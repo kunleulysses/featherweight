@@ -9,7 +9,7 @@ import { IStorage, JournalFilter, EmailFilter } from "./storage";
 const PostgresSessionStore = connectPg(session);
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using any type to avoid SessionStore type issues
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
@@ -34,17 +34,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const defaultPreferences = {
+    const defaultPreferences: UpdateUserPreferences = {
       emailFrequency: "daily",
       marketingEmails: false,
       receiveInsights: true,
       theme: "system"
     };
 
+    // Need to cast preferences because drizzle-orm typings are strict
     const [user] = await db.insert(users)
       .values({
         ...insertUser,
-        preferences: defaultPreferences
+        preferences: defaultPreferences as any
       })
       .returning();
     
@@ -57,12 +58,13 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`User with ID ${userId} not found`);
     }
     
+    // Cast to any to handle type issues with preferences
     const [updatedUser] = await db.update(users)
       .set({
         preferences: {
           ...user.preferences,
           ...preferences
-        },
+        } as any,
         updatedAt: new Date()
       })
       .where(eq(users.id, userId))
@@ -72,11 +74,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]> {
-    let query = db.select().from(journalEntries).where(eq(journalEntries.userId, userId));
+    // Build the query conditions
+    let conditions = [eq(journalEntries.userId, userId)];
     
     // Apply filters
     if (filter) {
-      if (filter.dateRange) {
+      if (filter.dateRange && filter.dateRange !== 'all') {
         const now = new Date();
         let startDate = new Date();
         
@@ -90,38 +93,37 @@ export class DatabaseStorage implements IStorage {
           case 'year':
             startDate.setFullYear(now.getFullYear() - 1);
             break;
-          case 'all':
-            // No date filtering
-            break;
         }
         
-        if (filter.dateRange !== 'all') {
-          query = query.where(gte(journalEntries.createdAt, startDate));
-        }
+        conditions.push(gte(journalEntries.createdAt, startDate));
       }
       
       if (filter.mood) {
-        query = query.where(eq(journalEntries.mood, filter.mood));
+        conditions.push(eq(journalEntries.mood, filter.mood));
       }
-      
-      // Note: Tags filtering is more complex with JSON, we'll handle any additional filtering in memory
     }
     
-    // Sort by newest first
-    let entries = await query.orderBy(journalEntries.createdAt);
+    // Execute the query with all conditions
+    const entries = await db.select()
+      .from(journalEntries)
+      .where(and(...conditions))
+      .orderBy(journalEntries.createdAt);
     
-    // Additional filtering for tags if needed
+    // Additional filtering for tags if needed - must be done in memory
+    let filteredEntries = [...entries];
     if (filter?.tags?.length) {
-      entries = entries.filter(entry => 
+      filteredEntries = filteredEntries.filter(entry => 
         entry.tags && filter.tags!.some(tag => entry.tags!.includes(tag))
       );
     }
     
-    return entries.reverse(); // newest first
+    return filteredEntries.reverse(); // newest first
   }
 
   async getJournalEntry(id: number): Promise<JournalEntry | undefined> {
-    const [entry] = await db.select().from(journalEntries).where(eq(journalEntries.id, id));
+    const [entry] = await db.select()
+      .from(journalEntries)
+      .where(eq(journalEntries.id, id));
     return entry;
   }
 
@@ -153,19 +155,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmails(userId: number, filter?: EmailFilter): Promise<Email[]> {
-    let query = db.select().from(emails).where(eq(emails.userId, userId));
+    // Build the query conditions
+    let conditions = [eq(emails.userId, userId)];
     
     // Apply filters
     if (filter) {
       if (filter.type) {
-        query = query.where(eq(emails.type, filter.type));
+        conditions.push(eq(emails.type, filter.type));
       }
       
       if (filter.isRead !== undefined) {
-        query = query.where(eq(emails.isRead, filter.isRead));
+        conditions.push(eq(emails.isRead, filter.isRead));
       }
       
-      if (filter.dateRange) {
+      if (filter.dateRange && filter.dateRange !== 'all') {
         const now = new Date();
         let startDate = new Date();
         
@@ -179,24 +182,25 @@ export class DatabaseStorage implements IStorage {
           case 'year':
             startDate.setFullYear(now.getFullYear() - 1);
             break;
-          case 'all':
-            // No date filtering
-            break;
         }
         
-        if (filter.dateRange !== 'all') {
-          query = query.where(gte(emails.sentAt, startDate));
-        }
+        conditions.push(gte(emails.sentAt, startDate));
       }
     }
     
-    // Sort by newest first
-    const userEmails = await query.orderBy(emails.sentAt);
+    // Execute the query with all conditions
+    const userEmails = await db.select()
+      .from(emails)
+      .where(and(...conditions))
+      .orderBy(emails.sentAt);
+    
     return userEmails.reverse(); // newest first
   }
 
   async getEmail(id: number): Promise<Email | undefined> {
-    const [email] = await db.select().from(emails).where(eq(emails.id, id));
+    const [email] = await db.select()
+      .from(emails)
+      .where(eq(emails.id, id));
     return email;
   }
 

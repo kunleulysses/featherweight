@@ -28,7 +28,7 @@ export interface IStorage {
   markEmailAsRead(id: number): Promise<Email | undefined>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using any type to avoid SessionStore type issues
 }
 
 // Filter types
