@@ -65,10 +65,11 @@ export class DatabaseStorage implements IStorage {
   
   async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
     try {
-      // Safe query that will work even if the column doesn't exist
+      // Since phone number is stored in preferences, we need to query for users
+      // where the preferences JSON contains the phone number
       const result = await pool.query(`
         SELECT * FROM users 
-        WHERE phone_number = $1 
+        WHERE preferences->>'phoneNumber' = $1 
         LIMIT 1
       `, [phoneNumber]);
       
@@ -139,16 +140,28 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`User with ID ${userId} not found`);
     }
     
-    const [updatedUser] = await db.update(users)
-      .set({
-        isPremium,
-        premiumUntil: premiumUntil || null,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return updatedUser;
+    try {
+      // Use raw SQL to update user subscription to avoid schema issues
+      const premiumUntilStr = premiumUntil ? premiumUntil.toISOString() : null;
+      const result = await pool.query(`
+        UPDATE users
+        SET 
+          is_premium = $1, 
+          premium_until = $2, 
+          updated_at = NOW()
+        WHERE id = $3
+        RETURNING *
+      `, [isPremium, premiumUntilStr, userId]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to update user subscription");
+      }
+    } catch (error) {
+      console.error("Error updating user subscription:", error);
+      throw error;
+    }
   }
 
   async updateUserPhoneNumber(userId: number, phoneNumber: string): Promise<User> {
