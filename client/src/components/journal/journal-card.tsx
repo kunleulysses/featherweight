@@ -67,7 +67,7 @@ export function JournalCard({ entry }: JournalCardProps) {
   };
 
   return (
-    <Card className={`mb-5 ${borderColorClass} border-l-4`}>
+    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-300 ${borderColorClass} border-l-4 rounded-lg overflow-hidden`}>
       <CardContent className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div>
@@ -83,7 +83,12 @@ export function JournalCard({ entry }: JournalCardProps) {
         
         {entry.imageUrl && (
           <div className="mb-4 rounded-[0.75rem] overflow-hidden">
-            <img src={entry.imageUrl} alt="Journal entry" className="w-full h-auto" />
+            <img 
+              src={entry.imageUrl} 
+              alt="Journal entry" 
+              className="w-full h-auto max-h-[300px] object-contain"
+              loading="lazy" 
+            />
           </div>
         )}
         
@@ -104,14 +109,24 @@ export function JournalCard({ entry }: JournalCardProps) {
           </div>
           
           <div className="flex space-x-2">
-            <Button variant="ghost" size="icon" aria-label="Edit entry">
-              <Edit className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-9 w-9 rounded-full hover:bg-primary/10"
+              aria-label="Edit entry"
+            >
+              <Edit className="h-[18px] w-[18px]" />
             </Button>
             
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Delete entry">
-                  <Trash2 className="h-4 w-4" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9 rounded-full hover:bg-destructive/10"
+                  aria-label="Delete entry"
+                >
+                  <Trash2 className="h-[18px] w-[18px]" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>

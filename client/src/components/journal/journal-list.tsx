@@ -72,9 +72,11 @@ export function JournalList({ filter }: JournalListProps) {
   }
 
   return (
-    <div>
+    <div className="space-y-4 pb-4 overflow-hidden">
       {entries.map((entry) => (
-        <JournalCard key={entry.id} entry={entry} />
+        <div key={entry.id} className="transform transition-transform duration-200 hover:translate-y-[-2px]">
+          <JournalCard entry={entry} />
+        </div>
       ))}
     </div>
   );

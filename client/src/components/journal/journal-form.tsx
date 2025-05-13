@@ -59,7 +59,7 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
       title: defaultValues?.title || "",
       content: defaultValues?.content || "",
       mood: defaultValues?.mood || "neutral",
-      tags: defaultValues?.tags ? defaultValues.tags.join(', ') : "",
+      tags: defaultValues?.tags || "",
       imageUrl: defaultValues?.imageUrl || "",
     },
   });
