@@ -1,4 +1,4 @@
-import { users, journalEntries, emails, type User, type InsertUser, type JournalEntry, type InsertJournalEntry, type Email, type InsertEmail, type UpdateUserPreferences } from "@shared/schema";
+import { users, journalEntries, emails, smsMessages, type User, type InsertUser, type JournalEntry, type InsertJournalEntry, type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, type InsertSmsMessage } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
 import { DatabaseStorage } from "./database-storage";
@@ -11,8 +11,11 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<User>;
+  updateUserSubscription(userId: number, isPremium: boolean, premiumUntil?: Date): Promise<User>;
+  updateUserPhoneNumber(userId: number, phoneNumber: string): Promise<User>;
   
   // Journal operations
   getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]>;
@@ -26,6 +29,12 @@ export interface IStorage {
   getEmail(id: number): Promise<Email | undefined>;
   createEmail(email: InsertEmail): Promise<Email>;
   markEmailAsRead(id: number): Promise<Email | undefined>;
+  
+  // SMS operations
+  getSmsMessages(userId: number, filter?: SmsFilter): Promise<SmsMessage[]>;
+  getSmsMessage(id: number): Promise<SmsMessage | undefined>;
+  createSmsMessage(message: InsertSmsMessage): Promise<SmsMessage>;
+  updateSmsMessage(id: number, message: Partial<InsertSmsMessage>): Promise<SmsMessage | undefined>;
   
   // Session store
   sessionStore: any; // Using any type to avoid SessionStore type issues
@@ -41,6 +50,12 @@ export type JournalFilter = {
 export type EmailFilter = {
   type?: string;
   isRead?: boolean;
+  dateRange?: string; // 7days, 30days, year, all
+};
+
+export type SmsFilter = {
+  direction?: "inbound" | "outbound";
+  isJournalEntry?: boolean;
   dateRange?: string; // 7days, 30days, year, all
 };
 

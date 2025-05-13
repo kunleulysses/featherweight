@@ -1,10 +1,10 @@
-import { users, type User, type InsertUser, type JournalEntry, type Email, type InsertJournalEntry, type InsertEmail, type UpdateUserPreferences, journalEntries, emails } from "@shared/schema";
+import { users, type User, type InsertUser, type JournalEntry, type Email, type InsertJournalEntry, type InsertEmail, type UpdateUserPreferences, journalEntries, emails, smsMessages, type SmsMessage, type InsertSmsMessage } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, or, inArray } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { pool } from "./db";
-import { IStorage, JournalFilter, EmailFilter } from "./storage";
+import { IStorage, JournalFilter, EmailFilter, SmsFilter } from "./storage";
 
 const PostgresSessionStore = connectPg(session);
 
