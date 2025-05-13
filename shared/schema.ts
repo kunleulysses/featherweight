@@ -8,6 +8,11 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  phoneNumber: text("phone_number").unique(),
+  isPremium: boolean("is_premium").default(false).notNull(),
+  premiumUntil: timestamp("premium_until"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   preferences: json("preferences").$type<UserPreferences>(),
@@ -39,20 +44,46 @@ export const emails = pgTable("emails", {
   messageId: text("message_id"), // Email message ID for tracking
 });
 
+// SMS messages table to track SMS conversations
+export const smsMessages = pgTable("sms_messages", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  phoneNumber: text("phone_number").notNull(), // User's phone number
+  content: text("content").notNull(),
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  direction: text("direction").notNull(), // "inbound" or "outbound"
+  twilioSid: text("twilio_sid"), // Twilio message SID for tracking
+  isJournalEntry: boolean("is_journal_entry").default(false), // Is this message a journal entry
+  journalEntryId: integer("journal_entry_id"), // Reference to created journal entry if applicable
+});
+
 // Types for JSON fields
 export type UserPreferences = {
   emailFrequency: "daily" | "weekdays" | "weekends" | "weekly";
   marketingEmails: boolean;
   receiveInsights: boolean;
   theme?: "light" | "dark" | "system";
+  receiveSms?: boolean;
 };
 
 // Insert schemas using drizzle-zod
 export const insertUserSchema = createInsertSchema(users)
-  .omit({ id: true, createdAt: true, updatedAt: true, preferences: true })
+  .omit({ 
+    id: true, 
+    createdAt: true, 
+    updatedAt: true, 
+    preferences: true,
+    isPremium: true,
+    premiumUntil: true,
+    stripeCustomerId: true,
+    stripeSubscriptionId: true
+  })
   .extend({
     email: z.string().email({ message: "Please enter a valid email address" }),
     password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+    phoneNumber: z.string().optional().refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val), {
+      message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)"
+    }),
   });
 
 export const insertJournalEntrySchema = createInsertSchema(journalEntries)
@@ -71,11 +102,20 @@ export const insertEmailSchema = createInsertSchema(emails)
     type: z.enum(["daily_inspiration", "journal_acknowledgment", "weekly_insight"]),
   });
 
+export const insertSmsMessageSchema = createInsertSchema(smsMessages)
+  .omit({ id: true, sentAt: true })
+  .extend({
+    content: z.string().min(1, { message: "Message content cannot be empty" }),
+    direction: z.enum(["inbound", "outbound"]),
+    isJournalEntry: z.boolean().default(false).optional(),
+  });
+
 export const updateUserPreferencesSchema = z.object({
   emailFrequency: z.enum(["daily", "weekdays", "weekends", "weekly"]),
   marketingEmails: z.boolean().default(false),
   receiveInsights: z.boolean().default(true),
   theme: z.enum(["light", "dark", "system"]).optional(),
+  receiveSms: z.boolean().default(false).optional(),
 });
 
 // Export types for use in application
@@ -83,6 +123,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type JournalEntry = typeof journalEntries.$inferSelect;
 export type Email = typeof emails.$inferSelect;
+export type SmsMessage = typeof smsMessages.$inferSelect;
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
+export type InsertSmsMessage = z.infer<typeof insertSmsMessageSchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
