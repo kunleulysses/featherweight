@@ -58,10 +58,13 @@ export class DatabaseStorage implements IStorage {
       theme: "system"
     };
 
+    // Create a new object without the phoneNumber property
+    const { phoneNumber, ...userWithoutPhoneNumber } = insertUser;
+
     // Need to cast preferences because drizzle-orm typings are strict
     const [user] = await db.insert(users)
       .values({
-        ...insertUser,
+        ...userWithoutPhoneNumber,
         preferences: defaultPreferences as any
       })
       .returning();
@@ -114,10 +117,17 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`User with ID ${userId} not found`);
     }
     
+    // Store the phone number in user preferences instead
+    const currentPreferences = user.preferences || {};
+    const updatedPreferences = {
+      ...currentPreferences,
+      phoneNumber: phoneNumber
+    };
+    
     const [updatedUser] = await db.update(users)
       .set({
-        phoneNumber,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        preferences: updatedPreferences as any
       })
       .where(eq(users.id, userId))
       .returning();
