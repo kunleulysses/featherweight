@@ -49,16 +49,18 @@ export default function JournalPage() {
                     New Entry
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[550px]">
-                  <DialogHeader>
+                <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+                  <DialogHeader className="mb-4">
                     <DialogTitle>Create New Journal Entry</DialogTitle>
                     <DialogDescription>
                       Document your thoughts, feelings, and reflections with Flappy.
                     </DialogDescription>
                   </DialogHeader>
-                  <JournalForm 
-                    onSuccess={() => setIsDialogOpen(false)}
-                  />
+                  <div className="pb-20 md:pb-0">
+                    <JournalForm 
+                      onSuccess={() => setIsDialogOpen(false)}
+                    />
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>

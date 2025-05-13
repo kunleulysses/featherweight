@@ -173,13 +173,13 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
   ];
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle className="font-quicksand">New Journal Entry</CardTitle>
+    <Card className="shadow-md overflow-visible">
+      <CardHeader className="px-4 py-3 sm:px-6 sm:py-4">
+        <CardTitle className="font-quicksand text-lg sm:text-xl">New Journal Entry</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 md:space-y-4">
             <FormField
               control={form.control}
               name="title"
@@ -187,7 +187,11 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="My thoughts today..." {...field} />
+                    <Input 
+                      placeholder="My thoughts today..." 
+                      className="h-10 md:h-11 rounded-md"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -203,7 +207,7 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
                   <FormControl>
                     <Textarea 
                       placeholder="Share your thoughts and reflections..." 
-                      className="min-h-[150px]" 
+                      className="min-h-[120px] md:min-h-[150px] rounded-md" 
                       {...field} 
                     />
                   </FormControl>
@@ -247,7 +251,11 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
                 <FormItem>
                   <FormLabel>Tags (comma separated)</FormLabel>
                   <FormControl>
-                    <Input placeholder="gratitude, reflection, goals..." {...field} />
+                    <Input 
+                      placeholder="gratitude, reflection, goals..." 
+                      className="h-10 md:h-11 rounded-md"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -326,11 +334,11 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
               )}
             />
 
-            <div className="pt-4">
+            <div className="pt-4 sticky bottom-0 md:relative md:bottom-auto pb-4 md:pb-0 bg-background">
               <Button 
                 type="submit" 
                 disabled={isSubmitting} 
-                className="w-full min-h-[48px] text-base font-medium rounded-md"
+                className="w-full min-h-[50px] text-base font-medium rounded-md shadow-md"
               >
                 {isSubmitting ? (
                   <>
