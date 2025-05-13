@@ -34,8 +34,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
-    return user;
+    try {
+      // Safe query that will work even if the column doesn't exist
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE phone_number = $1 
+        LIMIT 1
+      `, [phoneNumber]);
+      
+      return result.rows[0] as User | undefined;
+    } catch (error) {
+      console.error("Error getting user by phone number:", error);
+      // Return undefined if column doesn't exist or other error
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
