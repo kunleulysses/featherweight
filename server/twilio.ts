@@ -8,11 +8,37 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
-if (!accountSid || !authToken || !twilioPhoneNumber) {
-  console.warn('Twilio credentials not fully configured. SMS features will not work.');
+let client: twilio.Twilio | null = null;
+
+// Check if all Twilio credentials are configured
+const isTwilioConfigured = accountSid && authToken && twilioPhoneNumber;
+
+if (!isTwilioConfigured) {
+  console.warn('Twilio credentials not fully configured. SMS features will use mock mode.');
+} else {
+  try {
+    client = twilio(accountSid, authToken);
+    console.log('Twilio client initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Twilio client:', error);
+    client = null;
+  }
 }
 
-const client = twilio(accountSid, authToken);
+// Utility function to safely send SMS using Twilio or mock it
+async function safeSendMessage(to: string, body: string): Promise<{sid: string}> {
+  if (client && isTwilioConfigured) {
+    return await client.messages.create({
+      body: body,
+      from: twilioPhoneNumber!,
+      to: to
+    });
+  } else {
+    // Mock SMS sending in development
+    console.log(`[MOCK SMS] To: ${to}, Content: ${body}`);
+    return { sid: `mock-${Date.now()}` };
+  }
+}
 
 export const twilioService = {
   /**
@@ -26,12 +52,9 @@ export const twilioService = {
     }
 
     try {
-      const message = await client.messages.create({
-        body: content,
-        from: twilioPhoneNumber,
-        to: user.phoneNumber
-      });
-
+      // Use the safe utility function to send the message
+      const message = await safeSendMessage(user.phoneNumber, content);
+      
       // Store the SMS in our database
       const smsData: InsertSmsMessage = {
         userId: user.id,
@@ -76,21 +99,19 @@ export const twilioService = {
       
       if (!user) {
         // If no user found, send a message indicating the service is unavailable
-        await client.messages.create({
-          body: "We couldn't find your account. Please sign up for Featherweight to use this service.",
-          from: twilioPhoneNumber,
-          to: from
-        });
+        await safeSendMessage(
+          from, 
+          "We couldn't find your account. Please sign up for Featherweight to use this service."
+        );
         return;
       }
 
       // Check if user is premium
       if (!user.isPremium) {
-        await client.messages.create({
-          body: "This feature requires a premium subscription. Please upgrade your account on our website.",
-          from: twilioPhoneNumber,
-          to: from
-        });
+        await safeSendMessage(
+          from,
+          "This feature requires a premium subscription. Please upgrade your account on our website."
+        );
         return;
       }
 
