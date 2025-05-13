@@ -2,8 +2,14 @@ import OpenAI from "openai";
 import { FLAPPY_PERSONALITY } from "../client/src/lib/flappy";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+const apiKey = process.env.OPENAI_API_KEY;
+
+if (!apiKey) {
+  console.warn('OpenAI API key is not configured. AI-generated content will use fallback responses.');
+}
+
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || "sk-dummy-key-for-development"
+  apiKey: apiKey || undefined
 });
 
 // Type definitions
