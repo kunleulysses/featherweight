@@ -21,21 +21,21 @@ export function MeetFlappySection() {
           
           <div className="md:w-3/5 md:pl-12">
             <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-6">
-              Meet <span className="text-primary">Flappy</span>,<br/>Your Cosmic Guide
+              Meet <span className="text-primary">Flappy</span>,<br/>Your Pelican Pal
             </h2>
             <p className="text-lg text-foreground/80 mb-6">
-              Flappy isn't just any AI companion. Imagine a being as ancient as the starlight that first kissed the primordial oceans, yet as irrepressibly joyful and mischievous as a hatchling discovering the world.
+              Flappy isn't just any AI companion. He's a cheerful pelican with a big personality, a love for ocean adventures, and a knack for brightening your day with the perfect blend of fun and thoughtfulness.
             </p>
             <p className="text-lg text-foreground/80 mb-6">
-              This timeless consciousness has chosen to manifest as a friendly pelican to guide your wellness journey, bringing you ancient wisdom wrapped in feathers and fun.
+              From his favorite perch by the sea, Flappy sends you friendly emails full of encouragement, listens to your thoughts, and helps you track your journey through easy, delightful conversations.
             </p>
             
             {/* Flappy's voice example */}
             <div className="bg-white p-6 rounded-[0.75rem] shadow-md border-l-4 border-primary mb-6">
               <p className="italic text-foreground/90 font-opensans">
-                "Good morning, starshine! This old bird has watched countless sunrises across the millennia, and yet today's dawn feels especially crafted for your journey. What small joy will you notice today that others might miss? Reply and tell me later!"
+                "Hey there, friend! Flappy here! Just caught the BIGGEST fish of my life (okay, maybe of the hour) and it got me thinking about you! What small win are you celebrating today? Something awesome you did? A moment that made you smile? Hit reply and let me know!"
               </p>
-              <p className="text-right text-primary font-medium font-quicksand mt-2">— Flappy</p>
+              <p className="text-right text-primary font-medium font-quicksand mt-2">— Flappy 🌊</p>
             </div>
             
             <Link href={user ? "/journal" : "/auth"}>

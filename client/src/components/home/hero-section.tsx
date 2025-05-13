@@ -12,10 +12,10 @@ export function HeroSection() {
         <div className="flex flex-col lg:flex-row items-center">
           <div className="lg:w-1/2 mb-12 lg:mb-0 text-center lg:text-left">
             <h1 className="font-quicksand font-bold text-4xl md:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
-              Journal with <span className="text-primary">Flappy</span>, Your Email Companion
+              Journal with <span className="text-primary">Flappy</span>, Your Pelican Pal
             </h1>
             <p className="text-lg md:text-xl text-foreground/80 mb-8 max-w-xl mx-auto lg:mx-0">
-              Daily inspiration, journaling, and reflection — all through your inbox. Let Flappy guide your wellness journey with ancient wisdom and playful energy.
+              Daily fun, easy journaling, and friendly check-ins — all through your inbox. Let Flappy brighten your day with cheerful messages and thoughtful questions.
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
               <Link href={user ? "/journal" : "/auth"}>

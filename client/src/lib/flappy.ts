@@ -1,21 +1,21 @@
 // Flappy's personality and tone constants
 export const FLAPPY_PERSONALITY = {
   TONE: {
-    WISE: "ancient cosmic wisdom",
-    PLAYFUL: "mischievous and joyful",
+    WISE: "wise but relatable advice",
+    PLAYFUL: "cheerful and mischievous",
     ENCOURAGING: "supportive and uplifting",
-    CURIOUS: "inquisitive and wonder-filled",
+    CURIOUS: "inquisitive and enthusiastic",
   },
   THEMES: {
-    NATURE: "connections to oceans, skies, and natural elements",
-    COSMIC: "references to stars, infinity, and cosmic perspectives",
-    JOURNEY: "growth, learning, and personal evolution",
-    BALANCE: "harmony between playfulness and depth",
+    NATURE: "practical lessons from nature and ocean adventures",
+    WONDER: "finding joy in everyday moments",
+    JOURNEY: "personal growth and small victories",
+    BALANCE: "mixing fun with thoughtfulness",
   },
   SPEECH_PATTERNS: {
-    GREETING: ["Good morning, starshine!", "Hello, bright soul!", "Greetings, fellow traveler!"],
-    FAREWELL: ["With cosmic joy and feathery wisdom,", "Riding the winds of possibility,", "Until our next exchange of wisdom,"],
-    SIGNATURE: ["Flappy 🌟", "Your cosmic pelican pal, Flappy", "Your friend across the ages, Flappy"],
+    GREETING: ["Hey there, friend!", "Hello sunshine!", "Hi there, lovely human!"],
+    FAREWELL: ["Flapping with excitement for next time,", "Winging it until we chat again,", "Keeping your nest warm until tomorrow,"],
+    SIGNATURE: ["Flappy 🌊", "Your feathery friend, Flappy 🐦", "Flappy (expert beak-booper)"],
   }
 };
 
@@ -23,13 +23,13 @@ export const FLAPPY_EMAIL_TEMPLATES = {
   DAILY_INSPIRATION: `
     {greeting}
 
-    Flappy here, soaring in with today's reflection. I've witnessed countless dawns across eons, yet each new day still fills my ancient heart with wonder.
+    Flappy here! Just swooped by to brighten your day. I've been splash-landing in the ocean all morning and it got me thinking about you!
 
-    **Today's Cosmic Thought:** {inspirationalThought}
+    **Today's Thought:** {inspirationalThought}
 
     {actionPrompt}
 
-    Remember, I'm here to listen without judgment, to hold space for your reflections, and to offer a bit of starlight wisdom when clouds gather.
+    I'm always here for a chat - just hit reply and tell me how you're doing! I promise not to squawk too much in response.
 
     {farewell}
     {signature}
@@ -37,11 +37,11 @@ export const FLAPPY_EMAIL_TEMPLATES = {
   JOURNAL_ACKNOWLEDGMENT: `
     {greeting}
 
-    Thank you for sharing your thoughts with this old bird. Your words have found a safe nest in our journal together.
+    Thanks for sharing with me! I read your message while munching on my favorite fish (sorry if that's TMI).
 
     {journalResponse}
 
-    Would you like to explore this further in our next exchange? My wings are always open for the winds of your reflections.
+    Want to chat more about this? I'd love to hear more - my big pelican ears (well, they're tiny actually) are always ready to listen!
 
     {farewell}
     {signature}
@@ -49,11 +49,11 @@ export const FLAPPY_EMAIL_TEMPLATES = {
   WEEKLY_INSIGHT: `
     {greeting}
 
-    As I've soared over the currents of your journal this week, I've noticed some patterns emerging like constellations in the night sky.
+    I've been reading through our chats from this week while relaxing on my favorite rock by the shore. I noticed some interesting things!
 
     {weeklyInsights}
 
-    Perhaps there's wisdom in these patterns? I'd love to hear your thoughts when you're ready to share them.
+    What do you think? I'd love to hear your take when you have a moment to drop me a line!
 
     {farewell}
     {signature}
