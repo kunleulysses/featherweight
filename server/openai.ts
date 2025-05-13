@@ -3,14 +3,23 @@ import { FLAPPY_PERSONALITY } from "../client/src/lib/flappy";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const apiKey = process.env.OPENAI_API_KEY;
+let openai: OpenAI | null = null;
 
-if (!apiKey) {
-  console.warn('OpenAI API key is not configured. AI-generated content will use fallback responses.');
+try {
+  if (!apiKey) {
+    console.warn('OpenAI API key is not configured. AI-generated content will use fallback responses.');
+  } else {
+    openai = new OpenAI({ 
+      apiKey: apiKey,
+      timeout: 30000, // 30 second timeout
+      maxRetries: 2
+    });
+    console.log('OpenAI client initialized successfully');
+  }
+} catch (error) {
+  console.error('Failed to initialize OpenAI client:', error);
+  openai = null;
 }
-
-const openai = new OpenAI({ 
-  apiKey: apiKey || undefined
-});
 
 // Type definitions
 export type FlappyContentType = 'dailyInspiration' | 'journalResponse' | 'weeklyInsight';
@@ -28,7 +37,14 @@ export async function generateFlappyContent(
   const prompt = generatePrompt(contentType, context, userInfo);
   
   try {
-    const response = await openai.chat.completions.create({
+    // Check if OpenAI client is available
+    if (!openai) {
+      console.log("OpenAI client not available, using fallback content");
+      return getFallbackContent(contentType, context, userInfo);
+    }
+    
+    // TypeScript non-null assertion because we've checked above
+    const response = await openai!.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -36,22 +52,37 @@ export async function generateFlappyContent(
           content: prompt
         }
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+      max_tokens: 800
     });
 
     const content = response.choices[0].message.content;
     
     if (!content) {
-      throw new Error("Empty response from OpenAI");
+      console.warn("Empty response from OpenAI, using fallback content");
+      return getFallbackContent(contentType, context, userInfo);
     }
     
-    // Parse the JSON response
-    const parsedContent = JSON.parse(content) as FlappyContent;
-    
-    return {
-      subject: parsedContent.subject,
-      content: parsedContent.content
-    };
+    try {
+      // Parse the JSON response
+      const parsedContent = JSON.parse(content) as FlappyContent;
+      
+      // Validate that we have both required fields
+      if (!parsedContent.subject || !parsedContent.content) {
+        console.warn("Invalid response structure from OpenAI, using fallback content");
+        return getFallbackContent(contentType, context, userInfo);
+      }
+      
+      return {
+        subject: parsedContent.subject,
+        content: parsedContent.content
+      };
+    } catch (parseError) {
+      console.error("Error parsing OpenAI response as JSON:", parseError);
+      console.log("Raw response:", content);
+      return getFallbackContent(contentType, context, userInfo);
+    }
   } catch (error) {
     console.error("Error generating content with OpenAI:", error);
     
