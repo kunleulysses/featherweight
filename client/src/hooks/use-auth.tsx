@@ -14,13 +14,20 @@ type AuthContextType = {
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
 };
 
-type LoginData = {
+// For registration, we need username, email, and password
+type RegisterData = {
   username: string;
-  password: string;
   email: string;
+  password: string;
+};
+
+// For login, we only need email and password as the backend uses email-based login
+type LoginData = {
+  email: string;
+  password: string;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -57,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
+    mutationFn: async (credentials: RegisterData) => {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
@@ -71,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onError: (error: Error) => {
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: error.message || "Something went wrong during registration. Please try again.",
         variant: "destructive",
       });
     },
@@ -105,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         loginMutation,
         logoutMutation,
-        registerMutation,
+        registerMutation: registerMutation as unknown as UseMutationResult<SelectUser, Error, RegisterData>,
       }}
     >
       {children}
