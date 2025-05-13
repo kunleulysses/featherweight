@@ -4,14 +4,26 @@ import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/ui/container";
 import { JournalList } from "@/components/journal/journal-list";
 import { JournalSidebar } from "@/components/journal/journal-sidebar";
+import { JournalForm } from "@/components/journal/journal-form";
+import { Button } from "@/components/ui/button";
 import { Helmet } from 'react-helmet';
+import { PlusCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function JournalPage() {
   const [filter, setFilter] = useState({
     dateRange: "7days",
-    mood: null,
-    tags: [],
+    mood: undefined,
+    tags: [] as string[],
   });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
     <>
@@ -23,11 +35,32 @@ export default function JournalPage() {
         <Header />
         <main className="flex-grow py-8 bg-background">
           <Container>
-            <div className="mb-8">
-              <h1 className="font-quicksand font-bold text-3xl mb-2">My Journal</h1>
-              <p className="text-foreground/70">
-                Review and reflect on your journey with Flappy
-              </p>
+            <div className="mb-8 flex justify-between items-center">
+              <div>
+                <h1 className="font-quicksand font-bold text-3xl mb-2">My Journal</h1>
+                <p className="text-foreground/70">
+                  Review and reflect on your journey with Flappy
+                </p>
+              </div>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <PlusCircle size={16} />
+                    New Entry
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[550px]">
+                  <DialogHeader>
+                    <DialogTitle>Create New Journal Entry</DialogTitle>
+                    <DialogDescription>
+                      Document your thoughts, feelings, and reflections with Flappy.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <JournalForm 
+                    onSuccess={() => setIsDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
             
             <div className="flex flex-col md:flex-row gap-6">
