@@ -45,20 +45,21 @@ export const twilioService = {
    * Send an SMS message to a user
    */
   async sendSmsMessage(user: User, content: string): Promise<SmsMessage | null> {
-    // Check if user is premium and has a phone number
-    if (!user.isPremium || !user.phoneNumber) {
+    // Check if user is premium and has a phone number in preferences
+    const phoneNumber = user.preferences?.phoneNumber;
+    if (!user.isPremium || !phoneNumber) {
       console.warn(`Cannot send SMS to user ${user.id}: not premium or no phone number`);
       return null;
     }
 
     try {
       // Use the safe utility function to send the message
-      const message = await safeSendMessage(user.phoneNumber, content);
+      const message = await safeSendMessage(phoneNumber, content);
       
       // Store the SMS in our database
       const smsData: InsertSmsMessage = {
         userId: user.id,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: phoneNumber,
         content,
         direction: 'outbound',
         twilioSid: message.sid,
