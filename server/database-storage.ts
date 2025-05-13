@@ -88,18 +88,28 @@ export class DatabaseStorage implements IStorage {
       theme: "system"
     };
 
-    // Create a new object without the phoneNumber property
-    const { phoneNumber, ...userWithoutPhoneNumber } = insertUser;
-
-    // Need to cast preferences because drizzle-orm typings are strict
-    const [user] = await db.insert(users)
-      .values({
-        ...userWithoutPhoneNumber,
-        preferences: defaultPreferences as any
-      })
-      .returning();
-    
-    return user;
+    try {
+      // Use raw SQL insert to avoid schema conflicts
+      const result = await pool.query(`
+        INSERT INTO users (username, email, password, preferences, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        RETURNING *
+      `, [
+        insertUser.username,
+        insertUser.email,
+        insertUser.password,
+        JSON.stringify(defaultPreferences)
+      ]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to create user");
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   }
 
   async updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<User> {
