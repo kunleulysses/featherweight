@@ -19,18 +19,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE id = $1 
+        LIMIT 1
+      `, [id]);
+      
+      return result.rows[0] as User | undefined;
+    } catch (error) {
+      console.error("Error getting user by id:", error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    try {
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE username = $1 
+        LIMIT 1
+      `, [username]);
+      
+      return result.rows[0] as User | undefined;
+    } catch (error) {
+      console.error("Error getting user by username:", error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    try {
+      const result = await pool.query(`
+        SELECT * FROM users 
+        WHERE email = $1 
+        LIMIT 1
+      `, [email]);
+      
+      return result.rows[0] as User | undefined;
+    } catch (error) {
+      console.error("Error getting user by email:", error);
+      return undefined;
+    }
   }
   
   async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
