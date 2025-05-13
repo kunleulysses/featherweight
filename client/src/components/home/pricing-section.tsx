@@ -10,14 +10,15 @@ export function PricingSection() {
   
   const pricingPlans = [
     {
-      name: "Hatchling",
-      description: "Perfect for beginners",
+      name: "Free Tier",
+      description: "Start your journaling journey",
       price: "$0",
       period: "/month",
       features: [
-        "Daily inspiration emails",
-        "Email journaling",
-        "Basic journal storage (30 days)"
+        "Daily inspiration from Flappy",
+        "Unlimited journal entries via email",
+        "7-day journal history",
+        "Basic email responses"
       ],
       buttonText: "Start Free",
       buttonVariant: "outline" as const,
@@ -25,36 +26,22 @@ export function PricingSection() {
       borderClass: "border-border"
     },
     {
-      name: "Soaring",
-      description: "For committed journalers",
-      price: "$5",
+      name: "Premium",
+      description: "Full Flappy experience",
+      price: "$4.99",
       period: "/month",
       features: [
-        "Everything in Hatchling",
-        "Unlimited journal storage",
-        "Custom journal tags",
-        "Weekly insights from Flappy"
+        "Everything in Free Tier",
+        "Unlimited journal history",
+        "Custom journal tags and search",
+        "Weekly personalized insights",
+        "Priority response times",
+        "Ad-free experience"
       ],
-      buttonText: "Get Started",
+      buttonText: "Get Premium",
       buttonVariant: "default" as const,
       highlight: true,
       borderClass: "border-2 border-primary"
-    },
-    {
-      name: "Cosmic",
-      description: "The complete experience",
-      price: "$10",
-      period: "/month",
-      features: [
-        "Everything in Soaring",
-        "Advanced analytics & insights",
-        "Custom journaling prompts",
-        "Priority support"
-      ],
-      buttonText: "Upgrade Now",
-      buttonVariant: "outline" as const,
-      highlight: false,
-      borderClass: "border-border"
     }
   ];
 
@@ -63,14 +50,14 @@ export function PricingSection() {
       <Container>
         <div className="text-center mb-16">
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
-            Simple, Transparent Pricing
+            Simple Pricing, More Flappy
           </h2>
           <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-            Start your journaling journey with a plan that works for you.
+            Start free or upgrade for the full pelican experience. No complicated tiers!
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {pricingPlans.map((plan, index) => (
             <div 
               key={index} 
