@@ -73,8 +73,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/register", credentials);
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || 
+            "Registration failed. This username or email may already be in use."
+          );
+        }
+        return await res.json();
+      } catch (err) {
+        throw new Error(
+          err instanceof Error 
+            ? err.message 
+            : "Registration failed. Please try again with different credentials."
+        );
+      }
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -94,7 +109,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      try {
+        const res = await apiRequest("POST", "/api/logout");
+        if (!res.ok) {
+          throw new Error("Logout failed. Please try again.");
+        }
+      } catch (err) {
+        throw new Error(
+          err instanceof Error 
+            ? err.message 
+            : "Logout failed. Please try again later."
+        );
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -102,6 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
+      // Clear any other related cached data
+      queryClient.invalidateQueries({ queryKey: ["/api/journal"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/emails"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sms"] });
     },
     onError: (error: Error) => {
       toast({
@@ -109,6 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+      // Force logout on the client side even if the server request failed
+      queryClient.setQueryData(["/api/user"], null);
     },
   });
 
