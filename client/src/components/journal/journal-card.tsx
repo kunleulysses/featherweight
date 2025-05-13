@@ -3,7 +3,7 @@ import { formatDistance } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { JournalEntry } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -129,22 +129,29 @@ export function JournalCard({ entry }: JournalCardProps) {
                   <Trash2 className="h-[18px] w-[18px]" />
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="max-w-[90vw] md:max-w-md">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle className="text-center">Delete Journal Entry</AlertDialogTitle>
+                  <AlertDialogDescription className="text-center">
                     This action cannot be undone. This will permanently delete your
-                    journal entry.
+                    journal entry and its attached image (if any).
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                  <AlertDialogCancel className="mt-0 w-full sm:w-auto">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto"
                   >
-                    {isDeleting ? "Deleting..." : "Delete"}
+                    {isDeleting ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </div>
+                    ) : (
+                      "Delete Entry"
+                    )}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

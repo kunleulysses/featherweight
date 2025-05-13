@@ -30,10 +30,11 @@ export function JournalSidebar() {
   
   return (
     <>
-      <Card className="mb-4">
-        <CardContent className="p-4">
-          <h3 className="font-quicksand font-semibold text-lg text-foreground mb-3">
-            Filters
+      <Card className="mb-4 shadow-sm">
+        <CardContent className="p-4 overflow-y-auto">
+          <h3 className="font-quicksand font-semibold text-lg text-foreground mb-3 flex items-center">
+            <span className="mr-2">Filters</span>
+            <span className="text-xs text-muted-foreground font-normal">(tap to select)</span>
           </h3>
           <div className="space-y-3">
             <div>
@@ -57,7 +58,11 @@ export function JournalSidebar() {
                 {moodOptions.map((mood) => (
                   <button
                     key={mood.value}
-                    className={`text-xl ${selectedMood === mood.value ? 'scale-125 transition-transform' : 'opacity-70'}`}
+                    className={`p-2 rounded-full min-w-[40px] min-h-[40px] text-xl 
+                      ${selectedMood === mood.value 
+                        ? 'bg-background shadow-md scale-110 transition-all duration-200' 
+                        : 'opacity-70 hover:opacity-90 hover:bg-background/50 transition-all duration-200'}`
+                    }
                     onClick={() => handleMoodSelect(mood.value)}
                     aria-label={`Filter by ${mood.value} mood`}
                   >
@@ -73,7 +78,8 @@ export function JournalSidebar() {
                 {commonTags.map((tag, index) => (
                   <span 
                     key={index} 
-                    className={`text-xs ${tag.class} px-2 py-1 rounded-full cursor-pointer hover:opacity-80`}
+                    className={`text-sm ${tag.class} px-3 py-1.5 rounded-full cursor-pointer 
+                      hover:shadow-sm transition-all duration-200 hover:opacity-90 active:scale-95`}
                   >
                     {tag.name}
                   </span>
@@ -84,14 +90,16 @@ export function JournalSidebar() {
         </CardContent>
       </Card>
       
-      <div className="bg-primary/5 rounded-[0.75rem] p-4">
+      <div className="bg-primary/5 rounded-[0.75rem] p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
         <div className="flex items-center space-x-2 mb-3">
-          <Feather className="h-4 w-4 text-primary" />
+          <div className="bg-primary/10 rounded-full p-1.5">
+            <Feather className="h-5 w-5 text-primary" />
+          </div>
           <h3 className="font-quicksand font-semibold text-foreground">
             Flappy Says
           </h3>
         </div>
-        <p className="text-sm text-foreground/80 italic">
+        <p className="text-sm text-foreground/80 italic leading-relaxed">
           "I notice that your writing carries the rhythm of ocean waves. Sometimes crashing with energy, sometimes gentle and reflective. Both are beautiful parts of your journey."
         </p>
       </div>
