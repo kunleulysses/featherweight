@@ -42,7 +42,7 @@ export default function SmsPage() {
         throw error;
       }
     },
-    enabled: !!user?.isPremium && !!user?.phoneNumber
+    enabled: !!user?.isPremium && !!user?.preferences?.phoneNumber
   });
 
   // Request a new daily inspiration SMS
@@ -166,7 +166,7 @@ export default function SmsPage() {
   }
 
   // If the user is premium but doesn't have a phone number, show a message
-  if (!user?.phoneNumber) {
+  if (!user?.preferences?.phoneNumber) {
     return (
       <>
         <Helmet>

@@ -74,7 +74,7 @@ export default function SettingsPage() {
     setIsSubmitting(true);
     
     // Update phone number if it has changed
-    if (data.phoneNumber !== user?.phoneNumber) {
+    if (data.phoneNumber !== user?.preferences?.phoneNumber) {
       apiRequest("PATCH", "/api/user/phone", { phoneNumber: data.phoneNumber })
         .then((res) => {
           if (!res.ok) {
