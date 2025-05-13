@@ -41,16 +41,68 @@ export const emailService = {
   // Send a Flappy email and store it in the database
   async sendFlappyEmail(user: User, contentType: FlappyContentType, context?: string): Promise<Email> {
     try {
-      // Generate content using OpenAI
-      const { subject, content } = await generateFlappyContent(contentType, context, {
-        username: user.username,
-        email: user.email,
-      });
+      // Generate content using OpenAI (or use fallback content if there's an error)
+      let subject, content, messageId;
       
-      // Send the email
-      const { messageId } = await this.sendEmail(user.email, subject, content);
+      try {
+        // Try to generate content using OpenAI
+        const flappyContent = await generateFlappyContent(contentType, context, {
+          username: user.username,
+          email: user.email,
+        });
+        
+        subject = flappyContent.subject;
+        content = flappyContent.content;
+        
+        // Try to send the email
+        try {
+          const result = await this.sendEmail(user.email, subject, content);
+          messageId = result.messageId;
+        } catch (emailError) {
+          console.warn("Could not send email, continuing with database storage only:", emailError);
+          messageId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        }
+      } catch (aiError) {
+        console.warn("Failed to generate content with OpenAI, using fallback content:", aiError);
+        
+        // Fallback content based on content type
+        if (contentType === "dailyInspiration") {
+          subject = "Your Daily Inspiration from Flappy";
+          content = `Hello ${user.username}! 
+          
+          Today is a good day to write in your journal. How are you feeling today?
+          
+          Flappy is always here for you, even when AI services are taking a break!
+          
+          Warmly,
+          Flappy 🐦`;
+        } else if (contentType === "journalResponse") {
+          subject = "Flappy received your journal entry";
+          content = `Thank you for your journal entry, ${user.username}!
+          
+          I've recorded your thoughts and will be here whenever you want to reflect on them.
+          
+          Keep up the great journaling!
+          
+          Warmly,
+          Flappy 🐦`;
+        } else {
+          subject = "Weekly Insights from Flappy";
+          content = `Hello ${user.username}!
+          
+          It's time for your weekly reflection. How has your week been? What are you grateful for?
+          
+          I'm here to help you reflect on your journey.
+          
+          Warmly,
+          Flappy 🐦`;
+        }
+        
+        // Create a local message ID since we're not actually sending an email
+        messageId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      }
       
-      // Store the email in the database
+      // Store the email in the database (always do this even if sending fails)
       const emailData: InsertEmail = {
         userId: user.id,
         subject,
@@ -61,7 +113,7 @@ export const emailService = {
       
       return await storage.createEmail(emailData);
     } catch (error) {
-      console.error("Error sending Flappy email:", error);
+      console.error("Critical error in sendFlappyEmail:", error);
       throw new Error("Failed to send Flappy email");
     }
   },

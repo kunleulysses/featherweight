@@ -197,7 +197,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(email);
     } catch (error) {
       console.error("Error requesting inspiration email:", error);
-      res.status(500).json({ message: "Failed to send inspiration email" });
+      res.status(500).json({ 
+        message: "Failed to send inspiration email", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
   
