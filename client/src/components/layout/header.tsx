@@ -44,6 +44,9 @@ export function Header() {
                 <Link href="/journal" className={`font-quicksand font-medium ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                     Journal
                 </Link>
+                <Link href="/mood-tracker" className={`font-quicksand font-medium ${isActive("/mood-tracker") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                    Mood Feathers
+                </Link>
                 <Link href="/sms" className={`font-quicksand font-medium ${isActive("/sms") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                     SMS
                     {user?.isPremium && <span className="ml-1 text-xs text-green-500">•</span>}
@@ -104,6 +107,13 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Journal
+                  </Link>
+                  <Link 
+                    href="/mood-tracker" 
+                    className={`font-quicksand font-medium py-2 ${isActive("/mood-tracker") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Mood Feathers
                   </Link>
                   <Link 
                     href="/sms" 

@@ -31,7 +31,7 @@ type MoodType = 'happy' | 'calm' | 'neutral' | 'sad' | 'frustrated' | 'none';
 // Custom tooltip for charts
 const CustomTooltip = ({ active, payload, label, type }: { 
   active?: boolean; 
-  payload?: any[]; 
+  payload?: Array<{payload: any; value: any}>; 
   label?: string; 
   type: string;
 }) => {
@@ -417,13 +417,20 @@ export default function MoodTrackerPage() {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                label={({ name, percent }) => 
+                                  typeof name === 'string' && typeof percent === 'number' 
+                                    ? `${name} ${(percent * 100).toFixed(0)}%` 
+                                    : ''
+                                }
                               >
                                 {preparePieData().map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={MOOD_COLORS[entry.mood as keyof typeof MOOD_COLORS]} />
+                                  <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={MOOD_COLORS[entry.mood as MoodType]} 
+                                  />
                                 ))}
                               </Pie>
-                              <Tooltip formatter={(value: any) => [`${value} entries`, 'Count']} />
+                              <Tooltip formatter={(value) => [`${value} entries`, 'Count']} />
                               <Legend />
                             </PieChart>
                           </ResponsiveContainer>
