@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Helmet } from 'react-helmet';
 
 const profileFormSchema = z.object({
@@ -53,6 +54,7 @@ export default function SettingsPage() {
     defaultValues: {
       username: user?.username || "",
       email: user?.email || "",
+      phoneNumber: user?.phoneNumber || "",
       bio: "",
     },
   });
@@ -61,36 +63,79 @@ export default function SettingsPage() {
   const emailPreferencesForm = useForm<EmailPreferencesValues>({
     resolver: zodResolver(emailPreferencesSchema),
     defaultValues: {
-      emailFrequency: "daily",
-      marketingEmails: false,
-      receiveInsights: true,
+      emailFrequency: user?.preferences?.emailFrequency || "daily",
+      marketingEmails: user?.preferences?.marketingEmails || false,
+      receiveInsights: user?.preferences?.receiveInsights || true,
+      receiveSms: user?.preferences?.receiveSms || false,
     },
   });
 
   function onProfileSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
     
-    // Simulate API call to update profile
-    setTimeout(() => {
+    // Update phone number if it has changed
+    if (data.phoneNumber !== user?.phoneNumber) {
+      apiRequest("PATCH", "/api/user/phone", { phoneNumber: data.phoneNumber })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to update phone number");
+          }
+          return res.json();
+        })
+        .then(() => {
+          toast({
+            title: "Phone number updated",
+            description: "Your phone number has been updated successfully.",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        })
+        .catch((error) => {
+          toast({
+            title: "Update failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
+    } else {
       setIsSubmitting(false);
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully.",
       });
-    }, 1000);
+    }
   }
 
   function onEmailPreferencesSubmit(data: EmailPreferencesValues) {
     setIsSubmitting(true);
     
-    // Simulate API call to update email preferences
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast({
-        title: "Email preferences updated",
-        description: "Your email preferences have been saved successfully.",
+    // Update user preferences
+    apiRequest("PATCH", "/api/user/preferences", data)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to update preferences");
+        }
+        return res.json();
+      })
+      .then(() => {
+        toast({
+          title: "Preferences updated",
+          description: "Your preferences have been saved successfully.",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      })
+      .catch((error) => {
+        toast({
+          title: "Update failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-    }, 1000);
   }
 
   return (
@@ -154,6 +199,26 @@ export default function SettingsPage() {
                               </FormControl>
                               <FormDescription>
                                 This is where you'll receive emails from Flappy.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileForm.control}
+                          name="phoneNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone Number (Premium Feature)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="+14155552671" 
+                                  {...field} 
+                                  value={field.value || ""}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Add your phone number to enable SMS journaling. Premium feature only.
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -245,6 +310,27 @@ export default function SettingsPage() {
                               <FormControl>
                                 <Switch
                                   checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={emailPreferencesForm.control}
+                          name="receiveSms"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">SMS Journaling (Premium)</FormLabel>
+                                <FormDescription>
+                                  Receive daily inspirations and journal by sending SMS messages to Flappy. Requires a phone number and premium subscription.
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value && user?.isPremium}
+                                  disabled={!user?.isPremium}
                                   onCheckedChange={field.onChange}
                                 />
                               </FormControl>

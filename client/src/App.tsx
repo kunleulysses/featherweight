@@ -8,6 +8,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import JournalPage from "@/pages/journal-page";
 import SettingsPage from "@/pages/settings-page";
+import SmsPage from "@/pages/sms-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
