@@ -23,6 +23,11 @@ const profileFormSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
+  phoneNumber: z.string()
+    .optional()
+    .refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val), {
+      message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)"
+    }),
   bio: z.string().max(160).optional(),
 });
 
@@ -32,6 +37,7 @@ const emailPreferencesSchema = z.object({
   emailFrequency: z.enum(["daily", "weekdays", "weekends", "weekly"]),
   marketingEmails: z.boolean().default(false),
   receiveInsights: z.boolean().default(true),
+  receiveSms: z.boolean().default(false),
 });
 
 type EmailPreferencesValues = z.infer<typeof emailPreferencesSchema>;

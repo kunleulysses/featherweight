@@ -32,6 +32,11 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
+  
+  async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user;
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const defaultPreferences: UpdateUserPreferences = {
@@ -65,6 +70,41 @@ export class DatabaseStorage implements IStorage {
           ...user.preferences,
           ...preferences
         } as any,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+
+  async updateUserSubscription(userId: number, isPremium: boolean, premiumUntil?: Date): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    const [updatedUser] = await db.update(users)
+      .set({
+        isPremium,
+        premiumUntil: premiumUntil || null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+
+  async updateUserPhoneNumber(userId: number, phoneNumber: string): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    const [updatedUser] = await db.update(users)
+      .set({
+        phoneNumber,
         updatedAt: new Date()
       })
       .where(eq(users.id, userId))
@@ -219,5 +259,73 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedEmail;
+  }
+
+  // SMS operations
+  async getSmsMessages(userId: number, filter?: SmsFilter): Promise<SmsMessage[]> {
+    // Build the query conditions
+    let conditions = [eq(smsMessages.userId, userId)];
+    
+    // Apply filters
+    if (filter) {
+      if (filter.direction) {
+        conditions.push(eq(smsMessages.direction, filter.direction));
+      }
+      
+      if (filter.isJournalEntry !== undefined) {
+        conditions.push(eq(smsMessages.isJournalEntry, filter.isJournalEntry));
+      }
+      
+      if (filter.dateRange && filter.dateRange !== 'all') {
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch (filter.dateRange) {
+          case '7days':
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case '30days':
+            startDate.setDate(now.getDate() - 30);
+            break;
+          case 'year':
+            startDate.setFullYear(now.getFullYear() - 1);
+            break;
+        }
+        
+        conditions.push(gte(smsMessages.sentAt, startDate));
+      }
+    }
+    
+    // Execute the query with all conditions
+    const messages = await db.select()
+      .from(smsMessages)
+      .where(and(...conditions))
+      .orderBy(smsMessages.sentAt);
+    
+    return messages.reverse(); // newest first
+  }
+
+  async getSmsMessage(id: number): Promise<SmsMessage | undefined> {
+    const [message] = await db.select()
+      .from(smsMessages)
+      .where(eq(smsMessages.id, id));
+    return message;
+  }
+
+  async createSmsMessage(insertMessage: InsertSmsMessage): Promise<SmsMessage> {
+    const [message] = await db.insert(smsMessages)
+      .values(insertMessage)
+      .returning();
+    
+    return message;
+  }
+
+  async updateSmsMessage(id: number, partialMessage: Partial<InsertSmsMessage>): Promise<SmsMessage | undefined> {
+    const [updatedMessage] = await db.update(smsMessages)
+      .set(partialMessage)
+      .where(eq(smsMessages.id, id))
+      .returning();
+    
+    return updatedMessage;
   }
 }
