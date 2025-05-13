@@ -28,32 +28,24 @@ export function Header() {
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
               <Feather className="h-5 w-5 text-white" />
             </div>
-            <Link href="/">
-              <a className="font-quicksand font-bold text-2xl text-primary">
-                Featherweight
-              </a>
+            <Link href="/" className="font-quicksand font-bold text-2xl text-primary">
+              Featherweight
             </Link>
           </div>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/">
-              <a className={`font-quicksand font-medium ${isActive("/") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+            <Link href="/" className={`font-quicksand font-medium ${isActive("/") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                 Home
-              </a>
             </Link>
             
             {user ? (
               <>
-                <Link href="/journal">
-                  <a className={`font-quicksand font-medium ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/journal" className={`font-quicksand font-medium ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                     Journal
-                  </a>
                 </Link>
-                <Link href="/settings">
-                  <a className={`font-quicksand font-medium ${isActive("/settings") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/settings" className={`font-quicksand font-medium ${isActive("/settings") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                     Settings
-                  </a>
                 </Link>
                 <Button 
                   onClick={handleLogout} 
@@ -66,9 +58,11 @@ export function Header() {
               </>
             ) : (
               <Link href="/auth">
-                <Button className="font-quicksand font-medium">
-                  Sign In
-                </Button>
+                <span className="inline-block">
+                  <Button className="font-quicksand font-medium">
+                    Sign In
+                  </Button>
+                </span>
               </Link>
             )}
           </nav>
@@ -90,32 +84,29 @@ export function Header() {
         <div className="md:hidden bg-white border-t border-border">
           <Container className="py-2">
             <div className="flex flex-col space-y-3">
-              <Link href="/">
-                <a 
-                  className={`font-quicksand font-medium py-2 ${isActive("/") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Home
-                </a>
+              <Link 
+                href="/" 
+                className={`font-quicksand font-medium py-2 ${isActive("/") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Home
               </Link>
               
               {user ? (
                 <>
-                  <Link href="/journal">
-                    <a 
-                      className={`font-quicksand font-medium py-2 ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Journal
-                    </a>
+                  <Link 
+                    href="/journal" 
+                    className={`font-quicksand font-medium py-2 ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Journal
                   </Link>
-                  <Link href="/settings">
-                    <a 
-                      className={`font-quicksand font-medium py-2 ${isActive("/settings") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Settings
-                    </a>
+                  <Link 
+                    href="/settings" 
+                    className={`font-quicksand font-medium py-2 ${isActive("/settings") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Settings
                   </Link>
                   <Button 
                     onClick={() => {
@@ -130,13 +121,12 @@ export function Header() {
                   </Button>
                 </>
               ) : (
-                <Link href="/auth">
-                  <a 
-                    className="font-quicksand font-medium text-white bg-primary hover:bg-primary/90 transition-colors py-2 px-4 rounded-[0.75rem] text-center"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sign In
-                  </a>
+                <Link 
+                  href="/auth" 
+                  className="font-quicksand font-medium text-white bg-primary hover:bg-primary/90 transition-colors py-2 px-4 rounded-[0.75rem] text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
                 </Link>
               )}
             </div>
