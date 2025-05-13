@@ -18,6 +18,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/journal" component={JournalPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/sms" component={SmsPage} />
       <Route component={NotFound} />
     </Switch>
   );

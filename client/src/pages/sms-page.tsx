@@ -14,7 +14,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { PhoneOutgoing, PhoneIncoming, PlusCircle, RefreshCw, Send } from "lucide-react";
-import { SubscriptionCard } from "@/components/subscription-card";
+// Import dynamically to avoid issues
+const SubscriptionCard = () => {
+  const SubscriptionCardComponent = require('../components/subscription-card').SubscriptionCard;
+  return <SubscriptionCardComponent />;
+};
 
 export default function SmsPage() {
   const { user } = useAuth();
