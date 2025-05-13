@@ -170,22 +170,33 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`User with ID ${userId} not found`);
     }
     
-    // Store the phone number in user preferences instead
-    const currentPreferences = user.preferences || {};
-    const updatedPreferences = {
-      ...currentPreferences,
-      phoneNumber: phoneNumber
-    };
-    
-    const [updatedUser] = await db.update(users)
-      .set({
-        updatedAt: new Date(),
-        preferences: updatedPreferences as any
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return updatedUser;
+    try {
+      // Store the phone number in user preferences instead
+      const currentPreferences = user.preferences || {};
+      const updatedPreferences = {
+        ...currentPreferences,
+        phoneNumber: phoneNumber
+      };
+      
+      // Use raw SQL to update preferences to avoid schema issues
+      const result = await pool.query(`
+        UPDATE users
+        SET 
+          preferences = $1, 
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `, [updatedPreferences, userId]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to update user phone number");
+      }
+    } catch (error) {
+      console.error("Error updating user phone number:", error);
+      throw error;
+    }
   }
 
   async getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]> {
