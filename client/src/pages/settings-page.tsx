@@ -54,7 +54,7 @@ export default function SettingsPage() {
     defaultValues: {
       username: user?.username || "",
       email: user?.email || "",
-      phoneNumber: user?.phoneNumber || "",
+      phoneNumber: user?.preferences?.phoneNumber || "",
       bio: "",
     },
   });

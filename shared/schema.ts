@@ -64,6 +64,7 @@ export type UserPreferences = {
   receiveInsights: boolean;
   theme?: "light" | "dark" | "system";
   receiveSms?: boolean;
+  phoneNumber?: string;
 };
 
 // Insert schemas using drizzle-zod
@@ -116,6 +117,9 @@ export const updateUserPreferencesSchema = z.object({
   receiveInsights: z.boolean().default(true),
   theme: z.enum(["light", "dark", "system"]).optional(),
   receiveSms: z.boolean().default(false).optional(),
+  phoneNumber: z.string().optional().refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val), {
+    message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)"
+  }),
 });
 
 // Export types for use in application

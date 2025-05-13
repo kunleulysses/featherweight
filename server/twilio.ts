@@ -59,7 +59,7 @@ export const twilioService = {
       // Store the SMS in our database
       const smsData: InsertSmsMessage = {
         userId: user.id,
-        phoneNumber: phoneNumber,
+        phoneNumber: phoneNumber || '',
         content,
         direction: 'outbound',
         twilioSid: message.sid,
