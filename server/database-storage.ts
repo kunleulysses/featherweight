@@ -119,19 +119,31 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`User with ID ${userId} not found`);
     }
     
-    // Cast to any to handle type issues with preferences
-    const [updatedUser] = await db.update(users)
-      .set({
-        preferences: {
-          ...user.preferences,
-          ...preferences
-        } as any,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return updatedUser;
+    try {
+      const updatedPreferences = {
+        ...user.preferences,
+        ...preferences
+      };
+      
+      // Use raw SQL to update preferences to avoid schema issues
+      const result = await pool.query(`
+        UPDATE users
+        SET 
+          preferences = $1, 
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `, [updatedPreferences, userId]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to update user preferences");
+      }
+    } catch (error) {
+      console.error("Error updating user preferences:", error);
+      throw error;
+    }
   }
 
   async updateUserSubscription(userId: number, isPremium: boolean, premiumUntil?: Date): Promise<User> {
