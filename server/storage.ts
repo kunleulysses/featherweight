@@ -1,6 +1,7 @@
 import { users, journalEntries, emails, type User, type InsertUser, type JournalEntry, type InsertJournalEntry, type Email, type InsertEmail, type UpdateUserPreferences } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
+import { DatabaseStorage } from "./database-storage";
 
 // Memory store for session
 const MemoryStore = createMemoryStore(session);
@@ -297,4 +298,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use the database storage implementation
+export const storage = new DatabaseStorage();
