@@ -1,17 +1,44 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import { insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessageSchema } from "@shared/schema";
 import { emailService } from "./email";
 import { twilioService } from "./twilio";
+import { journalImageUpload, getFileUrl } from "./file-upload";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
 
   // =========== Journal Routes ===========
+  
+  // Upload journal image
+  app.post("/api/journal/upload-image", (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    journalImageUpload.single('image')(req, res, (err: any) => {
+      if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Generate URL for the uploaded file
+      const imageUrl = getFileUrl(req, req.file.filename);
+      
+      res.json({
+        imageUrl,
+        message: "Image uploaded successfully"
+      });
+    });
+  });
   
   // Get all journal entries for the current user
   app.get("/api/journal", async (req: Request, res: Response) => {
