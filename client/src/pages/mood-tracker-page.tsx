@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { CalendarIcon, ArrowDownIcon, ArrowUpIcon, BarChartIcon, PieChartIcon, CalendarDaysIcon, LineChartIcon, InfoIcon, MessageSquareHeartIcon } from "lucide-react";
+import { CalendarIcon, ArrowDownIcon, ArrowUpIcon, BarChartIcon, PieChartIcon, CalendarDaysIcon, LineChartIcon, InfoIcon, MessageSquareHeartIcon, ActivityIcon } from "lucide-react";
 
 // Mood color mapping
 const MOOD_COLORS = {
@@ -100,8 +100,30 @@ export default function MoodTrackerPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("daily");
   
+  // Type for analytics response
+  type MoodAnalytics = {
+    moodFrequency: Record<string, number>;
+    dailyTrends: Array<{
+      date: string;
+      mood: MoodType;
+      count: number;
+    }>;
+    monthlyTrends: Array<{
+      month: string;
+      monthKey: string;
+      counts: Record<string, number>;
+      total: number;
+    }>;
+    streaks: {
+      current: number;
+      longest: number;
+    };
+    insights: Insight[];
+    entryCount: number;
+  };
+
   // Fetch mood analytics data
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery<MoodAnalytics>({
     queryKey: ["/api/analytics/mood"],
     queryFn: async () => {
       try {
@@ -139,7 +161,17 @@ export default function MoodTrackerPage() {
       none: "❓"
     };
     
-    return emojiMap[mood] || "❓";
+    return emojiMap[mood as keyof typeof emojiMap] || "❓";
+  };
+  
+  // Default empty data for when data is undefined
+  const emptyData: MoodAnalytics = {
+    moodFrequency: {},
+    dailyTrends: [],
+    monthlyTrends: [],
+    streaks: { current: 0, longest: 0 },
+    insights: [],
+    entryCount: 0
   };
   
   return (
@@ -197,9 +229,9 @@ export default function MoodTrackerPage() {
             ) : (
               <div className="space-y-8">
                 {/* Insights Cards */}
-                {data.insights && data.insights.length > 0 && (
+                {data?.insights && data.insights.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {data.insights.map((insight: any, index: number) => (
+                    {data.insights.map((insight, index) => (
                       <InsightCard key={index} insight={insight} />
                     ))}
                   </div>
@@ -213,7 +245,7 @@ export default function MoodTrackerPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <span className="text-3xl font-bold">{data.entryCount}</span>
+                        <span className="text-3xl font-bold">{data?.entryCount || 0}</span>
                         <MessageSquareHeartIcon className="h-6 w-6 text-primary opacity-75" />
                       </div>
                     </CardContent>
@@ -225,11 +257,11 @@ export default function MoodTrackerPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <span className="text-3xl font-bold">{data.streaks.current}</span>
+                        <span className="text-3xl font-bold">{data?.streaks?.current || 0}</span>
                         <div className="text-2xl">🔥</div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Longest: {data.streaks.longest} days
+                        Longest: {data?.streaks?.longest || 0} days
                       </p>
                     </CardContent>
                   </Card>
@@ -240,9 +272,9 @@ export default function MoodTrackerPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <span className="text-3xl font-bold">{Object.keys(data.moodFrequency).length}</span>
+                        <span className="text-3xl font-bold">{Object.keys(data?.moodFrequency || {}).length}</span>
                         <div className="flex space-x-1">
-                          {Object.keys(data.moodFrequency).slice(0, 3).map(mood => (
+                          {Object.keys(data?.moodFrequency || {}).slice(0, 3).map(mood => (
                             <span key={mood} className="text-xl">{getMoodEmoji(mood)}</span>
                           ))}
                         </div>
@@ -257,19 +289,23 @@ export default function MoodTrackerPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {Object.entries(data.moodFrequency).length > 0 ? (
+                      {Object.entries(data?.moodFrequency || {}).length > 0 ? (
                         <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-xl font-medium capitalize">
-                              {Object.entries(data.moodFrequency).sort((a, b) => (b[1] as number) - (a[1] as number))[0][0]}
-                            </span>
-                            <p className="text-xs text-muted-foreground">
-                              {Object.entries(data.moodFrequency).sort((a, b) => (b[1] as number) - (a[1] as number))[0][1]} entries
-                            </p>
-                          </div>
-                          <span className="text-2xl">
-                            {getMoodEmoji(Object.entries(data.moodFrequency).sort((a, b) => (b[1] as number) - (a[1] as number))[0][0])}
-                          </span>
+                          {(() => {
+                            const sorted = Object.entries(data?.moodFrequency || {}).sort((a, b) => (b[1] as number) - (a[1] as number));
+                            const topMood = sorted[0][0];
+                            const count = sorted[0][1];
+                            
+                            return (
+                              <>
+                                <div>
+                                  <span className="text-xl font-medium capitalize">{topMood}</span>
+                                  <p className="text-xs text-muted-foreground">{count} entries</p>
+                                </div>
+                                <span className="text-2xl">{getMoodEmoji(topMood)}</span>
+                              </>
+                            );
+                          })()}
                         </div>
                       ) : (
                         <p className="text-muted-foreground">No mood data yet</p>
@@ -282,7 +318,7 @@ export default function MoodTrackerPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <ChartIcon className="mr-2 h-5 w-5" /> 
+                      <ActivityIcon className="mr-2 h-5 w-5" /> 
                       Mood Trends
                     </CardTitle>
                   </CardHeader>
@@ -307,7 +343,7 @@ export default function MoodTrackerPage() {
                         <div className="h-[400px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart
-                              data={data.dailyTrends}
+                              data={data?.dailyTrends || []}
                               margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -325,21 +361,9 @@ export default function MoodTrackerPage() {
                                 name="Journal Entries" 
                                 stroke="#64B5F6" 
                                 strokeWidth={2}
-                                dot={(props: any) => {
-                                  const mood = props.payload.mood;
-                                  if (mood === "none" || props.payload.count === 0) return null;
-                                  
-                                  return (
-                                    <circle
-                                      cx={props.cx}
-                                      cy={props.cy}
-                                      r={6}
-                                      fill={MOOD_COLORS[mood]}
-                                      stroke="#fff"
-                                      strokeWidth={2}
-                                    />
-                                  );
-                                }}
+                                // Implement custom dot as a separate component
+                                dot={false}
+                                activeDot={{ r: 6, fill: "#64B5F6" }}
                               />
                             </LineChart>
                           </ResponsiveContainer>
@@ -358,7 +382,7 @@ export default function MoodTrackerPage() {
                         <div className="h-[400px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart
-                              data={data.monthlyTrends}
+                              data={data?.monthlyTrends || []}
                               margin={{ top: 20, right: 20, left: 10, bottom: 5 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
