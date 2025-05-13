@@ -20,24 +20,31 @@ import {
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image, Loader2, Upload, X } from "lucide-react";
 
-// Extend the schema to include client-side validation
-const formSchema = insertJournalEntrySchema
-  .omit({ userId: true, createdAt: true, updatedAt: true })
-  .extend({
-    title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-    content: z.string().min(10, { message: "Content must be at least 10 characters" }),
-    tags: z.string().optional().transform(val => 
-      val ? val.split(',').map(tag => tag.trim().startsWith('#') ? tag.trim() : `#${tag.trim()}`) : []
-    ),
-    imageUrl: z.string().optional(),
-    mood: z.enum(["happy", "calm", "neutral", "sad", "frustrated"]).default("neutral"),
-  });
+// Define the form schema with client-side validation
+const formSchema = z.object({
+  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  content: z.string().min(10, { message: "Content must be at least 10 characters" }),
+  mood: z.enum(["happy", "calm", "neutral", "sad", "frustrated"]).default("neutral"),
+  tags: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
 
-type FormValues = z.infer<typeof formSchema>;
+// Define the form input values type
+type FormInputValues = z.infer<typeof formSchema>;
+
+// Transform function to convert form data to API format
+const transformFormData = (data: FormInputValues) => {
+  return {
+    ...data,
+    tags: data.tags 
+      ? data.tags.split(',').map(tag => tag.trim().startsWith('#') ? tag.trim() : `#${tag.trim()}`) 
+      : []
+  };
+};
 
 interface JournalFormProps {
   onSuccess?: () => void;
-  defaultValues?: Partial<FormValues>;
+  defaultValues?: Partial<FormInputValues>;
 }
 
 export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
@@ -46,7 +53,7 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormInputValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: defaultValues?.title || "",
@@ -58,8 +65,9 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
   });
 
   const createJournalMutation = useMutation({
-    mutationFn: async (data: FormValues) => {
-      const response = await apiRequest("POST", "/api/journal", data);
+    mutationFn: async (data: FormInputValues) => {
+      const transformedData = transformFormData(data);
+      const response = await apiRequest("POST", "/api/journal", transformedData);
       return response.json();
     },
     onSuccess: () => {
@@ -150,7 +158,7 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
     }
   };
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = (data: FormInputValues) => {
     createJournalMutation.mutate(data);
   };
 
@@ -274,16 +282,16 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
                           variant="outline"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploading}
-                          className="w-full"
+                          className="w-full min-h-[44px] text-base rounded-md"
                         >
                           {isUploading ? (
                             <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                               Uploading...
                             </>
                           ) : (
                             <>
-                              <Upload className="mr-2 h-4 w-4" />
+                              <Upload className="mr-2 h-5 w-5" />
                               Upload Image
                             </>
                           )}
@@ -293,16 +301,19 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
                     
                     {imagePreview && (
                       <div className="relative rounded-md overflow-hidden">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-auto max-h-[200px] object-cover rounded-md"
-                        />
+                        <div className="max-h-[200px] overflow-hidden">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-auto object-contain"
+                            loading="lazy"
+                          />
+                        </div>
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
-                          className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-md"
                           onClick={removeImage}
                         >
                           <X className="h-4 w-4" />
@@ -315,11 +326,15 @@ export function JournalForm({ onSuccess, defaultValues }: JournalFormProps) {
               )}
             />
 
-            <div className="pt-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+            <div className="pt-4">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="w-full min-h-[48px] text-base font-medium rounded-md"
+              >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Saving...
                   </>
                 ) : (
