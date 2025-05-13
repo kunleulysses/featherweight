@@ -9,6 +9,7 @@ import AuthPage from "@/pages/auth-page";
 import JournalPage from "@/pages/journal-page";
 import SettingsPage from "@/pages/settings-page";
 import SmsPage from "@/pages/sms-page";
+import MoodTrackerPage from "@/pages/mood-tracker-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/journal" component={JournalPage} />
+      <ProtectedRoute path="/mood-tracker" component={MoodTrackerPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/sms" component={SmsPage} />
       <Route component={NotFound} />

@@ -584,6 +584,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // =========== Analytics Routes ===========
+  
+  // Get mood analytics
+  app.get("/api/analytics/mood", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      // Get user's journal entries
+      const journalEntries = await storage.getJournalEntries(req.user.id);
+      
+      // Calculate mood frequencies
+      const moodFrequency: Record<string, number> = {};
+      const moodsByDay: Record<string, string[]> = {};
+      const moodsByMonth: Record<string, string[]> = {};
+      
+      // Track streak data
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let lastEntryDate: Date | null = null;
+      
+      // Process journal entries
+      journalEntries.forEach(entry => {
+        const mood = entry.mood || "neutral";
+        
+        // Count mood frequency
+        moodFrequency[mood] = (moodFrequency[mood] || 0) + 1;
+        
+        // Group by day for daily trends
+        const entryDate = new Date(entry.createdAt);
+        const dayKey = entryDate.toISOString().split('T')[0];
+        if (!moodsByDay[dayKey]) moodsByDay[dayKey] = [];
+        moodsByDay[dayKey].push(mood);
+        
+        // Group by month for monthly trends
+        const monthKey = `${entryDate.getFullYear()}-${entryDate.getMonth() + 1}`;
+        if (!moodsByMonth[monthKey]) moodsByMonth[monthKey] = [];
+        moodsByMonth[monthKey].push(mood);
+        
+        // Calculate streak
+        if (lastEntryDate) {
+          const dayDiff = Math.floor((entryDate.getTime() - lastEntryDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (dayDiff <= 1) {
+            // Entries on same day or consecutive days
+            currentStreak = dayDiff === 0 ? currentStreak : currentStreak + 1;
+          } else {
+            // Streak broken
+            if (currentStreak > longestStreak) {
+              longestStreak = currentStreak;
+            }
+            currentStreak = 1;
+          }
+        } else {
+          currentStreak = 1;
+        }
+        
+        lastEntryDate = entryDate;
+      });
+      
+      // Update longest streak if needed
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
+      }
+      
+      // Calculate daily mood trends (last 30 days)
+      const today = new Date();
+      const dailyTrends = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dayKey = date.toISOString().split('T')[0];
+        
+        const moods = moodsByDay[dayKey] || [];
+        let dominantMood = "none";
+        if (moods.length > 0) {
+          // Find most common mood for the day
+          const moodCounts: Record<string, number> = {};
+          moods.forEach(mood => {
+            moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+          });
+          dominantMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "none";
+        }
+        
+        dailyTrends.push({
+          date: dayKey,
+          mood: dominantMood,
+          count: moods.length
+        });
+      }
+      
+      // Calculate monthly mood trends (last 12 months)
+      const monthlyTrends = [];
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(today);
+        date.setMonth(date.getMonth() - i);
+        const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+        
+        const moods = moodsByMonth[monthKey] || [];
+        const moodCounts: Record<string, number> = {};
+        moods.forEach(mood => {
+          moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+        });
+        
+        const month = new Date(date.getFullYear(), date.getMonth(), 1).toLocaleString('default', { month: 'short' });
+        
+        monthlyTrends.push({
+          month,
+          monthKey,
+          counts: moodCounts,
+          total: moods.length
+        });
+      }
+      
+      // Generate insights
+      const insights = [];
+      
+      // Most common mood insight
+      if (Object.keys(moodFrequency).length > 0) {
+        const topMood = Object.entries(moodFrequency).sort((a, b) => b[1] - a[1])[0];
+        if (topMood) {
+          insights.push({
+            type: "topMood",
+            title: "Mood Feather",
+            description: `Your most common mood is "${topMood[0]}" with ${topMood[1]} entries!`,
+            emoji: getMoodEmoji(topMood[0])
+          });
+        }
+      }
+      
+      // Streak insight
+      insights.push({
+        type: "streak",
+        title: "Journal Streak",
+        description: `Your current journaling streak is ${currentStreak} day${currentStreak !== 1 ? 's' : ''}. Your longest streak is ${longestStreak} day${longestStreak !== 1 ? 's' : ''}!`,
+        emoji: "🔥"
+      });
+      
+      // Recent improvement insight
+      const recentDays = dailyTrends.slice(-7);
+      const happyDays = recentDays.filter(day => day.mood === "happy" || day.mood === "calm").length;
+      if (happyDays >= 4) {
+        insights.push({
+          type: "improvement",
+          title: "Feather in Your Cap!",
+          description: `You've had ${happyDays} positive days in the last week. That's something to celebrate!`,
+          emoji: "🎉"
+        });
+      }
+      
+      res.json({
+        moodFrequency,
+        dailyTrends,
+        monthlyTrends,
+        streaks: {
+          current: currentStreak,
+          longest: longestStreak
+        },
+        insights,
+        entryCount: journalEntries.length
+      });
+    } catch (error) {
+      console.error("Error fetching mood analytics:", error);
+      res.status(500).json({ message: "Failed to fetch mood analytics" });
+    }
+  });
+  
+  // Helper function to get mood emoji
+  function getMoodEmoji(mood: string): string {
+    const emojiMap: Record<string, string> = {
+      happy: "😊",
+      calm: "😌",
+      neutral: "😐",
+      sad: "😔",
+      frustrated: "😤",
+      none: "❓"
+    };
+    
+    return emojiMap[mood] || "❓";
+  }
 
   const httpServer = createServer(app);
   return httpServer;
