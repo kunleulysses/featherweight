@@ -359,10 +359,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate the request body - in a real app, this would verify payment
       const schema = z.object({
         isPremium: z.boolean(),
-        durationMonths: z.number().int().positive().optional()
+        durationMonths: z.number().int().positive().optional(),
+        paymentDetails: z.object({
+          lastFour: z.string(),
+          cardBrand: z.string().optional(),
+          billingDate: z.number(),
+          expiryMonth: z.number(),
+          expiryYear: z.number(),
+        }).optional()
       });
       
-      const { isPremium, durationMonths = 1 } = schema.parse(req.body);
+      const { isPremium, durationMonths = 1, paymentDetails } = schema.parse(req.body);
       
       // Calculate subscription end date if upgrading to premium
       let premiumUntil: Date | undefined;
@@ -371,7 +378,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         premiumUntil.setMonth(premiumUntil.getMonth() + durationMonths);
       }
       
+      // First update the subscription status
       const updatedUser = await storage.updateUserSubscription(req.user.id, isPremium, premiumUntil);
+      
+      // If payment details are provided, store them
+      if (isPremium && paymentDetails) {
+        // Update user with payment details
+        await storage.updateUserPaymentDetails(req.user.id, paymentDetails);
+      }
       
       // Filter out password from the response
       const { password, ...userWithoutPassword } = updatedUser;

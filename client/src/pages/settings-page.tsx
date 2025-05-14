@@ -532,11 +532,11 @@ export default function SettingsPage() {
                         <div className="space-y-4">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Payment method</span>
-                            <span>Visa ending in {user?.paymentDetails?.lastFour || '4242'}</span>
+                            <span>Visa ending in {user?.paymentDetails?.lastFour ?? '4242'}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Billing date</span>
-                            <span>Monthly on day {user?.paymentDetails?.billingDate || new Date().getDate()}</span>
+                            <span>Monthly on day {user?.paymentDetails?.billingDate ?? new Date().getDate()}</span>
                           </div>
                           <Button 
                             variant="outline" 

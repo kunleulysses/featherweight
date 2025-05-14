@@ -25,6 +25,7 @@ export interface IStorage {
   updateUserPhoneNumber(userId: number, phoneNumber: string | null): Promise<User>;
   updateUserStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
   updateUserStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User>;
+  updateUserPaymentDetails(userId: number, paymentDetails: PaymentDetails): Promise<User>;
   
   // Journal operations
   getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]>;
