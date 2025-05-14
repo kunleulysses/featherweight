@@ -11,7 +11,7 @@ import { Container } from "@/components/ui/container";
 import { AdBanner } from "@/components/ads/ad-banner";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Save, PlusCircle, X } from "lucide-react";
+import { Loader2, Send, Save, PlusCircle, X, Feather } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -344,6 +344,13 @@ export default function ConversationPage() {
                           message.type === "user" ? "justify-end" : "justify-start"
                         }`}
                       >
+                        {message.type === "flappy" && (
+                          <div className="flex-shrink-0 mr-2">
+                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                              <Feather className="h-6 w-6 text-primary" />
+                            </div>
+                          </div>
+                        )}
                         <div
                           className={`max-w-[75%] rounded-lg px-4 py-3 ${
                             message.type === "user"

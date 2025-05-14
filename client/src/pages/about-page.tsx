@@ -61,7 +61,7 @@ export default function AboutPage() {
               <CardContent className="space-y-4">
                 <div className="md:flex gap-8 items-center">
                   <div className="md:w-1/3 mb-6 md:mb-0 flex justify-center">
-                    <div className="w-48 h-48 bg-primary/10 rounded-full flex items-center justify-center">
+                    <div className="w-48 h-48 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
                       <Feather className="h-24 w-24 text-primary" />
                     </div>
                   </div>
