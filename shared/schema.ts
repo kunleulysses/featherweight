@@ -111,6 +111,8 @@ export type UserPreferences = {
   theme?: "light" | "dark" | "system";
   receiveSms?: boolean;
   phoneNumber?: string;
+  firstName?: string;
+  lastName?: string;
 };
 
 export type PaymentDetails = {

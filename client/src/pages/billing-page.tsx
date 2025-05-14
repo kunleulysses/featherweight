@@ -90,9 +90,8 @@ export default function BillingPage() {
                 <TabsTrigger value="subscription">Subscription</TabsTrigger>
                 <TabsTrigger value="payment-history">Payment History</TabsTrigger>
               </TabsList>
-            </Tabs>
-            
-            <TabsContent value="subscription" className="space-y-8">
+              
+              <TabsContent value="subscription" className="space-y-8 mt-6">
               {/* Current Plan */}
               <Card>
                 <CardHeader className="pb-3">
@@ -310,6 +309,7 @@ export default function BillingPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            </Tabs>
           </div>
         </Container>
       </main>
