@@ -24,23 +24,28 @@ export default function BillingPage() {
 
     setIsUpdating(true);
     try {
-      const res = await apiRequest("PATCH", "/api/user/subscription", {
-        isPremium: upgrade,
-        durationMonths: 1,
-      });
+      if (upgrade) {
+        // Navigate to payment page for subscription
+        window.location.href = '/subscription';
+        return;
+      } else {
+        // Handle cancellation
+        const res = await apiRequest("PATCH", "/api/user/subscription", {
+          isPremium: false,
+          durationMonths: 0,
+        });
 
-      if (!res.ok) {
-        throw new Error(upgrade ? "Failed to upgrade" : "Failed to cancel subscription");
+        if (!res.ok) {
+          throw new Error("Failed to cancel subscription");
+        }
+
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        
+        toast({
+          title: "Subscription Cancelled",
+          description: "Your subscription has been cancelled. You'll have access until the end of your billing period.",
+        });
       }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      
-      toast({
-        title: upgrade ? "Upgraded to Premium" : "Subscription Cancelled",
-        description: upgrade
-          ? "Welcome to Featherweight Premium! You now have access to all premium features."
-          : "Your subscription has been cancelled. You'll have access until the end of your billing period.",
-      });
     } catch (error) {
       toast({
         title: "Error",

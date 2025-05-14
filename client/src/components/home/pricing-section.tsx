@@ -47,7 +47,7 @@ export function PricingSection() {
   ];
 
   return (
-    <section className="py-16 bg-primary/5">
+    <section id="pricing" className="py-16 bg-primary/5">
       <Container>
         <div className="text-center mb-16">
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">

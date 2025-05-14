@@ -33,7 +33,7 @@ export function TestimonialsSection() {
   ];
 
   return (
-    <section className="py-16 bg-gradient-to-b from-background to-primary/5">
+    <section id="testimonials" className="py-16 bg-gradient-to-b from-background to-primary/5">
       <Container>
         <div className="text-center mb-16">
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
