@@ -22,7 +22,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<User>;
   updateUserSubscription(userId: number, isPremium: boolean, premiumUntil?: Date): Promise<User>;
-  updateUserPhoneNumber(userId: number, phoneNumber: string): Promise<User>;
+  updateUserPhoneNumber(userId: number, phoneNumber: string | null): Promise<User>;
   updateUserStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
   updateUserStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User>;
   

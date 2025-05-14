@@ -183,7 +183,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateUserPhoneNumber(userId: number, phoneNumber: string): Promise<User> {
+  async updateUserPhoneNumber(userId: number, phoneNumber: string | null): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found`);
