@@ -51,20 +51,19 @@ export function Footer() {
           <div>
             <h4 className="font-quicksand font-semibold text-lg mb-4">Company</h4>
             <ul className="space-y-2">
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">About Us</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Blog</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Careers</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Contact</span></Link></li>
+              <li><Link href="/about"><span className="text-white/70 hover:text-white transition-colors">About Us</span></Link></li>
+              <li><Link href="/about"><span className="text-white/70 hover:text-white transition-colors">Blog</span></Link></li>
+              <li><Link href="/contact"><span className="text-white/70 hover:text-white transition-colors">Contact</span></Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-quicksand font-semibold text-lg mb-4">Legal</h4>
             <ul className="space-y-2">
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Privacy Policy</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Terms of Service</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Cookie Policy</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">GDPR</span></Link></li>
+              <li><Link href="/privacy"><span className="text-white/70 hover:text-white transition-colors">Privacy Policy</span></Link></li>
+              <li><Link href="/terms"><span className="text-white/70 hover:text-white transition-colors">Terms of Service</span></Link></li>
+              <li><Link href="/privacy"><span className="text-white/70 hover:text-white transition-colors">Cookie Policy</span></Link></li>
+              <li><Link href="/privacy"><span className="text-white/70 hover:text-white transition-colors">GDPR</span></Link></li>
             </ul>
           </div>
         </div>

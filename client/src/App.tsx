@@ -12,6 +12,10 @@ import SmsPage from "@/pages/sms-page";
 import MoodTrackerPage from "@/pages/mood-tracker-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import ConversationPage from "@/pages/conversation-page";
+import AboutPage from "@/pages/about-page";
+import TermsPage from "@/pages/terms-page";
+import PrivacyPage from "@/pages/privacy-page";
+import ContactPage from "@/pages/contact-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -19,6 +23,10 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/contact" component={ContactPage} />
       <ProtectedRoute path="/journal" component={JournalPage} />
       <ProtectedRoute path="/mood-tracker" component={MoodTrackerPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
