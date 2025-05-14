@@ -23,16 +23,16 @@ export function MeetFlappySection() {
             <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-6">
               Meet <span className="text-primary">Flappy</span>,<br/>Your Pelican Pal
             </h2>
-            <p className="text-lg text-gray-900 mb-6">
+            <p className="text-lg text-gray-200 mb-6">
               Flappy isn't just any AI companion. He's a cheerful pelican with a big personality, a love for ocean adventures, and a knack for brightening your day with the perfect blend of fun and thoughtfulness.
             </p>
-            <p className="text-lg text-gray-900 mb-6">
+            <p className="text-lg text-gray-200 mb-6">
               From his favorite perch by the sea, Flappy sends you friendly emails full of encouragement, listens to your thoughts, and helps you track your journey through easy, delightful conversations.
             </p>
             
             {/* Flappy's voice example */}
             <div className="bg-white p-6 rounded-[0.75rem] shadow-md border-l-4 border-primary mb-6">
-              <p className="italic text-gray-900 font-opensans">
+              <p className="italic text-gray-700 font-opensans">
                 "Hi there! Flappy here checking in. I noticed you've been working hard lately. What's one moment from today that made you feel proud or brought you joy? Even the smallest things count. I'd love to hear about it when you have a moment!"
               </p>
               <p className="text-right text-primary font-medium font-quicksand mt-2">— Flappy 🌊</p>
