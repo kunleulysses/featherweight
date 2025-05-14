@@ -113,8 +113,8 @@ export default function SettingsPage() {
     // Check if profile information has changed - username, email, firstName, or lastName
     if (data.username !== user?.username || 
         data.email !== user?.email ||
-        data.firstName !== user?.firstName ||
-        data.lastName !== user?.lastName) {
+        data.firstName !== user?.preferences?.firstName ||
+        data.lastName !== user?.preferences?.lastName) {
       profileChanged = true;
       updates++;
       
