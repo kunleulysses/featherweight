@@ -90,6 +90,57 @@ export default function SettingsPage() {
         data.firstName !== user?.firstName ||
         data.lastName !== user?.lastName) {
       profileChanged = true;
+      updates++;
+      
+      // Make API call to update profile information
+      apiRequest("PATCH", "/api/user/profile", { 
+        username: data.username,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to update profile information");
+          }
+          return res.json();
+        })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          updates--;
+          
+          // Only show toast if this is the only update or the last one to complete
+          if (updates === 0) {
+            if (phoneNumberChanged && profileChanged) {
+              toast({
+                title: "Settings updated",
+                description: "Your profile information and phone number have been updated successfully.",
+              });
+            } else if (profileChanged) {
+              toast({
+                title: "Profile updated",
+                description: "Your profile information has been updated successfully.",
+              });
+            } else {
+              toast({
+                title: "No changes detected",
+                description: "No changes were made to your profile.",
+              });
+            }
+            setIsSubmitting(false);
+          }
+        })
+        .catch((error) => {
+          toast({
+            title: "Profile update failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          updates--;
+          if (updates === 0) {
+            setIsSubmitting(false);
+          }
+        });
     }
     
     // Update phone number if it has changed

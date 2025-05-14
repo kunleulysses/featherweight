@@ -68,7 +68,7 @@ export default function ConversationPage() {
   const [conversationTitle, setConversationTitle] = useState("");
   const [messageCount, setMessageCount] = useState(0);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const MAX_FREE_MESSAGES = 5; // Maximum messages for free tier users
+  const MAX_FREE_MESSAGES = 3; // Maximum messages for free tier users
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Initialize the form
@@ -433,7 +433,7 @@ export default function ConversationPage() {
                       </div>
                       <Button 
                         className="shrink-0"
-                        onClick={() => window.location.href = '/subscription-page'}
+                        onClick={() => window.location.href = '/subscription'}
                       >
                         <Feather className="mr-2 h-4 w-4" />
                         Upgrade to Premium
