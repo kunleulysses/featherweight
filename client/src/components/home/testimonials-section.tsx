@@ -39,7 +39,7 @@ export function TestimonialsSection() {
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
             What Our Users Say
           </h2>
-          <p className="text-lg text-gray-900 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Join thousands who've transformed their journaling habit with Featherweight.
           </p>
         </div>
@@ -57,7 +57,7 @@ export function TestimonialsSection() {
                   )}
                 </div>
               </div>
-              <p className="text-gray-900 italic mb-4">
+              <p className="text-gray-600 italic mb-4">
                 "{testimonial.text}"
               </p>
               <div className="flex items-center">
