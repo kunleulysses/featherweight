@@ -141,6 +141,7 @@ export class DatabaseStorage implements IStorage {
         ...currentPreferences,
         firstName: profileData.firstName || currentPreferences.firstName || undefined,
         lastName: profileData.lastName || currentPreferences.lastName || undefined,
+        bio: profileData.bio || currentPreferences.bio || undefined,
         // Ensure all required preferences fields exist
         emailFrequency: currentPreferences.emailFrequency || "daily",
         marketingEmails: currentPreferences.marketingEmails || false,

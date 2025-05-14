@@ -277,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const { username, email, firstName, lastName } = req.body;
+      const { username, email, firstName, lastName, bio } = req.body;
       
       // Check if the username or email are already taken by another user
       if (username !== req.user.username) {

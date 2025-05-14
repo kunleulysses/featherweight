@@ -111,11 +111,12 @@ export default function SettingsPage() {
     let profileChanged = false;
     let updates = 0;
     
-    // Check if profile information has changed - username, email, firstName, or lastName
+    // Check if profile information has changed - username, email, firstName, lastName, or bio
     if (data.username !== user?.username || 
         data.email !== user?.email ||
         data.firstName !== user?.preferences?.firstName ||
-        data.lastName !== user?.preferences?.lastName) {
+        data.lastName !== user?.preferences?.lastName ||
+        data.bio !== user?.preferences?.bio) {
       profileChanged = true;
       updates++;
       
@@ -124,7 +125,8 @@ export default function SettingsPage() {
         username: data.username,
         email: data.email,
         firstName: data.firstName,
-        lastName: data.lastName
+        lastName: data.lastName,
+        bio: data.bio
       })
         .then((res) => {
           if (!res.ok) {
