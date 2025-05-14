@@ -6,9 +6,11 @@ import { JournalList } from "@/components/journal/journal-list";
 import { JournalSidebar } from "@/components/journal/journal-sidebar";
 import { JournalForm } from "@/components/journal/journal-form";
 import { WelcomeDialog } from "@/components/welcome-dialog";
+import { AdBanner } from "@/components/ads/ad-banner";
 import { Button } from "@/components/ui/button";
 import { Helmet } from 'react-helmet';
 import { PlusCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 
 export default function JournalPage() {
+  const { user } = useAuth();
   const [filter, setFilter] = useState({
     dateRange: "7days",
     mood: undefined,
@@ -39,6 +42,12 @@ export default function JournalPage() {
           <WelcomeDialog />
           
           <Container>
+            {!user?.isPremium && (
+              <div className="mb-6">
+                <AdBanner format="horizontal" />
+              </div>
+            )}
+          
             <div className="mb-8 flex justify-between items-center">
               <div>
                 <h1 className="font-quicksand font-bold text-3xl mb-2">My Journal</h1>
@@ -73,11 +82,25 @@ export default function JournalPage() {
               {/* Sidebar with filters */}
               <div className="md:w-1/4">
                 <JournalSidebar />
+                
+                {/* Vertical ad for desktop */}
+                {!user?.isPremium && (
+                  <div className="hidden md:block mt-6">
+                    <AdBanner format="vertical" className="mx-auto" />
+                  </div>
+                )}
               </div>
               
               {/* Journal entries */}
               <div className="md:w-3/4">
                 <JournalList filter={filter} />
+                
+                {/* Bottom ad */}
+                {!user?.isPremium && (
+                  <div className="mt-8">
+                    <AdBanner format="horizontal" />
+                  </div>
+                )}
               </div>
             </div>
           </Container>

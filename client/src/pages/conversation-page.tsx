@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/ui/container";
+import { AdBanner } from "@/components/ads/ad-banner";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send, Save, PlusCircle, X } from "lucide-react";
