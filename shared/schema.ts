@@ -113,6 +113,7 @@ export type UserPreferences = {
   phoneNumber?: string;
   firstName?: string;
   lastName?: string;
+  bio?: string;
 };
 
 export type PaymentDetails = {

@@ -259,6 +259,68 @@ export default function SettingsPage() {
       });
   }
 
+  // Auto-save data when switching tabs
+  const handleTabChange = (newTab: string) => {
+    if (activeTab === "profile" && newTab !== "profile") {
+      // If we're leaving the profile tab, save profile changes
+      const profileData = profileForm.getValues();
+      const isDirty = profileForm.formState.isDirty;
+      
+      if (isDirty) {
+        // Don't show toast message for auto-save
+        const silentSubmit = async (data: ProfileFormValues) => {
+          try {
+            const res = await apiRequest("PATCH", "/api/user/profile", {
+              username: data.username,
+              email: data.email,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              bio: data.bio
+            });
+            
+            if (!res.ok) {
+              throw new Error("Failed to save profile");
+            }
+            
+            // Just invalidate queries without showing toast
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          } catch (error) {
+            console.error("Auto-save error:", error);
+          }
+        };
+        
+        silentSubmit(profileData);
+      }
+    } else if (activeTab === "email" && newTab !== "email") {
+      // If we're leaving the email preferences tab, save email preference changes
+      const emailData = emailPreferencesForm.getValues();
+      const isDirty = emailPreferencesForm.formState.isDirty;
+      
+      if (isDirty) {
+        // Don't show toast message for auto-save
+        const silentSubmit = async (data: EmailPreferencesValues) => {
+          try {
+            const res = await apiRequest("PATCH", "/api/user/preferences", data);
+            
+            if (!res.ok) {
+              throw new Error("Failed to save preferences");
+            }
+            
+            // Just invalidate queries without showing toast
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          } catch (error) {
+            console.error("Auto-save error:", error);
+          }
+        };
+        
+        silentSubmit(emailData);
+      }
+    }
+    
+    // Set the active tab
+    setActiveTab(newTab);
+  };
+
   return (
     <>
       <Helmet>

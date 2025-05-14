@@ -139,15 +139,15 @@ export class DatabaseStorage implements IStorage {
       // Update preferences to include firstName and lastName
       const updatedPreferences: UserPreferences = {
         ...currentPreferences,
-        firstName: profileData.firstName || currentPreferences.firstName || null,
-        lastName: profileData.lastName || currentPreferences.lastName || null,
+        firstName: profileData.firstName || currentPreferences.firstName || undefined,
+        lastName: profileData.lastName || currentPreferences.lastName || undefined,
         // Ensure all required preferences fields exist
         emailFrequency: currentPreferences.emailFrequency || "daily",
         marketingEmails: currentPreferences.marketingEmails || false,
         receiveInsights: currentPreferences.receiveInsights || true,
         theme: currentPreferences.theme || "light",
         receiveSms: currentPreferences.receiveSms || false,
-        phoneNumber: currentPreferences.phoneNumber || null
+        phoneNumber: currentPreferences.phoneNumber || undefined
       };
       
       // Update user with new preferences
