@@ -7,8 +7,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve uploaded files
+// Serve uploaded files and public directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
 
 app.use((req, res, next) => {
   const start = Date.now();

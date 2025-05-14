@@ -66,6 +66,10 @@ export default function AboutPage() {
                         src="/images/flappy-avatar.png" 
                         alt="Flappy the Pelican" 
                         className="w-auto h-48"
+                        onError={(e) => {
+                          console.error("Failed to load avatar image");
+                          e.currentTarget.src = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3'/%3E%3Cpath d='m16 16-4 4-4-4'/%3E%3C/svg%3E";
+                        }}
                       />
                     </div>
                   </div>
