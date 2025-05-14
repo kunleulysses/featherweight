@@ -38,7 +38,7 @@ export function JournalDemoSection() {
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
             Your Journal, Beautifully Organized
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-200 max-w-2xl mx-auto">
             All your reflections, safely stored and easily accessible in your personal dashboard.
           </p>
         </div>
@@ -65,7 +65,7 @@ export function JournalDemoSection() {
                     </div>
                     <div className="text-xl">{entry.mood === 'happy' ? '😊' : entry.mood === 'neutral' ? '😐' : '😌'}</div>
                   </div>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-700 mb-4">
                     {entry.content}
                   </p>
                   
