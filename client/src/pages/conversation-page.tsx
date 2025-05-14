@@ -278,6 +278,12 @@ export default function ConversationPage() {
                 Share your thoughts and create journal entries through conversation
               </p>
             </div>
+            
+            {!user?.isPremium && (
+              <div className="mb-6">
+                <AdBanner format="horizontal" />
+              </div>
+            )}
 
             <Card className="max-w-3xl mx-auto">
               <CardHeader className="pb-4">
@@ -442,6 +448,12 @@ export default function ConversationPage() {
                 )}
               </ul>
             </div>
+            
+            {!user?.isPremium && (
+              <div className="mt-8 max-w-3xl mx-auto">
+                <AdBanner format="horizontal" />
+              </div>
+            )}
           </Container>
         </main>
         <Footer />

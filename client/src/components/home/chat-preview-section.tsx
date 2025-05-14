@@ -2,6 +2,7 @@ import { Container } from "@/components/ui/container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { AdBanner } from "@/components/ads/ad-banner";
 import { Send } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -115,8 +116,8 @@ export function ChatPreviewSection() {
               </div>
               
               {/* Free tier ad space */}
-              <div className="mt-6 bg-muted/30 p-3 rounded-md text-xs text-center text-muted-foreground">
-                <p>Ad space for free tier users</p>
+              <div className="mt-6">
+                <AdBanner format="square" />
               </div>
             </CardContent>
           </Card>

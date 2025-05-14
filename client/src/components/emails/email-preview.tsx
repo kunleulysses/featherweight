@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { AdBanner } from "@/components/ads/ad-banner";
 import { Feather, Reply } from "lucide-react";
 
 interface EmailPreviewProps {
@@ -7,6 +8,7 @@ interface EmailPreviewProps {
   content?: string;
   time?: string;
   onReply?: () => void;
+  isPremium?: boolean;
 }
 
 export function EmailPreview({ 
@@ -26,11 +28,10 @@ Reply to this email anytime. Your thoughts matter and journaling about them, eve
 Looking forward to hearing from you!
 
 Warmly,
-Flappy 🌊
-
-[Free tier - Advertisement space]`,
+Flappy 🌊`,
   time = "8:05 AM",
-  onReply
+  onReply,
+  isPremium = false
 }: EmailPreviewProps) {
   return (
     <Card className="bg-background rounded-[0.75rem] shadow-lg border border-border max-w-2xl mx-auto">
@@ -58,6 +59,13 @@ Flappy 🌊
         <div className="prose prose-sm max-w-none text-foreground/80 mb-6 whitespace-pre-line">
           {content}
         </div>
+        
+        {/* Ad Banner for Free Tier */}
+        {!isPremium && (
+          <div className="mt-4 mb-6">
+            <AdBanner format="email" />
+          </div>
+        )}
         
         {/* Reply Button */}
         <div className="text-center">
