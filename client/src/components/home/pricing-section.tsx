@@ -32,6 +32,7 @@ export function PricingSection() {
       period: "/month",
       features: [
         "Everything in Free Tier",
+        "SMS journaling with Flappy",
         "Unlimited journal history",
         "Custom journal tags and search",
         "Weekly personalized insights",

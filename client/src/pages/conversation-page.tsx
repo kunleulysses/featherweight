@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/ui/container";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Save, PlusCircle, X } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -62,6 +62,10 @@ export default function ConversationPage() {
     },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [conversationTitle, setConversationTitle] = useState("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Initialize the form
   const form = useForm<MessageFormValues>({
@@ -102,7 +106,7 @@ export default function ConversationPage() {
         ...prev,
         {
           id: loadingId,
-          content: "Flappy is thinking...",
+          content: "Flappy is ruffling his feathers...",
           type: "flappy",
           timestamp: new Date(),
         },
@@ -145,7 +149,7 @@ export default function ConversationPage() {
       }
     } catch (error) {
       // Remove the loading message if there was an error
-      setMessages((prev) => prev.filter((msg) => msg.content !== "Flappy is thinking..."));
+      setMessages((prev) => prev.filter((msg) => msg.content !== "Flappy is ruffling his feathers..."));
       
       toast({
         title: "Message Failed",
@@ -207,7 +211,7 @@ export default function ConversationPage() {
                               : "bg-muted"
                           }`}
                         >
-                          {message.content === "Flappy is thinking..." ? (
+                          {message.content === "Flappy is ruffling his feathers..." ? (
                             <div className="flex items-center">
                               <span>{message.content}</span>
                               <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -279,7 +283,7 @@ export default function ConversationPage() {
               <h3 className="font-medium mb-2">Other ways to chat with Flappy:</h3>
               <ul className="list-disc ml-5 space-y-2">
                 <li>
-                  Email <span className="font-medium">flappy@featherweight.app</span> anytime
+                  Email <span className="font-medium">flappy@yourdomain.com</span> (when deployed to production)
                 </li>
                 <li>Reply to any daily inspiration email from Flappy</li>
                 {user?.isPremium && (
