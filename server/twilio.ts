@@ -189,7 +189,9 @@ export const twilioService = {
       const responseContent = await generateFlappyContent('journalResponse', message, {
         username: user.username,
         email: user.email,
-        userId: user.id
+        userId: user.id,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined
       });
       
       // Format for SMS - shorter than email

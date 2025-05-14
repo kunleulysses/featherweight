@@ -50,7 +50,9 @@ export const emailService = {
         const flappyContent = await generateFlappyContent(contentType, context, {
           username: user.username,
           email: user.email,
-          userId: user.id
+          userId: user.id,
+          firstName: user.firstName || undefined, 
+          lastName: user.lastName || undefined
         });
         
         subject = flappyContent.subject;
@@ -70,7 +72,7 @@ export const emailService = {
         // Fallback content based on content type
         if (contentType === "dailyInspiration") {
           subject = "Your Daily Inspiration from Flappy";
-          content = `Hello ${user.username}! 
+          content = `Hello ${user.firstName || user.username}! 
           
           Today is a good day to write in your journal. How are you feeling today?
           
@@ -80,7 +82,7 @@ export const emailService = {
           Flappy 🐦`;
         } else if (contentType === "journalResponse") {
           subject = "Flappy received your journal entry";
-          content = `Thank you for your journal entry, ${user.username}!
+          content = `Thank you for your journal entry, ${user.firstName || user.username}!
           
           I've recorded your thoughts and will be here whenever you want to reflect on them.
           
@@ -90,7 +92,7 @@ export const emailService = {
           Flappy 🐦`;
         } else {
           subject = "Weekly Insights from Flappy";
-          content = `Hello ${user.username}!
+          content = `Hello ${user.firstName || user.username}!
           
           It's time for your weekly reflection. How has your week been? What are you grateful for?
           
