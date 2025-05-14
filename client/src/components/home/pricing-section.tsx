@@ -76,15 +76,15 @@ export function PricingSection() {
                 } transition-shadow`}
               >
                 <CardContent className="p-6">
-                  <h3 className="font-quicksand font-bold text-2xl text-foreground mb-2">
+                  <h3 className="font-quicksand font-bold text-2xl text-white mb-2">
                     {plan.name}
                   </h3>
                   <p className="text-gray-200 mb-4">
                     {plan.description}
                   </p>
                   <div className="mb-6">
-                    <span className="font-quicksand font-bold text-4xl text-foreground">{plan.price}</span>
-                    <span className="text-foreground/60">{plan.period}</span>
+                    <span className="font-quicksand font-bold text-4xl text-white">{plan.price}</span>
+                    <span className="text-gray-300">{plan.period}</span>
                   </div>
                   <ul className="space-y-3 mb-8">
                     {plan.features.map((feature, featureIndex) => (
