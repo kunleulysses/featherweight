@@ -152,23 +152,25 @@ Create a JSON response with both 'subject' and 'content' keys where the content 
     case 'dailyInspiration':
       return `${basePrompt}
       
-Create a short, fun daily message that brightens someone's day and offers a simple but meaningful thought.
+Create an organized, structured daily message that brightens someone's day and encourages meaningful journaling.
 
-For the 'subject' field, create a catchy, upbeat email subject line that includes an emoji and a friendly title.
+For the 'subject' field, create a clear, engaging subject line that includes the date, an emoji, and a concise theme.
 
-For the 'content' field, include:
-1. A cheerful, casual greeting
-2. A brief mention of something you (as Flappy) are doing today
-3. A simple but meaningful insight about finding joy or dealing with challenges
-4. A question that invites journaling without pressure
-5. Your signature sign-off with personality
+For the 'content' field, structure it precisely as follows:
 
-Keep it under 150 words and focus on being genuine, warm and fun without being cheesy. Use natural, conversational language as if texting a friend.
+1. **Personal Greeting** - Begin with a warm greeting using their name
+2. **Flappy's Update** - A brief, light-hearted paragraph about what you (as Flappy) are experiencing today
+3. **Daily Wisdom** - A clearly labeled section with a thoughtful insight relevant to everyday life
+4. **Journaling Prompt** - A clearly labeled section with a specific, thought-provoking question for today's reflection
+5. **Gratitude Suggestion** - A brief, optional prompt about something specific to appreciate today
+6. **Signature** - Your friendly sign-off with a touch of pelican personality
+
+Keep it under 180 words. Maintain a warm, friendly tone while providing clear structure. The organization should make it easy for users to reference specific sections and respond to prompts.
 
 Format your response as JSON:
 {
-  "subject": "🌊 [Your fun subject line]",
-  "content": "[Your full message with line breaks and proper formatting]"
+  "subject": "🌅 Daily Inspiration - [Today's Date] - [Brief Theme]",
+  "content": "[Your structured message with clear section headings and appropriate formatting]"
 }`;
 
     case 'journalResponse':
@@ -178,45 +180,52 @@ Respond to this journal entry from a user with the warmth of a good friend:
 
 "${context}"
 
-For the 'subject' field, create a friendly subject line that refers to their journal entry with an appropriate emoji.
+For the 'subject' field, create a friendly yet organized subject line that refers to their journal entry with an appropriate emoji and includes a date format.
 
 For the 'content' field, include:
-1. A warm acknowledgment that feels like you really read their message
-2. Share a small personal anecdote about your day as a pelican that relates to their situation
-3. Offer one simple piece of gentle advice or perspective
-4. Ask an easy follow-up question that feels like continuing a conversation
-5. End with your cheerful signature
+1. A warm, personal greeting with the user's name
+2. A clear acknowledgment that shows you've understood the key points of their entry
+3. A brief, relevant response that validates their feelings or experience
+4. A structured insight section that neatly categorizes your observations about:
+   - Main themes of their entry (labeled clearly)
+   - Mood or emotional state you detected (labeled clearly)
+   - Any patterns you've noticed from past conversations (if applicable)
+5. A thoughtful, specific follow-up question that encourages deeper reflection
+6. Your signature with a personal touch that fits the tone of their entry
 
-Keep your response under 150 words. Be supportive, but casual and friendly - like texting with a friend.
+Keep your response under 200 words. Be supportive, precise, and organized while maintaining a friendly tone. The structure should help them easily read and reference your insights.
 
 Format your response as JSON:
 {
-  "subject": "💭 [Your friendly subject line]",
-  "content": "[Your full response with line breaks and proper formatting]"
+  "subject": "📝 Journal Entry Reflection - [Date] [Brief Theme]",
+  "content": "[Your structured response with clear sections, proper formatting, and appropriate line breaks]"
 }`;
 
     case 'weeklyInsight':
       return `${basePrompt}
       
-Create a fun weekly check-in based on these journal entries from a user:
+Create an organized weekly reflection based on these journal entries from a user:
 
 ${context}
 
-For the 'subject' field, create an upbeat subject line with an appropriate emoji.
+For the 'subject' field, create a clear subject line with the week number/date range and an appropriate emoji.
 
-For the 'content' field, include:
-1. A casual greeting that feels like catching up with a friend
-2. Mention something you (as Flappy) did this week at the beach 
-3. Point out something positive you noticed in their journaling
-4. Offer a small, practical tip based on what might help them this week
-5. End with your cheerful, encouraging signature
+For the 'content' field, structure it precisely as follows:
 
-Keep your response under 150 words. Be helpful but fun - like getting advice from a friend over coffee.
+1. **Personal Greeting** - Start with a warm, personalized greeting using their name
+2. **Weekly Summary** - A concise, well-structured paragraph that summarizes key themes from their journaling
+3. **Mood Insights** - A clearly labeled section analyzing emotional patterns you've noticed
+4. **Achievements & Growth** - A clearly labeled section highlighting positive developments
+5. **Weekly Wisdom** - A practical, actionable tip based on their specific situation
+6. **Looking Ahead** - A short, thoughtful question about the coming week
+7. **Your Signature** - End with your cheerful signature and a brief pelican-related anecdote to keep things light
+
+Keep your response under 200 words. Be supportive and organized, using clear section headers to make the insights easy to read and reference. Maintain a friendly tone while providing structured, valuable feedback.
 
 Format your response as JSON:
 {
-  "subject": "✨ [Your upbeat subject line]",
-  "content": "[Your full insights with line breaks and proper formatting]"
+  "subject": "📊 Weekly Reflection: [Week of Date Range] - [Brief Theme]",
+  "content": "[Your structured, organized response with clear section headers and appropriate formatting]"
 }`;
 
     default:

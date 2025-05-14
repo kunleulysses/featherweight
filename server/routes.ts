@@ -301,12 +301,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate the request body
       const schema = z.object({
-        phoneNumber: z.string().refine(val => /^\+?[1-9]\d{1,14}$/.test(val), {
-          message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)"
-        })
+        phoneNumber: z.string().optional() // Allow empty string or undefined
       });
       
       const { phoneNumber } = schema.parse(req.body);
+      
+      // If phoneNumber is empty string or undefined, set it to null
+      if (!phoneNumber) {
+        const updatedUser = await storage.updateUserPhoneNumber(req.user.id, null);
+        // Filter out password from the response
+        const { password, ...userWithoutPassword } = updatedUser;
+        return res.json(userWithoutPassword);
+      }
+      
+      // Validate phone number format only if it's provided
+      if (!/^\+?[1-9]\d{1,14}$/.test(phoneNumber)) {
+        return res.status(400).json({ 
+          message: "Invalid data", 
+          errors: [{ 
+            path: ["phoneNumber"], 
+            message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)" 
+          }] 
+        });
+      }
       
       // Check if phone number is already in use
       const existingUser = await storage.getUserByPhoneNumber(phoneNumber);

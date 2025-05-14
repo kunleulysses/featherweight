@@ -92,6 +92,17 @@ export function setupAuth(app: Express) {
       
       const user = await storage.createUser(userData);
 
+      // Send welcome email from Flappy
+      try {
+        // Import email service here to avoid circular dependency
+        const { emailService } = require('./email');
+        await emailService.sendFlappyEmail(user, 'dailyInspiration', 'welcome');
+        console.log(`Welcome email sent to new user: ${user.username} (${user.email})`);
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Continue with user creation even if email fails
+      }
+
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(201).json(user);

@@ -100,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Welcome to Featherweight!",
         description: "Your account has been created successfully.",
       });
+      
+      // Force redirect to journal page
+      window.location.href = "/journal";
     },
     onError: (error: Error) => {
       toast({
