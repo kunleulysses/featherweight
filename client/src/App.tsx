@@ -11,6 +11,7 @@ import SettingsPage from "@/pages/settings-page";
 import SmsPage from "@/pages/sms-page";
 import MoodTrackerPage from "@/pages/mood-tracker-page";
 import SubscriptionPage from "@/pages/subscription-page";
+import ConversationPage from "@/pages/conversation-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/sms" component={SmsPage} />
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
+      <ProtectedRoute path="/conversation" component={ConversationPage} />
       <Route component={NotFound} />
     </Switch>
   );

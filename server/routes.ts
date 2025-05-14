@@ -811,6 +811,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return emojiMap[mood] || "❓";
   }
+  
+  // =========== Conversation Routes ===========
+  
+  // Chat with Flappy endpoint - creates journal entries from conversations
+  app.post("/api/conversation", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { message } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      
+      // Get Flappy's response using the openAI service
+      const flappyResponse = await generateFlappyContent(
+        'journalResponse',
+        message,
+        {
+          username: req.user.username,
+          email: req.user.email,
+          userId: req.user.id
+        }
+      );
+      
+      // Create a journal entry from this conversation
+      const journalEntry = await storage.createJournalEntry({
+        userId: req.user.id,
+        title: `Conversation with Flappy - ${new Date().toLocaleDateString()}`,
+        content: `**Your message:**\n\n${message}\n\n**Flappy's response:**\n\n${flappyResponse.content}`,
+        tags: ["conversation"],
+        mood: "neutral", // Default mood, could be extracted using sentiment analysis
+      });
+      
+      // Process the message for memory service
+      await memoryService.processMessage(req.user.id, message, 'journal_topic');
+      
+      return res.status(200).json({
+        response: flappyResponse.content,
+        journalEntryCreated: true,
+        journalEntryId: journalEntry.id
+      });
+    } catch (error) {
+      console.error("Error in conversation endpoint:", error);
+      return res.status(500).json({ message: "Something went wrong processing your message" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
