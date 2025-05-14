@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import { FLAPPY_PERSONALITY } from "../client/src/lib/flappy";
+import { memoryService } from "./memory-service";
+import { ConversationMemory } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const apiKey = process.env.OPENAI_API_KEY;
@@ -32,9 +34,25 @@ export type FlappyContent = {
 export async function generateFlappyContent(
   contentType: FlappyContentType,
   context?: string,
-  userInfo?: { username: string; email: string }
+  userInfo?: { username: string; email: string; userId?: number }
 ): Promise<FlappyContent> {
-  const prompt = generatePrompt(contentType, context, userInfo);
+  // Retrieve relevant memories if userId is provided
+  let memories: ConversationMemory[] = [];
+  
+  if (userInfo?.userId && context) {
+    memories = await memoryService.getRelevantMemories(userInfo.userId, context);
+    
+    // Process context to extract new memories
+    if (contentType === 'journalResponse') {
+      await memoryService.processMessage(userInfo.userId, context, 'journal_topic');
+    }
+  }
+  
+  const memoryContext = memories.length > 0 
+    ? memoryService.formatMemoriesForPrompt(memories) 
+    : '';
+  
+  const prompt = generatePrompt(contentType, context, userInfo, memoryContext);
   
   try {
     // Check if OpenAI client is available
@@ -95,7 +113,8 @@ export async function generateFlappyContent(
 function generatePrompt(
   contentType: FlappyContentType, 
   context?: string,
-  userInfo?: { username: string; email: string }
+  userInfo?: { username: string; email: string; userId?: number },
+  memories?: string
 ): string {
   const basePrompt = `You are Flappy, a cheerful and wise pelican who loves the ocean and making friends. You communicate with a perfect blend of fun energy and helpful wisdom. Your tone is:
   
@@ -106,6 +125,13 @@ function generatePrompt(
 5. Occasionally silly - you mention your pelican life, like catching fish or your beach adventures
 
 ${userInfo ? `You are writing to ${userInfo.username} (email: ${userInfo.email}).` : ''}
+
+${memories ? `
+## Past Conversations and Memories
+You should subtly reference these memories to personalize your message and show continuity in your relationship. Don't explicitly mention that you are using "memories" - just naturally incorporate them:
+
+${memories}
+` : ''}
 
 Create a JSON response with both 'subject' and 'content' keys where the content is your message formatted with proper paragraphs and punctuation.`;
 
@@ -189,7 +215,7 @@ Format your response as JSON:
 function getFallbackContent(
   contentType: FlappyContentType, 
   context?: string,
-  userInfo?: { username: string; email: string }
+  userInfo?: { username: string; email: string; userId?: number }
 ): FlappyContent {
   const userGreeting = userInfo ? `Hey ${userInfo.username}!` : "Hey there!";
   
