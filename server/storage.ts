@@ -22,6 +22,8 @@ export interface IStorage {
   updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<User>;
   updateUserSubscription(userId: number, isPremium: boolean, premiumUntil?: Date): Promise<User>;
   updateUserPhoneNumber(userId: number, phoneNumber: string): Promise<User>;
+  updateUserStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
+  updateUserStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User>;
   
   // Journal operations
   getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]>;
@@ -41,6 +43,18 @@ export interface IStorage {
   getSmsMessage(id: number): Promise<SmsMessage | undefined>;
   createSmsMessage(message: InsertSmsMessage): Promise<SmsMessage>;
   updateSmsMessage(id: number, message: Partial<InsertSmsMessage>): Promise<SmsMessage | undefined>;
+  
+  // Payment operations
+  getPaymentMethods(userId: number): Promise<PaymentMethod[]>;
+  getPaymentMethod(id: number): Promise<PaymentMethod | undefined>;
+  createPaymentMethod(method: InsertPaymentMethod): Promise<PaymentMethod>;
+  updatePaymentMethodDefault(id: number, isDefault: boolean): Promise<PaymentMethod | undefined>;
+  deletePaymentMethod(id: number): Promise<boolean>;
+  
+  // Billing operations
+  getBillingTransactions(userId: number): Promise<BillingTransaction[]>;
+  getBillingTransaction(id: number): Promise<BillingTransaction | undefined>;
+  createBillingTransaction(transaction: InsertBillingTransaction): Promise<BillingTransaction>;
   
   // Session store
   sessionStore: any; // Using any type to avoid SessionStore type issues

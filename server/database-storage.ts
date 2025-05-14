@@ -1,4 +1,10 @@
-import { users, type User, type InsertUser, type JournalEntry, type Email, type InsertJournalEntry, type InsertEmail, type UpdateUserPreferences, journalEntries, emails, smsMessages, type SmsMessage, type InsertSmsMessage } from "@shared/schema";
+import { 
+  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions,
+  type User, type InsertUser, type JournalEntry, type InsertJournalEntry, 
+  type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
+  type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
+  type BillingTransaction, type InsertBillingTransaction 
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, or, inArray } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
