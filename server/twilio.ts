@@ -2,6 +2,7 @@ import twilio from 'twilio';
 import { User, InsertSmsMessage, SmsMessage, InsertJournalEntry } from '@shared/schema';
 import { storage } from './storage';
 import { generateFlappyContent, FlappyContentType } from './openai';
+import { memoryService } from './memory-service';
 
 // Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID;

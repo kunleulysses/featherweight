@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { User, Email, InsertEmail } from "@shared/schema";
 import { storage } from "./storage";
 import { generateFlappyContent, FlappyContentType } from "./openai";
+import { memoryService } from "./memory-service";
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
@@ -49,6 +50,7 @@ export const emailService = {
         const flappyContent = await generateFlappyContent(contentType, context, {
           username: user.username,
           email: user.email,
+          userId: user.id
         });
         
         subject = flappyContent.subject;
@@ -147,7 +149,7 @@ export const emailService = {
       }
       
       // Create the journal entry
-      await storage.createJournalEntry({
+      const journalEntry = await storage.createJournalEntry({
         userId: user.id,
         title,
         content: journalContent,
@@ -155,6 +157,9 @@ export const emailService = {
         tags: extractTags(cleanedContent),
         emailId,
       });
+      
+      // Process journal content for memories
+      await memoryService.processMessage(user.id, journalContent, 'journal_topic');
       
       // Send an acknowledgment email
       await this.sendFlappyEmail(user, "journalResponse", cleanedContent);
