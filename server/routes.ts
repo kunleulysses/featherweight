@@ -814,14 +814,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // =========== Conversation Routes ===========
   
-  // Chat with Flappy endpoint - creates journal entries from conversations
+  // Chat with Flappy endpoint - optionally creates journal entries from conversations
   app.post("/api/conversation", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
     try {
-      const { message } = req.body;
+      const { message, createJournalEntry = true } = req.body;
       
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
@@ -838,22 +838,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
       
-      // Create a journal entry from this conversation
-      const journalEntry = await storage.createJournalEntry({
-        userId: req.user.id,
-        title: `Conversation with Flappy - ${new Date().toLocaleDateString()}`,
-        content: `**Your message:**\n\n${message}\n\n**Flappy's response:**\n\n${flappyResponse.content}`,
-        tags: ["conversation"],
-        mood: "neutral", // Default mood, could be extracted using sentiment analysis
-      });
-      
       // Process the message for memory service
       await memoryService.processMessage(req.user.id, message, 'journal_topic');
       
+      // Only create a journal entry if requested (default behavior for backwards compatibility)
+      let journalEntry = null;
+      if (createJournalEntry) {
+        journalEntry = await storage.createJournalEntry({
+          userId: req.user.id,
+          title: `Conversation with Flappy - ${new Date().toLocaleDateString()}`,
+          content: `**Your message:**\n\n${message}\n\n**Flappy's response:**\n\n${flappyResponse.content}`,
+          tags: ["conversation"],
+          mood: "neutral", // Default mood, could be extracted using sentiment analysis
+        });
+      }
+      
       return res.status(200).json({
         response: flappyResponse.content,
-        journalEntryCreated: true,
-        journalEntryId: journalEntry.id
+        journalEntryCreated: createJournalEntry,
+        journalEntryId: journalEntry?.id
       });
     } catch (error) {
       console.error("Error in conversation endpoint:", error);

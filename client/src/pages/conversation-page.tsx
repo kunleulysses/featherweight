@@ -79,10 +79,107 @@ export default function ConversationPage() {
   const generateId = () => {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
+  
+  // Scroll to the bottom of the chat when new messages arrive
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // Start a new conversation
+  const startNewConversation = () => {
+    // Only start a new conversation if the current one is inactive or if there are only system messages
+    if (!isActive || messages.length <= 1) {
+      setMessages([{
+        id: "welcome",
+        content: `Hello ${user?.username || "there"}! I'm Flappy, your journaling companion. How are you feeling today? Feel free to share anything on your mind - I'm here to listen and help you reflect.`,
+        type: "flappy",
+        timestamp: new Date(),
+      }]);
+      setIsActive(true);
+      setConversationTitle("");
+    } else {
+      // Confirm before discarding the current conversation
+      if (window.confirm("Starting a new conversation will discard the current one. Continue?")) {
+        setMessages([{
+          id: "welcome",
+          content: `Hello ${user?.username || "there"}! I'm Flappy, your journaling companion. How are you feeling today? Feel free to share anything on your mind - I'm here to listen and help you reflect.`,
+          type: "flappy",
+          timestamp: new Date(),
+        }]);
+        setIsActive(true);
+        setConversationTitle("");
+      }
+    }
+  };
+
+  // Save the conversation as a journal entry
+  const saveConversation = async () => {
+    // Only save if there are messages beyond the welcome message
+    if (messages.length <= 1) {
+      toast({
+        title: "No Conversation to Save",
+        description: "Have a chat with Flappy first before saving.",
+      });
+      return;
+    }
+
+    // Don't save if already inactive (saved)
+    if (!isActive) {
+      toast({
+        title: "Already Saved",
+        description: "This conversation has already been saved to your journal.",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      // Format the conversation for saving
+      const formattedConversation = messages.map(msg => {
+        return `${msg.type === 'user' ? 'You' : 'Flappy'} (${format(msg.timestamp, "MMM d, h:mm a")}):\n${msg.content}\n\n`;
+      }).join('');
+      
+      // Generate a title based on the conversation content
+      const titleToUse = conversationTitle || `Conversation with Flappy - ${format(new Date(), "MMM d, yyyy")}`;
+      
+      // Call API to save the conversation as a journal entry
+      const response = await apiRequest("POST", "/api/journal", {
+        title: titleToUse,
+        content: formattedConversation,
+        tags: ["conversation"],
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to save conversation");
+      }
+      
+      // Mark conversation as inactive (saved)
+      setIsActive(false);
+      
+      toast({
+        title: "Conversation Saved",
+        description: "Your conversation has been saved to your journal.",
+      });
+      
+      // Invalidate the journal entries query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["/api/journal"] });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Handle form submission
   async function onSubmit(data: MessageFormValues) {
-    if (isSubmitting) return;
+    if (isSubmitting || !isActive) return;
     
     setIsSubmitting(true);
     
@@ -113,8 +210,10 @@ export default function ConversationPage() {
       ]);
       
       // Call the API to get Flappy's response
+      // Note: We're NOT creating a journal entry automatically anymore
       const response = await apiRequest("POST", "/api/conversation", {
         message: data.message,
+        createJournalEntry: false, // Don't create a journal entry automatically
       });
       
       if (!response.ok) {
@@ -137,15 +236,13 @@ export default function ConversationPage() {
         ];
       });
       
-      // If the conversation created a journal entry, refresh the journal entries
-      if (responseData.journalEntryCreated) {
-        toast({
-          title: "Journal Entry Created",
-          description: "This conversation has been saved to your journal.",
-        });
-        
-        // Invalidate the journal entries query to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["/api/journal"] });
+      // Use the first message as a potential title for the conversation
+      if (messages.length <= 2 && !conversationTitle) {
+        // Extract a title from the first user message - limit to 50 chars
+        const potentialTitle = data.message.length > 50 
+          ? data.message.substring(0, 47) + "..."
+          : data.message;
+        setConversationTitle(potentialTitle);
       }
     } catch (error) {
       // Remove the loading message if there was an error
@@ -183,20 +280,56 @@ export default function ConversationPage() {
 
             <Card className="max-w-3xl mx-auto">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center">
-                  <Avatar className="h-8 w-8 mr-2">
-                    <AvatarImage src="/assets/flappy.svg" alt="Flappy" />
-                    <AvatarFallback>F</AvatarFallback>
-                  </Avatar>
-                  <span>Flappy</span>
-                </CardTitle>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="flex items-center">
+                    <Avatar className="h-8 w-8 mr-2">
+                      <AvatarImage src="/assets/flappy.svg" alt="Flappy" />
+                      <AvatarFallback>F</AvatarFallback>
+                    </Avatar>
+                    <span>Flappy</span>
+                  </CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={startNewConversation}
+                      className="flex items-center"
+                      title="Start a new conversation"
+                    >
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      <span>New</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={saveConversation}
+                      className="flex items-center"
+                      disabled={!isActive || messages.length <= 1 || isSaving}
+                      title="Save conversation to journal"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-1" />
+                          <span>Save</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
                 <CardDescription>
-                  Every conversation is saved as a journal entry to help you reflect on your thoughts
+                  {isActive 
+                    ? "Have a conversation with Flappy and save it to your journal when done" 
+                    : "This conversation has been saved to your journal. Start a new one!"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px] pr-4">
-                  <div className="flex flex-col space-y-4">
+                  <div className="flex flex-col space-y-4" ref={scrollAreaRef}>
                     {messages.map((message) => (
                       <div
                         key={message.id}
@@ -237,45 +370,60 @@ export default function ConversationPage() {
                 </ScrollArea>
               </CardContent>
               <CardFooter>
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="w-full space-y-4"
-                  >
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="flex space-x-2">
-                              <Textarea
-                                placeholder="Type your message here..."
-                                className="flex-1 min-h-[80px]"
-                                {...field}
-                                disabled={isSubmitting}
-                              />
-                              <Button
-                                type="submit"
-                                size="icon"
-                                className="h-10 mt-auto"
-                                disabled={isSubmitting}
-                              >
-                                {isSubmitting ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                                <span className="sr-only">Send</span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </form>
-                </Form>
+                {isActive ? (
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="w-full space-y-4"
+                    >
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="flex space-x-2">
+                                <Textarea
+                                  placeholder="Type your message here..."
+                                  className="flex-1 min-h-[80px]"
+                                  {...field}
+                                  disabled={isSubmitting}
+                                />
+                                <Button
+                                  type="submit"
+                                  size="icon"
+                                  className="h-10 mt-auto"
+                                  disabled={isSubmitting}
+                                >
+                                  {isSubmitting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Send className="h-4 w-4" />
+                                  )}
+                                  <span className="sr-only">Send</span>
+                                </Button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </form>
+                  </Form>
+                ) : (
+                  <div className="w-full bg-muted/30 rounded-md p-4 text-center">
+                    <p className="text-muted-foreground">
+                      This conversation has been saved to your journal.
+                      <Button 
+                        variant="link" 
+                        onClick={startNewConversation}
+                        className="px-1 py-0 h-auto font-normal"
+                      >
+                        Start a new conversation
+                      </Button>
+                    </p>
+                  </div>
+                )}
               </CardFooter>
             </Card>
 
