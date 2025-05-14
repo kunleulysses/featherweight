@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/home/hero-section";
 import { FeaturesSection } from "@/components/home/features-section";
 import { MeetFlappySection } from "@/components/home/meet-flappy-section";
 import { JournalDemoSection } from "@/components/home/journal-demo-section";
+import { ChatPreviewSection } from "@/components/home/chat-preview-section";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { EmailPreviewSection } from "@/components/home/email-preview-section";
 import { PricingSection } from "@/components/home/pricing-section";
@@ -24,6 +25,7 @@ export default function HomePage() {
           <FeaturesSection />
           <MeetFlappySection />
           <JournalDemoSection />
+          <ChatPreviewSection />
           <TestimonialsSection />
           <EmailPreviewSection />
           <PricingSection />

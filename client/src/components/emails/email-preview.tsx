@@ -10,19 +10,25 @@ interface EmailPreviewProps {
 }
 
 export function EmailPreview({ 
-  subject = "🌊 The Ripples of Your Day Await",
-  content = `Good morning, bright soul!
+  subject = "🌅 How's your day shaping up?",
+  content = `Good morning!
 
-Flappy here, soaring in with today's reflection. I've witnessed countless dawns across eons, yet each new day still fills my ancient heart with wonder.
+Flappy here checking in with you. I hope your morning is off to a good start!
 
-**Today's Cosmic Thought:** Like pebbles cast into still waters, our smallest actions create ripples that travel far beyond our sight. What positive ripple might you create today?
+I've been thinking about you today and wanted to ask: What's one thing you're looking forward to this week?
 
-Take a moment to breathe deeply and set an intention for one small act of kindness or self-care. Then, later, reply to this email and tell me how that ripple expanded through your day.
+Sometimes just identifying something positive ahead can brighten our outlook. It could be something small like a favorite meal, a moment of relaxation, or catching up with a friend.
 
-Remember, I'm here to listen without judgment, to hold space for your reflections, and to offer a bit of starlight wisdom when clouds gather.
+If you're facing some challenges right now, that's okay too. Feel free to share what's on your mind - I'm here to listen and support you through both the good days and the tough ones.
 
-With cosmic joy and feathery wisdom,
-Flappy 🌟`,
+Reply to this email anytime. Your thoughts matter and journaling about them, even briefly, can help provide clarity and perspective.
+
+Looking forward to hearing from you!
+
+Warmly,
+Flappy 🌊
+
+[Free tier - Advertisement space]`,
   time = "8:05 AM",
   onReply
 }: EmailPreviewProps) {

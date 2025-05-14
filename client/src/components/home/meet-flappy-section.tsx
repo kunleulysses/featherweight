@@ -33,7 +33,7 @@ export function MeetFlappySection() {
             {/* Flappy's voice example */}
             <div className="bg-white p-6 rounded-[0.75rem] shadow-md border-l-4 border-primary mb-6">
               <p className="italic text-foreground/90 font-opensans">
-                "Hey there, friend! Flappy here! Just caught the BIGGEST fish of my life (okay, maybe of the hour) and it got me thinking about you! What small win are you celebrating today? Something awesome you did? A moment that made you smile? Hit reply and let me know!"
+                "Hi there! Flappy here checking in. I noticed you've been working hard lately. What's one moment from today that made you feel proud or brought you joy? Even the smallest things count. I'd love to hear about it when you have a moment!"
               </p>
               <p className="text-right text-primary font-medium font-quicksand mt-2">— Flappy 🌊</p>
             </div>
