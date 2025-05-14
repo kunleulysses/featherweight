@@ -4,7 +4,7 @@ import path from "path";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
-import { insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessageSchema } from "@shared/schema";
+import { insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessageSchema, User } from "@shared/schema";
 import { emailService } from "./email";
 import { twilioService } from "./twilio";
 import { journalImageUpload, getFileUrl } from "./file-upload";

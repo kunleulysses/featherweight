@@ -72,9 +72,14 @@ export default function SettingsPage() {
 
   function onProfileSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
+    let phoneNumberChanged = false;
+    let updates = 0;
     
     // Update phone number if it has changed
     if (data.phoneNumber !== user?.preferences?.phoneNumber) {
+      phoneNumberChanged = true;
+      updates++;
+      
       apiRequest("PATCH", "/api/user/phone", { phoneNumber: data.phoneNumber })
         .then((res) => {
           if (!res.ok) {
@@ -83,11 +88,24 @@ export default function SettingsPage() {
           return res.json();
         })
         .then(() => {
-          toast({
-            title: "Phone number updated",
-            description: "Your phone number has been updated successfully.",
-          });
           queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          updates--;
+          
+          // Only show toast if this is the only update or the last one to complete
+          if (updates === 0) {
+            if (phoneNumberChanged) {
+              toast({
+                title: "Phone number updated",
+                description: "Your phone number has been updated successfully.",
+              });
+            } else {
+              toast({
+                title: "Profile updated",
+                description: "Your profile information has been updated successfully.",
+              });
+            }
+            setIsSubmitting(false);
+          }
         })
         .catch((error) => {
           toast({
@@ -95,8 +113,6 @@ export default function SettingsPage() {
             description: error.message,
             variant: "destructive",
           });
-        })
-        .finally(() => {
           setIsSubmitting(false);
         });
     } else {

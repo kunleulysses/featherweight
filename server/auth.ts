@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { emailService } from "./email";
 
 declare global {
   namespace Express {
@@ -94,8 +95,6 @@ export function setupAuth(app: Express) {
 
       // Send welcome email from Flappy
       try {
-        // Import email service here to avoid circular dependency
-        const { emailService } = require('./email');
         await emailService.sendFlappyEmail(user, 'dailyInspiration', 'welcome');
         console.log(`Welcome email sent to new user: ${user.username} (${user.email})`);
       } catch (emailError) {
