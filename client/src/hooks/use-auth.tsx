@@ -61,6 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
+      
+      // Force redirect to journal page
+      window.location.href = "/journal";
     },
     onError: (error: Error) => {
       toast({
