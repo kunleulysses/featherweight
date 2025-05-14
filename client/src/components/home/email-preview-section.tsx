@@ -1,9 +1,11 @@
 import { Container } from "@/components/ui/container";
 import { EmailPreview } from "@/components/emails/email-preview";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export function EmailPreviewSection() {
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const handleReply = () => {
     toast({
@@ -21,10 +23,14 @@ export function EmailPreviewSection() {
           </h2>
           <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
             Here's a peek at the kind of emails you'll receive from Flappy.
+            {!user?.isPremium && <span className="block mt-2 text-sm text-primary">Free tier includes ads</span>}
           </p>
         </div>
         
-        <EmailPreview onReply={handleReply} />
+        <EmailPreview 
+          onReply={handleReply} 
+          isPremium={user?.isPremium || false}
+        />
       </Container>
     </section>
   );

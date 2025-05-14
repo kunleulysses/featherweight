@@ -22,14 +22,14 @@ const FROM_NAME = "Flappy from Featherweight";
 // Export email service functions
 export const emailService = {
   // Send a single email
-  async sendEmail(to: string, subject: string, content: string): Promise<{ messageId: string }> {
+  async sendEmail(to: string, subject: string, content: string, isPremium: boolean = false): Promise<{ messageId: string }> {
     try {
       const info = await transporter.sendMail({
         from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
         to,
         subject,
-        html: formatEmailHTML(content),
-        text: content,
+        html: formatEmailHTML(content, isPremium),
+        text: content + (!isPremium ? '\n\n[Advertisement: Upgrade to premium for ad-free experiences]' : ''),
       });
       
       return { messageId: info.messageId };
@@ -58,7 +58,7 @@ export const emailService = {
         
         // Try to send the email
         try {
-          const result = await this.sendEmail(user.email, subject, content);
+          const result = await this.sendEmail(user.email, subject, content, user.isPremium);
           messageId = result.messageId;
         } catch (emailError) {
           console.warn("Could not send email, continuing with database storage only:", emailError);
@@ -235,7 +235,7 @@ export const emailService = {
 };
 
 // Helper function to format email as HTML
-function formatEmailHTML(content: string): string {
+function formatEmailHTML(content: string, isPremium: boolean = false): string {
   const paragraphs = content.split('\n\n').filter(p => p.trim() !== '');
   
   const htmlParagraphs = paragraphs.map(p => {
@@ -332,6 +332,18 @@ function formatEmailHTML(content: string): string {
       </div>
       <div class="content">
         ${htmlParagraphs.join('')}
+        
+        ${!isPremium ? `
+        <div style="margin: 30px 0; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; text-align: center;">
+          <p style="margin-bottom: 10px; font-size: 14px; color: #757575;">Advertisement</p>
+          <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px;">
+            <p style="font-weight: bold; margin-bottom: 10px; color: #3b82f6;">Upgrade to Premium</p>
+            <p style="margin-bottom: 15px; font-size: 14px;">Remove ads, unlock SMS journaling, and enjoy an enhanced experience with Flappy.</p>
+            <a href="https://featherweight.app/subscription" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">Upgrade Now</a>
+          </div>
+        </div>
+        ` : ''}
+        
         <div style="text-align: center">
           <a href="mailto:${FROM_EMAIL}" class="reply-button">Reply to Journal</a>
         </div>
