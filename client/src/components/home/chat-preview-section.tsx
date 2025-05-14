@@ -115,10 +115,7 @@ export function ChatPreviewSection() {
                 </Link>
               </div>
               
-              {/* Free tier ad space */}
-              <div className="mt-6">
-                <AdBanner format="square" />
-              </div>
+              {/* Ad banner has been removed as requested */}
             </CardContent>
           </Card>
         </div>

@@ -41,10 +41,10 @@ export function Footer() {
           <div>
             <h4 className="font-quicksand font-semibold text-lg mb-4">Product</h4>
             <ul className="space-y-2">
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Features</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Pricing</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">FAQ</span></Link></li>
-              <li><Link href="/"><span className="text-white/70 hover:text-white transition-colors">Testimonials</span></Link></li>
+              <li><a href="/#features" className="text-white/70 hover:text-white transition-colors">Features</a></li>
+              <li><a href="/#pricing" className="text-white/70 hover:text-white transition-colors">Pricing</a></li>
+              <li><a href="/#faq" className="text-white/70 hover:text-white transition-colors">FAQ</a></li>
+              <li><a href="/#testimonials" className="text-white/70 hover:text-white transition-colors">Testimonials</a></li>
             </ul>
           </div>
           
@@ -54,6 +54,7 @@ export function Footer() {
               <li><Link href="/about"><span className="text-white/70 hover:text-white transition-colors">About Us</span></Link></li>
               <li><Link href="/about"><span className="text-white/70 hover:text-white transition-colors">Blog</span></Link></li>
               <li><Link href="/contact"><span className="text-white/70 hover:text-white transition-colors">Contact</span></Link></li>
+              <li><a href="tel:19174318197" className="text-white/70 hover:text-white transition-colors">(917) 431-8197</a></li>
             </ul>
           </div>
           
@@ -63,7 +64,6 @@ export function Footer() {
               <li><Link href="/privacy"><span className="text-white/70 hover:text-white transition-colors">Privacy Policy</span></Link></li>
               <li><Link href="/terms"><span className="text-white/70 hover:text-white transition-colors">Terms of Service</span></Link></li>
               <li><Link href="/privacy"><span className="text-white/70 hover:text-white transition-colors">Cookie Policy</span></Link></li>
-              <li><Link href="/privacy"><span className="text-white/70 hover:text-white transition-colors">GDPR</span></Link></li>
             </ul>
           </div>
         </div>
