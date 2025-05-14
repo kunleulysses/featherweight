@@ -4,7 +4,8 @@ import {
   type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
   type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
   type BillingTransaction, type InsertBillingTransaction,
-  type ConversationMemory, type InsertConversationMemory, type PaymentDetails
+  type ConversationMemory, type InsertConversationMemory, type PaymentDetails,
+  type UserPreferences
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, or, inArray } from "drizzle-orm";
@@ -133,13 +134,20 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Get current preferences
-      const currentPreferences = user.preferences || {};
+      const currentPreferences = user.preferences || {} as UserPreferences;
       
       // Update preferences to include firstName and lastName
-      const updatedPreferences = {
+      const updatedPreferences: UserPreferences = {
         ...currentPreferences,
         firstName: profileData.firstName || currentPreferences.firstName || null,
-        lastName: profileData.lastName || currentPreferences.lastName || null
+        lastName: profileData.lastName || currentPreferences.lastName || null,
+        // Ensure all required preferences fields exist
+        emailFrequency: currentPreferences.emailFrequency || "daily",
+        marketingEmails: currentPreferences.marketingEmails || false,
+        receiveInsights: currentPreferences.receiveInsights || true,
+        theme: currentPreferences.theme || "light",
+        receiveSms: currentPreferences.receiveSms || false,
+        phoneNumber: currentPreferences.phoneNumber || null
       };
       
       // Update user with new preferences
