@@ -1,4 +1,10 @@
-import { users, journalEntries, emails, smsMessages, type User, type InsertUser, type JournalEntry, type InsertJournalEntry, type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, type InsertSmsMessage } from "@shared/schema";
+import { 
+  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, 
+  type User, type InsertUser, type JournalEntry, type InsertJournalEntry, 
+  type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
+  type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
+  type BillingTransaction, type InsertBillingTransaction 
+} from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
 import { DatabaseStorage } from "./database-storage";

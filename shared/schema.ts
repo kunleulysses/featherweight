@@ -32,6 +32,32 @@ export const journalEntries = pgTable("journal_entries", {
   emailId: text("email_id"), // To track which email this entry is responding to
 });
 
+// Payment methods table
+export const paymentMethods = pgTable("payment_methods", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  stripePaymentMethodId: text("stripe_payment_method_id").notNull(),
+  cardBrand: text("card_brand").notNull(), // visa, mastercard, etc.
+  cardLast4: text("card_last4").notNull(),
+  cardExpMonth: integer("card_exp_month").notNull(),
+  cardExpYear: integer("card_exp_year").notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Billing transactions table
+export const billingTransactions = pgTable("billing_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeInvoiceId: text("stripe_invoice_id"),
+  amount: integer("amount").notNull(), // in cents
+  currency: text("currency").default("usd").notNull(),
+  status: text("status").notNull(), // succeeded, failed, pending
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Emails table to track sent emails
 export const emails = pgTable("emails", {
   id: serial("id").primaryKey(),
@@ -111,6 +137,22 @@ export const insertSmsMessageSchema = createInsertSchema(smsMessages)
     isJournalEntry: z.boolean().default(false).optional(),
   });
 
+export const insertPaymentMethodSchema = createInsertSchema(paymentMethods)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    cardBrand: z.string().min(1, { message: "Card brand cannot be empty" }),
+    cardLast4: z.string().length(4, { message: "Card last 4 digits must be 4 characters" }),
+    cardExpMonth: z.number().int().min(1).max(12),
+    cardExpYear: z.number().int().min(new Date().getFullYear()),
+  });
+
+export const insertBillingTransactionSchema = createInsertSchema(billingTransactions)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    amount: z.number().int().positive(),
+    status: z.enum(["succeeded", "failed", "pending"]),
+  });
+
 export const updateUserPreferencesSchema = z.object({
   emailFrequency: z.enum(["daily", "weekdays", "weekends", "weekly"]),
   marketingEmails: z.boolean().default(false),
@@ -128,7 +170,11 @@ export type User = typeof users.$inferSelect;
 export type JournalEntry = typeof journalEntries.$inferSelect;
 export type Email = typeof emails.$inferSelect;
 export type SmsMessage = typeof smsMessages.$inferSelect;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+export type BillingTransaction = typeof billingTransactions.$inferSelect;
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
 export type InsertSmsMessage = z.infer<typeof insertSmsMessageSchema>;
+export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
+export type InsertBillingTransaction = z.infer<typeof insertBillingTransactionSchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
