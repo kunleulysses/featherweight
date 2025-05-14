@@ -57,7 +57,7 @@ export default function ConversationPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: `Hello ${user?.firstName || user?.username || "there"}! I'm Flappy, your journaling companion. How are you feeling today? Feel free to share anything on your mind - I'm here to listen and help you reflect.`,
+      content: `Hello ${user?.preferences?.firstName || user?.username || "there"}! I'm Flappy, your journaling companion. How are you feeling today? Feel free to share anything on your mind - I'm here to listen and help you reflect.`,
       type: "flappy",
       timestamp: new Date(),
     },
@@ -453,9 +453,10 @@ export default function ConversationPage() {
                     >
                       {!user?.isPremium && (
                         <div className="flex justify-end -mb-2">
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <Feather className="h-3 w-3 mr-1 text-primary" />
-                            {messageCount}/{MAX_FREE_MESSAGES} messages used
+                          <div className="text-xs bg-amber-100 rounded-md p-1.5 text-amber-800 border border-amber-200 flex items-center">
+                            <Feather className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                            <strong>{messageCount}/{MAX_FREE_MESSAGES}</strong> messages used <span className="mx-1">•</span> 
+                            <span className="font-medium">Free tier limited to {MAX_FREE_MESSAGES} messages per conversation</span>
                           </div>
                         </div>
                       )}
@@ -514,7 +515,7 @@ export default function ConversationPage() {
               <h3 className="font-medium mb-2">Other ways to chat with Flappy:</h3>
               <ul className="list-disc ml-5 space-y-2">
                 <li>
-                  Email <span className="font-medium">flappy@yourdomain.com</span> (when deployed to production)
+                  Email <span className="font-medium">flappy@featherweight.app</span> (when deployed to production)
                 </li>
                 <li>Reply to any daily inspiration email from Flappy</li>
                 {user?.isPremium && (
