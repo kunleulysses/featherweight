@@ -593,12 +593,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       // Get all premium users with phone numbers
-      const users = await Promise.resolve([]); // TODO: Implement user query
+      const users = await Promise.resolve([] as User[]); // TODO: Implement user query
       
       // Send SMS to each premium user
       const results = [];
       for (const user of users) {
-        if (user.isPremium && user.phoneNumber) {
+        if (user.preferences?.isPremium && user.preferences?.phoneNumber) {
           try {
             const message = await twilioService.sendDailyInspirationSms(user);
             if (message) {
