@@ -18,6 +18,12 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Helmet } from 'react-helmet';
 
 const profileFormSchema = z.object({
+  firstName: z.string().min(1, {
+    message: "First name is required.",
+  }).optional(),
+  lastName: z.string().min(1, {
+    message: "Last name is required.",
+  }).optional(),
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
   }),
@@ -52,6 +58,8 @@ export default function SettingsPage() {
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
       username: user?.username || "",
       email: user?.email || "",
       phoneNumber: user?.preferences?.phoneNumber || "",
@@ -76,9 +84,11 @@ export default function SettingsPage() {
     let profileChanged = false;
     let updates = 0;
     
-    // Check if profile information has changed - username or email
+    // Check if profile information has changed - username, email, firstName, or lastName
     if (data.username !== user?.username || 
-        data.email !== user?.email) {
+        data.email !== user?.email ||
+        data.firstName !== user?.firstName ||
+        data.lastName !== user?.lastName) {
       profileChanged = true;
     }
     
@@ -205,6 +215,34 @@ export default function SettingsPage() {
                   <CardContent>
                     <Form {...profileForm}>
                       <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={profileForm.control}
+                            name="firstName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>First Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="John" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="lastName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Doe" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                         <FormField
                           control={profileForm.control}
                           name="username"
