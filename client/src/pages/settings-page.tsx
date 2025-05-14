@@ -199,9 +199,10 @@ export default function SettingsPage() {
             </div>
             
             <Tabs defaultValue="profile" className="max-w-3xl mx-auto">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger value="profile" className="font-quicksand">Profile</TabsTrigger>
                 <TabsTrigger value="email" className="font-quicksand">Email Preferences</TabsTrigger>
+                <TabsTrigger value="subscription" className="font-quicksand">Subscription</TabsTrigger>
               </TabsList>
               
               <TabsContent value="profile">
@@ -437,6 +438,129 @@ export default function SettingsPage() {
                         </Button>
                       </form>
                     </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="subscription">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-quicksand">Subscription Management</CardTitle>
+                    <CardDescription>
+                      Manage your Featherweight subscription and billing information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="rounded-lg border p-4">
+                      <h3 className="text-lg font-semibold mb-2">Current Plan</h3>
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className={`p-2 rounded-full ${user?.isPremium ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                          {user?.isPremium ? 
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L5 7.875L7.5 17H16.5L19 7.875L12 2Z"></path><path d="M12 9L9 14H15L12 9Z"></path></svg> :
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                          }
+                        </div>
+                        <span className="font-semibold">{user?.isPremium ? 'Premium' : 'Free Plan'}</span>
+                      </div>
+                      
+                      {user?.isPremium && user?.premiumUntil && (
+                        <div className="text-sm text-muted-foreground mb-4">
+                          Your subscription renews on {new Date(user.premiumUntil).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center">
+                        {user?.isPremium ? (
+                          <div className="text-sm">
+                            $4.99/month
+                          </div>
+                        ) : (
+                          <div className="text-sm">
+                            Free plan - Limited features
+                          </div>
+                        )}
+                        
+                        <Button 
+                          variant={user?.isPremium ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => {
+                            if (user?.isPremium) {
+                              if (window.confirm("Are you sure you want to cancel your premium subscription? You'll lose access to premium features at the end of your billing period.")) {
+                                setIsSubmitting(true);
+                                apiRequest("PATCH", "/api/user/subscription", {
+                                  isPremium: false,
+                                  durationMonths: 0,
+                                })
+                                .then(res => {
+                                  if (!res.ok) throw new Error("Failed to cancel subscription");
+                                  queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                                  toast({
+                                    title: "Subscription cancelled",
+                                    description: "Your premium subscription has been cancelled. You'll have access until the end of your current billing period.",
+                                  });
+                                })
+                                .catch(error => {
+                                  toast({
+                                    title: "Error",
+                                    description: error.message,
+                                    variant: "destructive",
+                                  });
+                                })
+                                .finally(() => {
+                                  setIsSubmitting(false);
+                                });
+                              }
+                            } else {
+                              window.location.href = '/subscription';
+                            }
+                          }}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting 
+                            ? "Processing..." 
+                            : user?.isPremium 
+                              ? "Cancel Subscription" 
+                              : "Upgrade to Premium"
+                          }
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {user?.isPremium && (
+                      <div className="rounded-lg border p-4">
+                        <h3 className="text-lg font-semibold mb-2">Payment Information</h3>
+                        <div className="space-y-4">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Payment method</span>
+                            <span>Visa ending in {user?.paymentDetails?.lastFour || '4242'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Billing date</span>
+                            <span>Monthly on day {user?.paymentDetails?.billingDate || new Date().getDate()}</span>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.location.href = '/billing'}
+                          >
+                            Manage Billing Details
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="rounded-lg bg-muted p-4 text-sm">
+                      <h3 className="font-medium mb-1">Need help with your subscription?</h3>
+                      <p className="text-muted-foreground mb-3">
+                        If you have any questions about your subscription or need assistance, please contact our support team.
+                      </p>
+                      <a 
+                        href="mailto:support@featherweight.com" 
+                        className="text-primary hover:underline inline-block"
+                      >
+                        support@featherweight.com
+                      </a>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

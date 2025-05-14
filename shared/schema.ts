@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   preferences: json("preferences").$type<UserPreferences>(),
+  paymentDetails: json("payment_details").$type<PaymentDetails>(),
 });
 
 // Journal entries table
@@ -110,6 +111,14 @@ export type UserPreferences = {
   theme?: "light" | "dark" | "system";
   receiveSms?: boolean;
   phoneNumber?: string;
+};
+
+export type PaymentDetails = {
+  lastFour: string;
+  cardBrand: string;
+  billingDate: number;
+  expiryMonth: number;
+  expiryYear: number;
 };
 
 // Insert schemas using drizzle-zod
