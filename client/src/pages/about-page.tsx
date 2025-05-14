@@ -62,14 +62,18 @@ export default function AboutPage() {
                 <div className="md:flex gap-8 items-center">
                   <div className="md:w-1/3 mb-6 md:mb-0 flex justify-center">
                     <div className="w-48 h-48 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
-                      <Feather className="h-24 w-24 text-primary" />
+                      <img 
+                        src="/images/flappy-avatar.png" 
+                        alt="Flappy the Pelican" 
+                        className="w-auto h-48"
+                      />
                     </div>
                   </div>
                   <div className="md:w-2/3 space-y-4">
                     <p>
-                      Flappy is an ancient cosmic pelican with the wisdom of millennia and the playful 
-                      spirit of a friend who truly cares about your wellbeing. Flappy combines ancient 
-                      wisdom with a modern, approachable personality.
+                      Flappy is an ancient cosmic pelican captain with the wisdom of millennia and the playful 
+                      spirit of a friend who truly cares about your wellbeing. With his signature captain's hat 
+                      and spectacles, Flappy navigates the seas of human emotion with both warmth and insight.
                     </p>
                     <p>
                       As your journaling companion, Flappy provides thoughtful prompts, responds to your 

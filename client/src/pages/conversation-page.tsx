@@ -347,7 +347,11 @@ export default function ConversationPage() {
                         {message.type === "flappy" && (
                           <div className="flex-shrink-0 mr-2">
                             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                              <Feather className="h-6 w-6 text-primary" />
+                              <img 
+                                src="/images/flappy-avatar.png" 
+                                alt="Flappy the Pelican" 
+                                className="h-10 w-auto"
+                              />
                             </div>
                           </div>
                         )}
