@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <!-- Background circle -->
+  <circle cx="300" cy="300" r="280" fill="#e6f7ff" />
+  
+  <!-- Pelican body -->
+  <ellipse cx="300" cy="320" rx="180" ry="140" fill="#ffffff" stroke="#87CEFA" stroke-width="10" />
+  
+  <!-- Pelican head -->
+  <circle cx="220" cy="220" r="70" fill="#ffffff" stroke="#87CEFA" stroke-width="8" />
+  
+  <!-- Eyes -->
+  <circle cx="200" cy="205" r="12" fill="#333333" />
+  <circle cx="196" cy="201" r="4" fill="#ffffff" />
+  
+  <!-- Beak -->
+  <path d="M220,230 Q240,248 290,240 L270,270 Q230,280 220,260 Z" fill="#FFD700" stroke="#e6b800" stroke-width="2" />
+  
+  <!-- Wings -->
+  <path d="M300,270 Q380,210 460,280 Q450,330 430,350 Q380,380 300,330 Z" fill="#ffffff" stroke="#87CEFA" stroke-width="8" />
+  <path d="M300,330 Q380,380 430,350 Q420,390 390,410 Q340,430 300,380 Z" fill="#e6f7ff" stroke="#87CEFA" stroke-width="6" />
+  
+  <!-- Legs -->
+  <path d="M260,440 L270,500 L290,500 L300,440" fill="none" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+  <path d="M330,440 L340,500 L360,500 L370,440" fill="none" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Feet -->
+  <path d="M270,500 L260,510 L290,510 L290,500" fill="#FFD700" />
+  <path d="M340,500 L330,510 L360,510 L360,500" fill="#FFD700" />
+  
+  <!-- Pouch -->
+  <path d="M220,260 Q230,290 250,295 Q260,300 280,290 Q290,280 290,260" fill="none" stroke="#f4a261" stroke-width="5" stroke-linecap="round" />
+  
+  <!-- Expression lines - happy -->
+  <path d="M240,220 Q230,230 220,220" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Details -->
+  <path d="M360,280 Q380,260 400,280" fill="none" stroke="#87CEFA" stroke-width="4" stroke-linecap="round" />
+  <path d="M370,300 Q390,280 410,300" fill="none" stroke="#87CEFA" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Feathers on head -->
+  <path d="M220,170 Q235,150 250,170" fill="none" stroke="#87CEFA" stroke-width="6" stroke-linecap="round" />
+  <path d="M240,160 Q255,140 270,160" fill="none" stroke="#87CEFA" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Ancient wisdom symbol on forehead -->
+  <circle cx="220" cy="190" r="10" fill="none" stroke="#4682b4" stroke-width="2" />
+  <path d="M215,190 L225,190 M220,185 L220,195" stroke="#4682b4" stroke-width="2" />
+</svg>

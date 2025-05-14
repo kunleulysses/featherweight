@@ -78,11 +78,7 @@ export function WelcomeDialog() {
                 <img 
                   src="/assets/flappy.svg" 
                   alt="Flappy the Pelican" 
-                  className="w-24 h-24" 
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://api.dicebear.com/7.x/bottts/svg?seed=flappy&backgroundColor=b6e3f4";
-                  }}
+                  className="w-32 h-32" 
                 />
               </div>
               <p className="text-lg mb-4">
