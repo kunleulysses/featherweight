@@ -10,6 +10,7 @@ import JournalPage from "@/pages/journal-page";
 import SettingsPage from "@/pages/settings-page";
 import SmsPage from "@/pages/sms-page";
 import MoodTrackerPage from "@/pages/mood-tracker-page";
+import SubscriptionPage from "@/pages/subscription-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/mood-tracker" component={MoodTrackerPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/sms" component={SmsPage} />
+      <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <Route component={NotFound} />
     </Switch>
   );

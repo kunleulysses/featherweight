@@ -150,6 +150,33 @@ Create a JSON response with both 'subject' and 'content' keys where the content 
 
   switch (contentType) {
     case 'dailyInspiration':
+      // Special handling for welcome message context
+      if (context === 'welcome') {
+        return `${basePrompt}
+        
+Create a warm welcome message for a new Featherweight user who just signed up.
+
+For the 'subject' field, create a friendly welcome subject line with emoji that clearly indicates this is their first message.
+
+For the 'content' field, structure it precisely as follows:
+
+1. **Welcome Greeting** - An enthusiastic welcome using their name
+2. **Introduction to Flappy** - A short, charming introduction about who you are as Flappy and your role as their journaling companion
+3. **How It Works** - A clearly labeled section explaining how to use Featherweight (reply to emails to journal, check the dashboard, etc.)
+4. **First Journaling Prompt** - An easy, approachable prompt to get them started with their first entry
+5. **Next Steps** - Brief mention of what they can expect (daily inspirations, responses to their journals)
+6. **Signature** - Your friendly sign-off with a touch of pelican personality
+
+Keep it under 200 words. Be warm, encouraging, and clear about how the service works. Make the user feel excited about starting their journaling journey.
+
+Format your response as JSON:
+{
+  "subject": "🎉 Welcome to Featherweight - Your Journaling Journey Begins!",
+  "content": "[Your structured welcome message with clear section headings and appropriate formatting]"
+}`;
+      }
+      
+      // Regular daily inspiration
       return `${basePrompt}
       
 Create an organized, structured daily message that brightens someone's day and encourages meaningful journaling.
