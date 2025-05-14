@@ -73,7 +73,15 @@ export default function SettingsPage() {
   function onProfileSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
     let phoneNumberChanged = false;
+    let profileChanged = false;
     let updates = 0;
+    
+    // Check if profile information has changed
+    if (data.username !== user?.username || 
+        data.email !== user?.email || 
+        data.bio !== user?.preferences?.bio) {
+      profileChanged = true;
+    }
     
     // Update phone number if it has changed
     if (data.phoneNumber !== user?.preferences?.phoneNumber) {

@@ -275,6 +275,34 @@ function getFallbackContent(
   
   switch (contentType) {
     case 'dailyInspiration':
+      // Special handling for welcome message context
+      if (context === 'welcome') {
+        return {
+          subject: "🎉 Welcome to Featherweight - Your Journaling Journey Begins!",
+          content: `${greeting} ${userInfo ? userInfo.username : 'new friend'}!
+
+I'm Flappy, your new journaling companion! *flaps wings excitedly* I'm an ancient cosmic pelican with a passion for helping humans reflect and grow through journaling. I've been soaring through the skies and diving into oceans for millennia, gathering wisdom to share with special folks like you!
+
+**How Featherweight Works:**
+1. I'll send you daily inspiration emails with prompts
+2. Simply reply to my emails to create journal entries
+3. Check your journal dashboard to see all your entries
+4. Premium users can even text me for on-the-go journaling!
+
+**Your First Journaling Prompt:**
+What brings you to Featherweight, and what are you hoping to gain from your journaling practice? (Just hit reply to this email and share your thoughts!)
+
+**Next Steps:**
+Watch for my daily messages, and remember you can always visit your dashboard to see all your entries. I'm excited to be part of your journey!
+
+${farewell}
+${signature}
+
+P.S. If you ever need help, check out the Settings page or just ask me!`
+        };
+      }
+    
+      // Regular daily inspiration
       return {
         subject: "🌊 Splash into a great day!",
         content: `${greeting}
