@@ -215,6 +215,7 @@ export default function ConversationPage() {
       const response = await apiRequest("POST", "/api/conversation", {
         message: data.message,
         createJournalEntry: false, // Don't create a journal entry automatically
+        isFirstMessage: messages.filter(m => m.type === "flappy").length === 0, // Check if this is the first flappy message
       });
       
       if (!response.ok) {

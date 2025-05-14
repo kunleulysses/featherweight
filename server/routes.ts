@@ -835,7 +835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const { message, createJournalEntry = true } = req.body;
+      const { message, createJournalEntry = true, isFirstMessage = true } = req.body;
       
       if (!message) {
         return res.status(400).json({ message: "Message is required" });
@@ -850,7 +850,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: req.user.email,
           userId: req.user.id,
           firstName: req.user.firstName === null ? undefined : req.user.firstName,
-          lastName: req.user.lastName === null ? undefined : req.user.lastName
+          lastName: req.user.lastName === null ? undefined : req.user.lastName,
+          isFirstMessage: isFirstMessage
         }
       );
       
