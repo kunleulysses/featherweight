@@ -453,8 +453,8 @@ export default function ConversationPage() {
                     >
                       {!user?.isPremium && (
                         <div className="flex justify-end -mb-2">
-                          <div className="text-xs bg-amber-100 rounded-md p-1.5 text-amber-800 border border-amber-200 flex items-center">
-                            <Feather className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                          <div className="text-xs bg-blue-50 rounded-md p-1.5 text-blue-800 border border-blue-200 flex items-center">
+                            <Feather className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
                             <strong>{messageCount}/{MAX_FREE_MESSAGES}</strong> messages used <span className="mx-1">•</span> 
                             <span className="font-medium">Free tier limited to {MAX_FREE_MESSAGES} messages per conversation</span>
                           </div>
