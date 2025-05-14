@@ -142,6 +142,9 @@ export const twilioService = {
 
         const journalEntry = await storage.createJournalEntry(journalData);
         
+        // Process journal content for memories
+        await memoryService.processMessage(user.id, journalContent, 'journal_topic');
+        
         // Update the SMS message with the journal entry ID
         await storage.updateSmsMessage(savedMessage.id, {
           journalEntryId: journalEntry.id
@@ -179,8 +182,15 @@ export const twilioService = {
    */
   async respondToConversation(user: User, message: string): Promise<SmsMessage | null> {
     try {
-      // Generate a response using Flappy's AI personality
-      const responseContent = await generateFlappyContent('journalResponse', message);
+      // Process message for memories before responding
+      await memoryService.processMessage(user.id, message, 'sms');
+      
+      // Generate a response using Flappy's AI personality with memories
+      const responseContent = await generateFlappyContent('journalResponse', message, {
+        username: user.username,
+        email: user.email,
+        userId: user.id
+      });
       
       // Format for SMS - shorter than email
       const smsResponse = responseContent.content;

@@ -217,6 +217,62 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+  
+  async updateUserStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    try {
+      // Use raw SQL to update Stripe customer ID
+      const result = await pool.query(`
+        UPDATE users
+        SET 
+          stripe_customer_id = $1, 
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `, [stripeCustomerId, userId]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to update user Stripe customer ID");
+      }
+    } catch (error) {
+      console.error("Error updating user Stripe customer ID:", error);
+      throw error;
+    }
+  }
+  
+  async updateUserStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    try {
+      // Use raw SQL to update Stripe subscription ID
+      const result = await pool.query(`
+        UPDATE users
+        SET 
+          stripe_subscription_id = $1, 
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `, [stripeSubscriptionId, userId]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to update user Stripe subscription ID");
+      }
+    } catch (error) {
+      console.error("Error updating user Stripe subscription ID:", error);
+      throw error;
+    }
+  }
 
   async getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]> {
     // Build the query conditions
