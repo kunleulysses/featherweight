@@ -127,6 +127,8 @@ export const insertUserSchema = createInsertSchema(users)
   .extend({
     email: z.string().email({ message: "Please enter a valid email address" }),
     password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     phoneNumber: z.string().optional().refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val), {
       message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)"
     }),

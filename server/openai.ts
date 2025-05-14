@@ -35,7 +35,7 @@ export type FlappyContent = {
 export async function generateFlappyContent(
   contentType: FlappyContentType,
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number }
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string }
 ): Promise<FlappyContent> {
   // Retrieve relevant memories if userId is provided
   let memories: ConversationMemory[] = [];
@@ -126,9 +126,12 @@ export async function generateFlappyContent(
 function generatePrompt(
   contentType: FlappyContentType, 
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number },
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string },
   memories?: string
 ): string {
+  // Get the user's name for personalization, prioritizing firstName if available
+  const userName = userInfo?.firstName || userInfo?.username || '';
+  
   const basePrompt = `You are Flappy, a cheerful and wise pelican who loves the ocean and making friends. You communicate with a perfect blend of fun energy and helpful wisdom. Your tone is:
   
 1. Playful and enthusiastic - you use exclamation points, occasional bird puns, and a light-hearted approach
@@ -137,7 +140,7 @@ function generatePrompt(
 4. Practical and relatable - you connect life lessons to simple, everyday experiences
 5. Occasionally silly - you mention your pelican life, like catching fish or your beach adventures
 
-${userInfo ? `You are writing to ${userInfo.username} (email: ${userInfo.email}).` : ''}
+${userInfo ? `You are writing to ${userName} (email: ${userInfo.email}).` : ''}
 
 ${memories ? `
 ## Past Conversations and Memories
@@ -264,9 +267,11 @@ Format your response as JSON:
 function getFallbackContent(
   contentType: FlappyContentType, 
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number }
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string }
 ): FlappyContent {
-  const userGreeting = userInfo ? `Hey ${userInfo.username}!` : "Hey there!";
+  // Get the user's name for personalization, prioritizing firstName if available
+  const userName = userInfo?.firstName || userInfo?.username || '';
+  const userGreeting = userInfo ? `Hey ${userName}!` : "Hey there!";
   
   // Get random greeting and signature from the constants
   const greeting = getRandomItem(FLAPPY_PERSONALITY.SPEECH_PATTERNS.GREETING);
@@ -279,7 +284,7 @@ function getFallbackContent(
       if (context === 'welcome') {
         return {
           subject: "🎉 Welcome to Featherweight - Your Journaling Journey Begins!",
-          content: `${greeting} ${userInfo ? userInfo.username : 'new friend'}!
+          content: `${greeting} ${userName || 'new friend'}!
 
 I'm Flappy, your new journaling companion! *flaps wings excitedly* I'm an ancient cosmic pelican with a passion for helping humans reflect and grow through journaling. I've been soaring through the skies and diving into oceans for millennia, gathering wisdom to share with special folks like you!
 

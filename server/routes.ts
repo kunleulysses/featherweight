@@ -834,7 +834,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           username: req.user.username,
           email: req.user.email,
-          userId: req.user.id
+          userId: req.user.id,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName
         }
       );
       
