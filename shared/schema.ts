@@ -115,7 +115,7 @@ export type UserPreferences = {
 
 export type PaymentDetails = {
   lastFour: string;
-  cardBrand: string;
+  cardBrand?: string;
   billingDate: number;
   expiryMonth: number;
   expiryYear: number;

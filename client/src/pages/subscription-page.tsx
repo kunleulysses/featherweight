@@ -142,6 +142,13 @@ export default function SubscriptionPage() {
   };
   
   const handleStartSubscription = () => {
+    if (user?.isPremium) {
+      toast({
+        title: "Already subscribed",
+        description: "You're already on the Premium plan.",
+      });
+      return;
+    }
     setShowPaymentForm(true);
   };
 

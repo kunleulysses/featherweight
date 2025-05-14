@@ -4,7 +4,7 @@ import {
   type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
   type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
   type BillingTransaction, type InsertBillingTransaction,
-  type ConversationMemory, type InsertConversationMemory
+  type ConversationMemory, type InsertConversationMemory, type PaymentDetails
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, or, inArray } from "drizzle-orm";
@@ -270,6 +270,34 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error("Error updating user Stripe subscription ID:", error);
+      throw error;
+    }
+  }
+  
+  async updateUserPaymentDetails(userId: number, paymentDetails: PaymentDetails): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    try {
+      // Use raw SQL to update payment details
+      const result = await pool.query(`
+        UPDATE users
+        SET 
+          payment_details = $1, 
+          updated_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `, [paymentDetails, userId]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error("Failed to update user payment details");
+      }
+    } catch (error) {
+      console.error("Error updating user payment details:", error);
       throw error;
     }
   }
