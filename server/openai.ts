@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { FLAPPY_PERSONALITY } from "../client/src/lib/flappy";
 import { memoryService } from "./memory-service";
+import { storage } from "./storage";
 import { ConversationMemory } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -48,9 +49,21 @@ export async function generateFlappyContent(
     }
   }
   
+  // Format memories for the prompt
   const memoryContext = memories.length > 0 
     ? memoryService.formatMemoriesForPrompt(memories) 
     : '';
+    
+  // Mark these memories as discussed to increase frequency
+  if (memories.length > 0 && userInfo?.userId) {
+    // Update each memory's frequency in the background
+    // No need to await as this shouldn't block the main response
+    for (const memory of memories) {
+      void storage.incrementConversationMemoryFrequency(memory.id).catch((err: Error) => 
+        console.error(`Failed to increment memory frequency for memory ${memory.id}:`, err.message)
+      );
+    }
+  }
   
   const prompt = generatePrompt(contentType, context, userInfo, memoryContext);
   
