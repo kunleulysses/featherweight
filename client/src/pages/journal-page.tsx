@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/container";
 import { JournalList } from "@/components/journal/journal-list";
 import { JournalSidebar } from "@/components/journal/journal-sidebar";
 import { JournalForm } from "@/components/journal/journal-form";
+import { WelcomeDialog } from "@/components/welcome-dialog";
 import { Button } from "@/components/ui/button";
 import { Helmet } from 'react-helmet';
 import { PlusCircle } from "lucide-react";
@@ -34,6 +35,9 @@ export default function JournalPage() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-grow py-8 bg-background">
+          {/* Welcome Dialog for new users */}
+          <WelcomeDialog />
+          
           <Container>
             <div className="mb-8 flex justify-between items-center">
               <div>

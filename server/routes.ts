@@ -598,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send SMS to each premium user
       const results = [];
       for (const user of users) {
-        if (user.preferences?.isPremium && user.preferences?.phoneNumber) {
+        if (user.isPremium && user.preferences?.phoneNumber) {
           try {
             const message = await twilioService.sendDailyInspirationSms(user);
             if (message) {
