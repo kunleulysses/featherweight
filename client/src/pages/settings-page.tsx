@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Profile form
   const profileForm = useForm<ProfileFormValues>({
@@ -275,7 +276,7 @@ export default function SettingsPage() {
               </p>
             </div>
             
-            <Tabs defaultValue="profile" className="max-w-3xl mx-auto">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="max-w-3xl mx-auto">
               <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger value="profile" className="font-quicksand">Profile</TabsTrigger>
                 <TabsTrigger value="email" className="font-quicksand">Email Preferences</TabsTrigger>
