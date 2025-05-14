@@ -132,52 +132,30 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // First check if the firstName and lastName columns exist
-      try {
-        await pool.query(`SELECT firstName, lastName FROM users LIMIT 1`);
-      } catch (error) {
-        // If columns don't exist, just update username and email
-        const result = await pool.query(`
-          UPDATE users 
-          SET 
-            username = $1, 
-            email = $2,
-            updated_at = NOW()
-          WHERE id = $3
-          RETURNING *
-        `, [
-          profileData.username,
-          profileData.email,
-          userId
-        ]);
-        
-        // Create a modified user object that includes the firstName and lastName
-        // even though they're not in the database yet
-        const updatedUser = {
-          ...result.rows[0],
-          firstName: profileData.firstName || null,
-          lastName: profileData.lastName || null
-        };
-        
-        return updatedUser as User;
-      }
+      // Get current preferences
+      const currentPreferences = user.preferences || {};
       
-      // If we reach here, the columns exist, so update everything
+      // Update preferences to include firstName and lastName
+      const updatedPreferences = {
+        ...currentPreferences,
+        firstName: profileData.firstName || currentPreferences.firstName || null,
+        lastName: profileData.lastName || currentPreferences.lastName || null
+      };
+      
+      // Update user with new preferences
       const result = await pool.query(`
         UPDATE users 
         SET 
           username = $1, 
-          email = $2, 
-          firstName = $3, 
-          lastName = $4,
+          email = $2,
+          preferences = $3,
           updated_at = NOW()
-        WHERE id = $5
+        WHERE id = $4
         RETURNING *
       `, [
         profileData.username,
         profileData.email,
-        profileData.firstName || null,
-        profileData.lastName || null,
+        JSON.stringify(updatedPreferences),
         userId
       ]);
       

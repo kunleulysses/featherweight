@@ -58,8 +58,8 @@ export default function SettingsPage() {
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
+      firstName: user?.preferences?.firstName || "",
+      lastName: user?.preferences?.lastName || "",
       username: user?.username || "",
       email: user?.email || "",
       phoneNumber: user?.preferences?.phoneNumber || "",
@@ -71,8 +71,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       profileForm.reset({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
+        firstName: user.preferences?.firstName || "",
+        lastName: user.preferences?.lastName || "",
         username: user.username || "",
         email: user.email || "",
         phoneNumber: user.preferences?.phoneNumber || "",

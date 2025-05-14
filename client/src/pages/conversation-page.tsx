@@ -117,7 +117,7 @@ export default function ConversationPage() {
       if (window.confirm("Starting a new conversation will discard the current one. Continue?")) {
         setMessages([{
           id: "welcome",
-          content: `Hello ${user?.firstName || user?.username || "there"}! I'm Flappy, your journaling companion. How are you feeling today? Feel free to share anything on your mind - I'm here to listen and help you reflect.`,
+          content: `Hello ${user?.preferences?.firstName || user?.username || "there"}! I'm Flappy, your journaling companion. How are you feeling today? Feel free to share anything on your mind - I'm here to listen and help you reflect.`,
           type: "flappy",
           timestamp: new Date(),
         }]);
