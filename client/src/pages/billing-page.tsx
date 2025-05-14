@@ -220,8 +220,8 @@ export default function BillingPage() {
                     
                     {/* Ad-Free Experience */}
                     <div className="col-span-1">
-                      <p className="font-medium">Ad-Free Experience</p>
-                      <p className="text-sm text-muted-foreground">No advertisements</p>
+                      <p className="font-medium font-bold">100% Ad-Free Experience</p>
+                      <p className="text-sm text-muted-foreground">No advertisements or sponsored content, ever</p>
                     </div>
                     <div className="col-span-1 text-center text-muted-foreground">
                       ✕

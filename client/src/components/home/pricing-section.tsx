@@ -94,7 +94,7 @@ export function PricingSection() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={user ? "/settings" : "/auth"}>
+                  <Link href={user ? (plan.highlight ? "/billing" : "/settings") : "/auth"}>
                     <Button 
                       variant={plan.buttonVariant} 
                       className="w-full font-quicksand font-medium"
