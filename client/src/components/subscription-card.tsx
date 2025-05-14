@@ -44,10 +44,8 @@ export function SubscriptionCard() {
   });
 
   const handleSubscribe = () => {
-    setIsSubscribing(true);
-    subscribeMutation.mutate(undefined, {
-      onSettled: () => setIsSubscribing(false)
-    });
+    // Redirect to the billing page instead of directly subscribing
+    window.location.href = '/billing';
   };
 
   // If the user is already premium, show a different message

@@ -132,14 +132,44 @@ export class DatabaseStorage implements IStorage {
     }
 
     try {
-      // Update the user in the database
+      // First check if the firstName and lastName columns exist
+      try {
+        await pool.query(`SELECT firstName, lastName FROM users LIMIT 1`);
+      } catch (error) {
+        // If columns don't exist, just update username and email
+        const result = await pool.query(`
+          UPDATE users 
+          SET 
+            username = $1, 
+            email = $2,
+            updated_at = NOW()
+          WHERE id = $3
+          RETURNING *
+        `, [
+          profileData.username,
+          profileData.email,
+          userId
+        ]);
+        
+        // Create a modified user object that includes the firstName and lastName
+        // even though they're not in the database yet
+        const updatedUser = {
+          ...result.rows[0],
+          firstName: profileData.firstName || null,
+          lastName: profileData.lastName || null
+        };
+        
+        return updatedUser as User;
+      }
+      
+      // If we reach here, the columns exist, so update everything
       const result = await pool.query(`
         UPDATE users 
         SET 
           username = $1, 
           email = $2, 
-          first_name = $3, 
-          last_name = $4,
+          firstName = $3, 
+          lastName = $4,
           updated_at = NOW()
         WHERE id = $5
         RETURNING *

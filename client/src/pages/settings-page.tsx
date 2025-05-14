@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -66,6 +66,20 @@ export default function SettingsPage() {
       bio: "",
     },
   });
+  
+  // Reset form values when user data changes
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        username: user.username || "",
+        email: user.email || "",
+        phoneNumber: user.preferences?.phoneNumber || "",
+        bio: "",
+      });
+    }
+  }, [user, profileForm]);
 
   // Email preferences form
   const emailPreferencesForm = useForm<EmailPreferencesValues>({
@@ -77,6 +91,18 @@ export default function SettingsPage() {
       receiveSms: user?.preferences?.receiveSms || false,
     },
   });
+  
+  // Reset email preferences form values when user data changes
+  useEffect(() => {
+    if (user?.preferences) {
+      emailPreferencesForm.reset({
+        emailFrequency: user.preferences.emailFrequency || "daily",
+        marketingEmails: user.preferences.marketingEmails || false,
+        receiveInsights: user.preferences.receiveInsights || true,
+        receiveSms: user.preferences.receiveSms || false,
+      });
+    }
+  }, [user, emailPreferencesForm]);
 
   function onProfileSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
