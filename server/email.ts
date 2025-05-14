@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Email from address
-const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@featherweight.io";
+const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@featherweight.world";
 const FROM_NAME = "Flappy from Featherweight";
 
 // Export email service functions

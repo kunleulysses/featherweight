@@ -515,7 +515,7 @@ export default function ConversationPage() {
               <h3 className="font-medium mb-2">Other ways to chat with Flappy:</h3>
               <ul className="list-disc ml-5 space-y-2">
                 <li>
-                  Email <span className="font-medium">flappy@featherweight.app</span> (when deployed to production)
+                  Email <span className="font-medium">flappy@featherweight.world</span> (when deployed to production)
                 </li>
                 <li>Reply to any daily inspiration email from Flappy</li>
                 {user?.isPremium && (

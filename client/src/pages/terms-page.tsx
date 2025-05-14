@@ -131,8 +131,8 @@ export default function TermsPage() {
                   If you have any questions about these Terms & Conditions, please contact us at:
                 </p>
                 <p className="mt-2">
-                  <a href="mailto:legal@featherweight.app" className="text-primary hover:underline">
-                    legal@featherweight.app
+                  <a href="mailto:legal@featherweight.world" className="text-primary hover:underline">
+                    legal@featherweight.world
                   </a>
                 </p>
               </CardContent>
