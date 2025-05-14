@@ -103,7 +103,7 @@ export const twilioService = {
         // If no user found, send a message indicating the service is unavailable
         await safeSendMessage(
           from, 
-          "We couldn't find your account. Please sign up for Featherweight to use this service."
+          "We couldn't find your account. Please sign up at featherweight.world to use this service with Flappy."
         );
         return;
       }
@@ -112,7 +112,7 @@ export const twilioService = {
       if (!user.isPremium) {
         await safeSendMessage(
           from,
-          "This feature requires a premium subscription. Please upgrade your account on our website."
+          "This feature requires a premium subscription. Please upgrade your account at featherweight.world to enable SMS journaling."
         );
         return;
       }
