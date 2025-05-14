@@ -8,6 +8,8 @@ import { insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessage
 import { emailService } from "./email";
 import { twilioService } from "./twilio";
 import { journalImageUpload, getFileUrl } from "./file-upload";
+import { generateFlappyContent } from "./openai";
+import { memoryService } from "./memory-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
