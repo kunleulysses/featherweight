@@ -1,9 +1,10 @@
 import { 
-  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions,
+  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, conversationMemories,
   type User, type InsertUser, type JournalEntry, type InsertJournalEntry, 
   type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
   type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
-  type BillingTransaction, type InsertBillingTransaction 
+  type BillingTransaction, type InsertBillingTransaction,
+  type ConversationMemory, type InsertConversationMemory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, or, inArray } from "drizzle-orm";
@@ -431,5 +432,76 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedMessage;
+  }
+
+  // Conversation Memory methods
+  async getConversationMemories(userId: number, type?: string): Promise<ConversationMemory[]> {
+    let conditions = [eq(conversationMemories.userId, userId)];
+    
+    if (type) {
+      conditions.push(eq(conversationMemories.type, type));
+    }
+    
+    const memories = await db.select()
+      .from(conversationMemories)
+      .where(and(...conditions))
+      .orderBy(conversationMemories.lastDiscussed);
+    
+    return memories.reverse(); // Most recent first
+  }
+
+  async getConversationMemory(id: number): Promise<ConversationMemory | undefined> {
+    const [memory] = await db.select()
+      .from(conversationMemories)
+      .where(eq(conversationMemories.id, id));
+    
+    return memory;
+  }
+
+  async createConversationMemory(memory: InsertConversationMemory): Promise<ConversationMemory> {
+    const [newMemory] = await db.insert(conversationMemories)
+      .values(memory)
+      .returning();
+    
+    return newMemory;
+  }
+
+  async updateConversationMemory(id: number, updates: Partial<InsertConversationMemory>): Promise<ConversationMemory | undefined> {
+    const [updatedMemory] = await db.update(conversationMemories)
+      .set({
+        ...updates,
+        lastDiscussed: new Date()
+      })
+      .where(eq(conversationMemories.id, id))
+      .returning();
+    
+    return updatedMemory;
+  }
+
+  async incrementConversationMemoryFrequency(id: number): Promise<ConversationMemory | undefined> {
+    const memory = await this.getConversationMemory(id);
+    if (!memory) return undefined;
+    
+    const [updatedMemory] = await db.update(conversationMemories)
+      .set({
+        frequency: memory.frequency + 1,
+        lastDiscussed: new Date()
+      })
+      .where(eq(conversationMemories.id, id))
+      .returning();
+    
+    return updatedMemory;
+  }
+
+  async markConversationMemoryResolved(id: number, isResolved: boolean): Promise<ConversationMemory | undefined> {
+    const [updatedMemory] = await db.update(conversationMemories)
+      .set({
+        isResolved,
+        lastDiscussed: new Date()
+      })
+      .where(eq(conversationMemories.id, id))
+      .returning();
+    
+    return updatedMemory;
   }
 }

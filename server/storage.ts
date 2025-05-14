@@ -1,9 +1,10 @@
 import { 
-  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, 
+  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, conversationMemories,
   type User, type InsertUser, type JournalEntry, type InsertJournalEntry, 
   type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
   type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
-  type BillingTransaction, type InsertBillingTransaction 
+  type BillingTransaction, type InsertBillingTransaction,
+  type ConversationMemory, type InsertConversationMemory
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
@@ -55,6 +56,14 @@ export interface IStorage {
   getBillingTransactions(userId: number): Promise<BillingTransaction[]>;
   getBillingTransaction(id: number): Promise<BillingTransaction | undefined>;
   createBillingTransaction(transaction: InsertBillingTransaction): Promise<BillingTransaction>;
+  
+  // Conversation memory operations
+  getConversationMemories(userId: number, type?: string): Promise<ConversationMemory[]>;
+  getConversationMemory(id: number): Promise<ConversationMemory | undefined>;
+  createConversationMemory(memory: InsertConversationMemory): Promise<ConversationMemory>;
+  updateConversationMemory(id: number, updates: Partial<InsertConversationMemory>): Promise<ConversationMemory | undefined>;
+  incrementConversationMemoryFrequency(id: number): Promise<ConversationMemory | undefined>;
+  markConversationMemoryResolved(id: number, isResolved: boolean): Promise<ConversationMemory | undefined>;
   
   // Session store
   sessionStore: any; // Using any type to avoid SessionStore type issues

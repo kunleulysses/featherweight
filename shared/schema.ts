@@ -81,6 +81,23 @@ export const smsMessages = pgTable("sms_messages", {
   twilioSid: text("twilio_sid"), // Twilio message SID for tracking
   isJournalEntry: boolean("is_journal_entry").default(false), // Is this message a journal entry
   journalEntryId: integer("journal_entry_id"), // Reference to created journal entry if applicable
+  conversationId: text("conversation_id"), // Unique identifier for conversation thread
+});
+
+// Conversation memory table to track interaction history
+export const conversationMemories = pgTable("conversation_memories", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type").notNull(), // "email", "sms", "journal_topic"
+  topic: text("topic"), // Extracted topic or theme
+  sentiment: text("sentiment"), // Extracted sentiment
+  importance: integer("importance").default(1), // 1-5 scale of importance
+  lastDiscussed: timestamp("last_discussed").defaultNow().notNull(),
+  frequency: integer("frequency").default(1), // How many times this has been discussed
+  firstMentionedAt: timestamp("first_mentioned_at").defaultNow().notNull(),
+  context: text("context").notNull(), // Brief context about this topic
+  relatedEntryIds: json("related_entry_ids").$type<number[]>(), // IDs of related journal entries
+  isResolved: boolean("is_resolved").default(false), // Whether this topic has been resolved
 });
 
 // Types for JSON fields
@@ -135,6 +152,20 @@ export const insertSmsMessageSchema = createInsertSchema(smsMessages)
     content: z.string().min(1, { message: "Message content cannot be empty" }),
     direction: z.enum(["inbound", "outbound"]),
     isJournalEntry: z.boolean().default(false).optional(),
+    conversationId: z.string().optional(),
+  });
+
+export const insertConversationMemorySchema = createInsertSchema(conversationMemories)
+  .omit({ id: true, lastDiscussed: true, firstMentionedAt: true })
+  .extend({
+    type: z.enum(["email", "sms", "journal_topic"]),
+    topic: z.string().min(1, { message: "Topic cannot be empty" }),
+    sentiment: z.string().optional(),
+    importance: z.number().int().min(1).max(5).default(1),
+    frequency: z.number().int().min(1).default(1),
+    context: z.string().min(1, { message: "Context cannot be empty" }),
+    relatedEntryIds: z.array(z.number()).optional(),
+    isResolved: z.boolean().default(false).optional(),
   });
 
 export const insertPaymentMethodSchema = createInsertSchema(paymentMethods)
@@ -172,9 +203,11 @@ export type Email = typeof emails.$inferSelect;
 export type SmsMessage = typeof smsMessages.$inferSelect;
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type BillingTransaction = typeof billingTransactions.$inferSelect;
+export type ConversationMemory = typeof conversationMemories.$inferSelect;
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
 export type InsertSmsMessage = z.infer<typeof insertSmsMessageSchema>;
 export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
 export type InsertBillingTransaction = z.infer<typeof insertBillingTransactionSchema>;
+export type InsertConversationMemory = z.infer<typeof insertConversationMemorySchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
