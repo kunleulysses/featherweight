@@ -57,7 +57,7 @@ export function TestimonialsSection() {
                   )}
                 </div>
               </div>
-              <p className="text-gray-200 italic mb-4">
+              <p className="text-gray-600 italic mb-4">
                 "{testimonial.text}"
               </p>
               <div className="flex items-center">
@@ -65,8 +65,8 @@ export function TestimonialsSection() {
                   {testimonial.initials}
                 </div>
                 <div>
-                  <h4 className="font-quicksand font-medium text-foreground">{testimonial.author}</h4>
-                  <p className="text-sm text-foreground/60">{testimonial.duration}</p>
+                  <h4 className="font-quicksand font-medium text-gray-800">{testimonial.author}</h4>
+                  <p className="text-sm text-gray-500">{testimonial.duration}</p>
                 </div>
               </div>
             </div>

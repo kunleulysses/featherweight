@@ -18,10 +18,10 @@ export function EmailPreviewSection() {
     <section className="py-16 bg-white">
       <Container>
         <div className="text-center mb-16">
-          <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
+          <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-gray-900 mb-4">
             Daily Doses of Wisdom & Joy
           </h2>
-          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Here's a peek at the kind of emails you'll receive from Flappy.
             {!user?.isPremium && <span className="block mt-2 text-sm text-primary">Free tier includes ads</span>}
           </p>
