@@ -9,7 +9,7 @@ export function FeaturesSection() {
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
             How Featherweight Works
           </h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-900 max-w-2xl mx-auto">
             Simplify your wellness journey with our unique approach to journaling and mindfulness.
           </p>
         </div>
@@ -23,7 +23,7 @@ export function FeaturesSection() {
             <h3 className="font-quicksand font-semibold text-xl text-foreground mb-3">
               Daily Inspirations
             </h3>
-            <p className="text-gray-700">
+            <p className="text-gray-900">
               Receive thoughtful messages from Flappy each morning to start your day with positivity and purpose.
             </p>
           </div>
@@ -36,7 +36,7 @@ export function FeaturesSection() {
             <h3 className="font-quicksand font-semibold text-xl text-foreground mb-3">
               Email Journaling
             </h3>
-            <p className="text-gray-700">
+            <p className="text-gray-900">
               Simply reply to Flappy's emails to create journal entries. No apps to open, just your regular inbox.
             </p>
           </div>
@@ -49,7 +49,7 @@ export function FeaturesSection() {
             <h3 className="font-quicksand font-semibold text-xl text-foreground mb-3">
               Journal Archive
             </h3>
-            <p className="text-gray-700">
+            <p className="text-gray-900">
               Access your complete journal history in our beautifully designed web interface, organized and searchable.
             </p>
           </div>
