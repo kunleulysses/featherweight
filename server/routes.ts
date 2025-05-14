@@ -299,7 +299,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username, 
         email, 
         firstName, 
-        lastName
+        lastName,
+        bio
       });
       
       // Filter out password from the response

@@ -125,7 +125,8 @@ export class DatabaseStorage implements IStorage {
     username: string; 
     email: string; 
     firstName?: string; 
-    lastName?: string 
+    lastName?: string;
+    bio?: string
   }): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) {
