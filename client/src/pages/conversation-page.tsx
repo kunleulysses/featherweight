@@ -90,6 +90,13 @@ export default function ConversationPage() {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
+  
+  // Reset message constraints when user upgrades to premium
+  useEffect(() => {
+    if (user?.isPremium && showUpgradePrompt) {
+      setShowUpgradePrompt(false);
+    }
+  }, [user?.isPremium, showUpgradePrompt]);
 
   // Start a new conversation
   const startNewConversation = () => {
@@ -116,6 +123,8 @@ export default function ConversationPage() {
         }]);
         setIsActive(true);
         setConversationTitle("");
+        setMessageCount(0);
+        setShowUpgradePrompt(false);
       }
     }
   };
@@ -412,12 +421,41 @@ export default function ConversationPage() {
                 </ScrollArea>
               </CardContent>
               <CardFooter>
+                {showUpgradePrompt && !user?.isPremium && isActive && (
+                  <div className="w-full mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="font-medium text-amber-800 mb-1">Message Limit Reached</h4>
+                        <p className="text-sm text-amber-700">
+                          Free users are limited to {MAX_FREE_MESSAGES} messages per conversation. 
+                          Upgrade to Premium for unlimited messages!
+                        </p>
+                      </div>
+                      <Button 
+                        className="shrink-0"
+                        onClick={() => window.location.href = '/subscription-page'}
+                      >
+                        <Feather className="mr-2 h-4 w-4" />
+                        Upgrade to Premium
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
                 {isActive ? (
                   <Form {...form}>
                     <form
                       onSubmit={form.handleSubmit(onSubmit)}
                       className="w-full space-y-4"
                     >
+                      {!user?.isPremium && (
+                        <div className="flex justify-end -mb-2">
+                          <div className="text-xs text-gray-500 flex items-center">
+                            <Feather className="h-3 w-3 mr-1 text-primary" />
+                            {messageCount}/{MAX_FREE_MESSAGES} messages used
+                          </div>
+                        </div>
+                      )}
                       <FormField
                         control={form.control}
                         name="message"
