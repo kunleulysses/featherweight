@@ -270,6 +270,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // =========== User Preferences Routes ===========
   
+  // Update user profile information
+  app.patch("/api/user/profile", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { username, email, firstName, lastName } = req.body;
+      
+      // Check if the username or email are already taken by another user
+      if (username !== req.user.username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== req.user.id) {
+          return res.status(400).json({ message: "Username is already taken" });
+        }
+      }
+      
+      if (email !== req.user.email) {
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser && existingUser.id !== req.user.id) {
+          return res.status(400).json({ message: "Email is already taken" });
+        }
+      }
+      
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(req.user.id, {
+        username, 
+        email, 
+        firstName, 
+        lastName
+      });
+      
+      // Filter out password from the response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+  
   // Update user preferences
   app.patch("/api/user/preferences", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {

@@ -120,6 +120,48 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async updateUserProfile(userId: number, profileData: { 
+    username: string; 
+    email: string; 
+    firstName?: string; 
+    lastName?: string 
+  }): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+
+    try {
+      // Update the user in the database
+      const result = await pool.query(`
+        UPDATE users 
+        SET 
+          username = $1, 
+          email = $2, 
+          first_name = $3, 
+          last_name = $4,
+          updated_at = NOW()
+        WHERE id = $5
+        RETURNING *
+      `, [
+        profileData.username,
+        profileData.email,
+        profileData.firstName || null,
+        profileData.lastName || null,
+        userId
+      ]);
+      
+      if (result.rows.length > 0) {
+        return result.rows[0] as User;
+      } else {
+        throw new Error(`Failed to update user with ID ${userId}`);
+      }
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      throw error;
+    }
+  }
+
   async updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) {
