@@ -35,7 +35,7 @@ export type FlappyContent = {
 export async function generateFlappyContent(
   contentType: FlappyContentType,
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string }
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string; isFirstMessage?: boolean }
 ): Promise<FlappyContent> {
   // Retrieve relevant memories if userId is provided
   let memories: ConversationMemory[] = [];
@@ -126,11 +126,12 @@ export async function generateFlappyContent(
 function generatePrompt(
   contentType: FlappyContentType, 
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string },
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string; isFirstMessage?: boolean },
   memories?: string
 ): string {
   // Get the user's name for personalization, prioritizing firstName if available
   const userName = userInfo?.firstName || userInfo?.username || '';
+  const isFirstMessage = userInfo?.isFirstMessage === undefined ? true : userInfo.isFirstMessage;
   
   const basePrompt = `You are Flappy, a cheerful and wise pelican who loves the ocean and making friends. You communicate with a perfect blend of fun energy and helpful wisdom. Your tone is:
   
@@ -213,7 +214,7 @@ Respond to this journal entry from a user with the warmth of a good friend:
 For the 'subject' field, create a friendly yet organized subject line that refers to their journal entry with an appropriate emoji and includes a date format.
 
 For the 'content' field, include:
-1. A warm, personal greeting with the user's name
+1. ${isFirstMessage ? `A warm, personal greeting using the name "${userName}"` : `Skip any greeting and do NOT use "${userName}" in your response`}
 2. A clear acknowledgment that shows you've understood the key points of their entry
 3. A brief, relevant response that validates their feelings or experience
 4. A structured insight section that neatly categorizes your observations about:
@@ -267,11 +268,12 @@ Format your response as JSON:
 function getFallbackContent(
   contentType: FlappyContentType, 
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string }
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string; isFirstMessage?: boolean }
 ): FlappyContent {
   // Get the user's name for personalization, prioritizing firstName if available
   const userName = userInfo?.firstName || userInfo?.username || '';
-  const userGreeting = userInfo ? `Hey ${userName}!` : "Hey there!";
+  const isFirstMessage = userInfo?.isFirstMessage === undefined ? true : userInfo.isFirstMessage;
+  const userGreeting = (userInfo && isFirstMessage) ? `Hey ${userName}!` : "Hey there!";
   
   // Get random greeting and signature from the constants
   const greeting = getRandomItem(FLAPPY_PERSONALITY.SPEECH_PATTERNS.GREETING);
@@ -325,9 +327,9 @@ ${signature}`
     case 'journalResponse':
       return {
         subject: "💭 Thanks for sharing with me!",
-        content: `${greeting}
+        content: `${isFirstMessage ? greeting : ""}
 
-Thanks for sharing your thoughts! I was just taking a break from my beach patrol (very important pelican business) to read your message.
+${isFirstMessage ? "Thanks for sharing your thoughts!" : "I appreciate you sharing more of your thoughts!"} I was just taking a break from my beach patrol (very important pelican business) to read your message.
 
 I really like how you're thinking about this. It reminds me of yesterday when I was trying to decide which rock to nap on - sometimes we overthink the small stuff when our instincts already know what feels right!
 
