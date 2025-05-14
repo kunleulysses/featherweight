@@ -76,10 +76,9 @@ export default function SettingsPage() {
     let profileChanged = false;
     let updates = 0;
     
-    // Check if profile information has changed
+    // Check if profile information has changed - username or email
     if (data.username !== user?.username || 
-        data.email !== user?.email || 
-        data.bio !== user?.preferences?.bio) {
+        data.email !== user?.email) {
       profileChanged = true;
     }
     
@@ -101,15 +100,25 @@ export default function SettingsPage() {
           
           // Only show toast if this is the only update or the last one to complete
           if (updates === 0) {
-            if (phoneNumberChanged) {
+            if (phoneNumberChanged && profileChanged) {
+              toast({
+                title: "Settings updated",
+                description: "Your profile information and phone number have been updated successfully.",
+              });
+            } else if (phoneNumberChanged) {
               toast({
                 title: "Phone number updated",
                 description: "Your phone number has been updated successfully.",
               });
-            } else {
+            } else if (profileChanged) {
               toast({
                 title: "Profile updated",
                 description: "Your profile information has been updated successfully.",
+              });
+            } else {
+              toast({
+                title: "No changes detected",
+                description: "No changes were made to your profile.",
               });
             }
             setIsSubmitting(false);

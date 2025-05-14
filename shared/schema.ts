@@ -188,6 +188,7 @@ export const updateUserPreferencesSchema = z.object({
   emailFrequency: z.enum(["daily", "weekdays", "weekends", "weekly"]),
   marketingEmails: z.boolean().default(false),
   receiveInsights: z.boolean().default(true),
+  bio: z.string().max(160).optional(),
   theme: z.enum(["light", "dark", "system"]).optional(),
   receiveSms: z.boolean().default(false).optional(),
   phoneNumber: z.string().optional().refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val), {
