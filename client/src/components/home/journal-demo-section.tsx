@@ -60,8 +60,8 @@ export function JournalDemoSection() {
                 }`}>
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h3 className="font-quicksand font-semibold text-lg text-foreground">{entry.title}</h3>
-                      <p className="text-sm text-foreground/60">{entry.date}</p>
+                      <h3 className="font-quicksand font-semibold text-lg text-gray-900">{entry.title}</h3>
+                      <p className="text-sm text-gray-500">{entry.date}</p>
                     </div>
                     <div className="text-xl">{entry.mood === 'happy' ? '😊' : entry.mood === 'neutral' ? '😐' : '😌'}</div>
                   </div>
@@ -91,10 +91,10 @@ export function JournalDemoSection() {
                       ))}
                     </div>
                     <div className="flex space-x-2">
-                      <button className="text-foreground/50 hover:text-primary transition-colors">
+                      <button className="text-gray-500 hover:text-primary transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                       </button>
-                      <button className="text-foreground/50 hover:text-primary transition-colors">
+                      <button className="text-gray-500 hover:text-primary transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                       </button>
                     </div>
