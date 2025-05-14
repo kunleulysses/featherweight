@@ -66,6 +66,9 @@ export default function ConversationPage() {
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [conversationTitle, setConversationTitle] = useState("");
+  const [messageCount, setMessageCount] = useState(0);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const MAX_FREE_MESSAGES = 5; // Maximum messages for free tier users
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Initialize the form
@@ -100,6 +103,8 @@ export default function ConversationPage() {
       }]);
       setIsActive(true);
       setConversationTitle("");
+      setMessageCount(0);
+      setShowUpgradePrompt(false);
     } else {
       // Confirm before discarding the current conversation
       if (window.confirm("Starting a new conversation will discard the current one. Continue?")) {
@@ -182,6 +187,17 @@ export default function ConversationPage() {
   async function onSubmit(data: MessageFormValues) {
     if (isSubmitting || !isActive) return;
     
+    // Check message limit for free users
+    if (!user?.isPremium && messageCount >= MAX_FREE_MESSAGES) {
+      setShowUpgradePrompt(true);
+      toast({
+        title: "Message Limit Reached",
+        description: `Free users are limited to ${MAX_FREE_MESSAGES} messages per conversation. Upgrade to Premium for unlimited messages!`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     // Add user message to the conversation
@@ -193,6 +209,9 @@ export default function ConversationPage() {
     };
     
     setMessages((prev) => [...prev, userMessage]);
+    
+    // Increment message count
+    setMessageCount(prevCount => prevCount + 1);
     
     // Reset the form
     form.reset();
