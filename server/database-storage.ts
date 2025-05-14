@@ -273,6 +273,131 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+  
+  // Payment Methods
+  async getPaymentMethods(userId: number): Promise<PaymentMethod[]> {
+    try {
+      const methods = await db.select()
+        .from(paymentMethods)
+        .where(eq(paymentMethods.userId, userId));
+      
+      return methods;
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentMethod(id: number): Promise<PaymentMethod | undefined> {
+    try {
+      const [method] = await db.select()
+        .from(paymentMethods)
+        .where(eq(paymentMethods.id, id));
+      
+      return method;
+    } catch (error) {
+      console.error('Error fetching payment method:', error);
+      throw error;
+    }
+  }
+
+  async createPaymentMethod(method: InsertPaymentMethod): Promise<PaymentMethod> {
+    try {
+      const [paymentMethod] = await db.insert(paymentMethods)
+        .values(method)
+        .returning();
+      
+      return paymentMethod;
+    } catch (error) {
+      console.error('Error creating payment method:', error);
+      throw error;
+    }
+  }
+
+  async updatePaymentMethodDefault(id: number, isDefault: boolean): Promise<PaymentMethod | undefined> {
+    try {
+      // First get the payment method to check user ID
+      const method = await this.getPaymentMethod(id);
+      if (!method) {
+        return undefined;
+      }
+      
+      // If setting as default, unset any existing default methods for this user
+      if (isDefault) {
+        await db.update(paymentMethods)
+          .set({ isDefault: false })
+          .where(and(
+            eq(paymentMethods.userId, method.userId),
+            eq(paymentMethods.isDefault, true)
+          ));
+      }
+      
+      // Now update the specific payment method
+      const [updatedMethod] = await db.update(paymentMethods)
+        .set({ isDefault })
+        .where(eq(paymentMethods.id, id))
+        .returning();
+      
+      return updatedMethod;
+    } catch (error) {
+      console.error('Error updating payment method default status:', error);
+      throw error;
+    }
+  }
+
+  async deletePaymentMethod(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(paymentMethods)
+        .where(eq(paymentMethods.id, id))
+        .returning({ id: paymentMethods.id });
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
+      throw error;
+    }
+  }
+  
+  // Billing Transactions
+  async getBillingTransactions(userId: number): Promise<BillingTransaction[]> {
+    try {
+      const transactions = await db.select()
+        .from(billingTransactions)
+        .where(eq(billingTransactions.userId, userId))
+        .orderBy(billingTransactions.createdAt);
+      
+      return transactions.reverse(); // Most recent first
+    } catch (error) {
+      console.error('Error fetching billing transactions:', error);
+      throw error;
+    }
+  }
+
+  async getBillingTransaction(id: number): Promise<BillingTransaction | undefined> {
+    try {
+      const [transaction] = await db.select()
+        .from(billingTransactions)
+        .where(eq(billingTransactions.id, id));
+      
+      return transaction;
+    } catch (error) {
+      console.error('Error fetching billing transaction:', error);
+      throw error;
+    }
+  }
+
+  async createBillingTransaction(transaction: InsertBillingTransaction): Promise<BillingTransaction> {
+    try {
+      const [newTransaction] = await db.insert(billingTransactions)
+        .values(transaction)
+        .returning();
+      
+      return newTransaction;
+    } catch (error) {
+      console.error('Error creating billing transaction:', error);
+      throw error;
+    }
+  }
 
   async getJournalEntries(userId: number, filter?: JournalFilter): Promise<JournalEntry[]> {
     // Build the query conditions
