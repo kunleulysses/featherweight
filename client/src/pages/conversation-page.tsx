@@ -364,14 +364,14 @@ export default function ConversationPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="flex flex-col space-y-4" ref={scrollAreaRef}>
+                <ScrollArea className="h-[450px] pr-4">
+                  <div className="flex flex-col space-y-5" ref={scrollAreaRef}>
                     {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${
                           message.type === "user" ? "justify-end" : "justify-start"
-                        }`}
+                        } select-text`}
                       >
                         {message.type === "flappy" && (
                           <div className="flex-shrink-0 mr-2">
@@ -389,7 +389,7 @@ export default function ConversationPage() {
                           </div>
                         )}
                         <div
-                          className={`max-w-[75%] rounded-lg px-4 py-3 ${
+                          className={`max-w-[75%] rounded-lg px-4 py-3 shadow-sm ${
                             message.type === "user"
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted"
@@ -402,9 +402,9 @@ export default function ConversationPage() {
                             </div>
                           ) : (
                             <>
-                              <div className="whitespace-pre-wrap">{message.content}</div>
+                              <div className="whitespace-pre-wrap break-words text-left">{message.content}</div>
                               <div
-                                className={`text-xs mt-1 ${
+                                className={`text-xs mt-2 text-right ${
                                   message.type === "user"
                                     ? "text-primary-foreground/70"
                                     : "text-foreground/50"
@@ -422,22 +422,25 @@ export default function ConversationPage() {
               </CardContent>
               <CardFooter>
                 {showUpgradePrompt && !user?.isPremium && isActive && (
-                  <div className="w-full mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+                  <div className="w-full mb-4 p-5 bg-amber-50 border border-amber-300 rounded-lg">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <h4 className="font-medium text-amber-800 mb-1">Message Limit Reached</h4>
-                        <p className="text-sm text-amber-700">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-amber-800 mb-2">Message Limit Reached</h4>
+                        <p className="text-sm text-amber-700 max-w-prose">
                           Free users are limited to {MAX_FREE_MESSAGES} messages per conversation. 
-                          Upgrade to Premium for unlimited messages!
+                          Upgrade to Premium for unlimited messages with Flappy!
                         </p>
                       </div>
-                      <Button 
-                        className="shrink-0"
-                        onClick={() => window.location.href = '/billing'}
-                      >
-                        <Feather className="mr-2 h-4 w-4" />
-                        Upgrade to Premium
-                      </Button>
+                      <div className="flex-shrink-0">
+                        <Button 
+                          size="default"
+                          className="whitespace-nowrap shadow-sm"
+                          onClick={() => window.location.href = '/billing'}
+                        >
+                          <Feather className="mr-2 h-4 w-4" />
+                          Upgrade to Premium
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
