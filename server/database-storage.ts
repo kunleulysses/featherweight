@@ -663,9 +663,11 @@ export class DatabaseStorage implements IStorage {
     const memory = await this.getConversationMemory(id);
     if (!memory) return undefined;
     
+    const currentFrequency = memory.frequency || 0;
+    
     const [updatedMemory] = await db.update(conversationMemories)
       .set({
-        frequency: memory.frequency + 1,
+        frequency: currentFrequency + 1,
         lastDiscussed: new Date()
       })
       .where(eq(conversationMemories.id, id))

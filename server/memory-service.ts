@@ -171,8 +171,10 @@ export const memoryService = {
       return allMemories
         .sort((a, b) => {
           // Sort by frequency first, then by recency
-          if (b.frequency !== a.frequency) {
-            return b.frequency - a.frequency;
+          const aFreq = a.frequency || 0;
+          const bFreq = b.frequency || 0;
+          if (bFreq !== aFreq) {
+            return bFreq - aFreq;
           }
           return new Date(b.lastDiscussed).getTime() - new Date(a.lastDiscussed).getTime();
         })

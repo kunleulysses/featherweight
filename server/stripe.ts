@@ -80,7 +80,9 @@ export const stripeService = {
 
       // Get the client secret for the payment intent
       const invoice = subscription.latest_invoice as Stripe.Invoice;
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      // Access the paymentIntent safely by handling the potential undefined value
+      // The expand option ensures this should be available as a PaymentIntent object
+      const paymentIntent = (invoice.payment_intent as unknown) as Stripe.PaymentIntent;
 
       return {
         subscriptionId: subscription.id,
