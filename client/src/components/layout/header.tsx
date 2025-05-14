@@ -35,26 +35,26 @@ export function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className={`font-quicksand font-medium ${isActive("/") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+            <Link href="/" className={`font-quicksand font-medium ${isActive("/") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                 Home
             </Link>
             
             {user ? (
               <>
-                <Link href="/journal" className={`font-quicksand font-medium ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/journal" className={`font-quicksand font-medium ${isActive("/journal") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                     Journal
                 </Link>
-                <Link href="/conversation" className={`font-quicksand font-medium ${isActive("/conversation") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/conversation" className={`font-quicksand font-medium ${isActive("/conversation") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                     Chat with Flappy
                 </Link>
-                <Link href="/mood-tracker" className={`font-quicksand font-medium ${isActive("/mood-tracker") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/mood-tracker" className={`font-quicksand font-medium ${isActive("/mood-tracker") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                     Mood Feathers
                 </Link>
-                <Link href="/sms" className={`font-quicksand font-medium ${isActive("/sms") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/sms" className={`font-quicksand font-medium ${isActive("/sms") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                     SMS
                     {user?.isPremium && <span className="ml-1 text-xs text-green-500">•</span>}
                 </Link>
-                <Link href="/settings" className={`font-quicksand font-medium ${isActive("/settings") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+                <Link href="/settings" className={`font-quicksand font-medium ${isActive("/settings") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                     Settings
                 </Link>
                 <Button 
@@ -96,7 +96,7 @@ export function Header() {
             <div className="flex flex-col space-y-3">
               <Link 
                 href="/" 
-                className={`font-quicksand font-medium py-2 ${isActive("/") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                className={`font-quicksand font-medium py-2 ${isActive("/") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Home
@@ -106,35 +106,35 @@ export function Header() {
                 <>
                   <Link 
                     href="/journal" 
-                    className={`font-quicksand font-medium py-2 ${isActive("/journal") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    className={`font-quicksand font-medium py-2 ${isActive("/journal") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Journal
                   </Link>
                   <Link 
                     href="/conversation" 
-                    className={`font-quicksand font-medium py-2 ${isActive("/conversation") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    className={`font-quicksand font-medium py-2 ${isActive("/conversation") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Chat with Flappy
                   </Link>
                   <Link 
                     href="/mood-tracker" 
-                    className={`font-quicksand font-medium py-2 ${isActive("/mood-tracker") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    className={`font-quicksand font-medium py-2 ${isActive("/mood-tracker") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Mood Feathers
                   </Link>
                   <Link 
                     href="/sms" 
-                    className={`font-quicksand font-medium py-2 ${isActive("/sms") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    className={`font-quicksand font-medium py-2 ${isActive("/sms") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     SMS {user?.isPremium && <span className="ml-1 text-xs text-green-500">•</span>}
                   </Link>
                   <Link 
                     href="/settings" 
-                    className={`font-quicksand font-medium py-2 ${isActive("/settings") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}
+                    className={`font-quicksand font-medium py-2 ${isActive("/settings") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Settings
