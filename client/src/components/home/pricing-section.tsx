@@ -53,7 +53,7 @@ export function PricingSection() {
           <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
             Simple Pricing, More Flappy
           </h2>
-          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-200 max-w-2xl mx-auto">
             Start free or upgrade for the full pelican experience. No complicated tiers!
           </p>
         </div>
@@ -79,7 +79,7 @@ export function PricingSection() {
                   <h3 className="font-quicksand font-bold text-2xl text-foreground mb-2">
                     {plan.name}
                   </h3>
-                  <p className="text-foreground/70 mb-4">
+                  <p className="text-gray-200 mb-4">
                     {plan.description}
                   </p>
                   <div className="mb-6">
@@ -90,7 +90,7 @@ export function PricingSection() {
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start">
                         <Check className="text-accent h-5 w-5 mt-0.5 mr-2 flex-shrink-0" />
-                        <span className="text-foreground/80">{feature}</span>
+                        <span className="text-gray-200">{feature}</span>
                       </li>
                     ))}
                   </ul>

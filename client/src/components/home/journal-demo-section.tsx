@@ -35,10 +35,10 @@ export function JournalDemoSection() {
     <section className="py-16 bg-white">
       <Container>
         <div className="text-center mb-16">
-          <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-4">
+          <h2 className="font-quicksand font-bold text-3xl md:text-4xl text-gray-900 mb-4">
             Your Journal, Beautifully Organized
           </h2>
-          <p className="text-lg text-gray-200 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             All your reflections, safely stored and easily accessible in your personal dashboard.
           </p>
         </div>
