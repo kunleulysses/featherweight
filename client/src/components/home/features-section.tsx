@@ -23,7 +23,7 @@ export function FeaturesSection() {
             <h3 className="font-quicksand font-semibold text-xl text-white mb-3">
               Daily Inspirations
             </h3>
-            <p className="text-gray-200">
+            <p className="text-foreground/80 dark:text-gray-200">
               Receive thoughtful messages from Flappy each morning to start your day with positivity and purpose.
             </p>
           </div>
@@ -36,7 +36,7 @@ export function FeaturesSection() {
             <h3 className="font-quicksand font-semibold text-xl text-white mb-3">
               Email Journaling
             </h3>
-            <p className="text-gray-200">
+            <p className="text-foreground/80 dark:text-gray-200">
               Simply reply to Flappy's emails to create journal entries. No apps to open, just your regular inbox.
             </p>
           </div>
@@ -49,7 +49,7 @@ export function FeaturesSection() {
             <h3 className="font-quicksand font-semibold text-xl text-white mb-3">
               Journal Archive
             </h3>
-            <p className="text-gray-200">
+            <p className="text-foreground/80 dark:text-gray-200">
               Access your complete journal history in our beautifully designed web interface, organized and searchable.
             </p>
           </div>
