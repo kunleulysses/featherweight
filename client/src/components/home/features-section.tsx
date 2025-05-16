@@ -20,7 +20,7 @@ export function FeaturesSection() {
             <div className="rounded-full bg-primary/10 w-16 h-16 flex items-center justify-center mb-4">
               <Mail className="text-primary h-8 w-8" />
             </div>
-            <h3 className="font-quicksand font-semibold text-xl text-white mb-3">
+            <h3 className="font-quicksand font-semibold text-xl text-foreground dark:text-white mb-3">
               Daily Inspirations
             </h3>
             <p className="text-foreground/80 dark:text-gray-200">
@@ -33,7 +33,7 @@ export function FeaturesSection() {
             <div className="rounded-full bg-secondary/10 w-16 h-16 flex items-center justify-center mb-4">
               <Reply className="text-secondary h-8 w-8" />
             </div>
-            <h3 className="font-quicksand font-semibold text-xl text-white mb-3">
+            <h3 className="font-quicksand font-semibold text-xl text-foreground dark:text-white mb-3">
               Email Journaling
             </h3>
             <p className="text-foreground/80 dark:text-gray-200">
@@ -46,7 +46,7 @@ export function FeaturesSection() {
             <div className="rounded-full bg-accent/10 w-16 h-16 flex items-center justify-center mb-4">
               <BookOpen className="text-accent h-8 w-8" />
             </div>
-            <h3 className="font-quicksand font-semibold text-xl text-white mb-3">
+            <h3 className="font-quicksand font-semibold text-xl text-foreground dark:text-white mb-3">
               Journal Archive
             </h3>
             <p className="text-foreground/80 dark:text-gray-200">
