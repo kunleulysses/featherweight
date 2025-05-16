@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Mail, MessageSquareText, PenLine, Brain, Lightbulb } from "lucide-react";
+import { Mail, MessageSquareText, PenLine, Brain, Lightbulb, Feather } from "lucide-react";
 
 export function WelcomeDialog() {
   const [open, setOpen] = useState(false);
