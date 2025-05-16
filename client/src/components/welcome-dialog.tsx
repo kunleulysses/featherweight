@@ -74,16 +74,47 @@ export function WelcomeDialog() {
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-center my-6 text-center">
-              <div className="w-40 h-40 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <img 
-                  src="/assets/flappy.png" 
-                  alt="Flappy the Pelican" 
-                  className="w-32 h-32"
-                  onError={(e) => {
-                    console.error("Failed to load Flappy avatar");
-                    e.currentTarget.src = "/assets/flappy-fallback.png";
-                  }}
-                />
+              <div className="w-40 h-40 rounded-full bg-primary/10 flex items-center justify-center mb-4 overflow-hidden">
+                <svg width="128" height="128" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Base */}
+                  <ellipse cx="256" cy="400" rx="80" ry="20" fill="#6f75c5" opacity="0.6" />
+                  
+                  {/* Feet */}
+                  <path d="M235 380 L225 400 L235 410 L255 400 Z" fill="#ff9b9b" />
+                  <path d="M275 380 L265 400 L275 410 L295 400 Z" fill="#ff9b9b" />
+                  
+                  {/* Body */}
+                  <path d="M200 260 Q256 330 310 260 Q330 240 330 210 Q330 170 280 160 Q270 160 255 170 Q240 160 230 160 Q180 170 180 210 Q180 240 200 260 Z" fill="#ffffff" />
+                  
+                  {/* Wings */}
+                  <path d="M190 230 Q160 210 150 250 Q140 290 170 300 Q200 310 200 270 Z" fill="#7f82c4" />
+                  <path d="M190 230 Q205 240 200 270 Z" fill="#7f82c4" />
+                  
+                  {/* Face */}
+                  <ellipse cx="255" cy="195" rx="70" ry="65" fill="#ffffff" />
+                  
+                  {/* Captain's Hat */}
+                  <path d="M190 140 Q255 170 320 140 L300 120 Q255 140 210 120 Z" fill="#3F3B89" />
+                  <path d="M210 120 Q255 140 300 120 L290 100 Q255 115 220 100 Z" fill="#3F3B89" />
+                  <path d="M220 100 Q255 115 290 100 L280 80 Q255 90 230 80 Z" fill="#3F3B89" />
+                  <circle cx="230" cy="125" r="10" fill="#ff7eb3" />
+                  <circle cx="230" cy="125" r="5" fill="#ffeb3b" />
+                  
+                  {/* Eyes with Glasses */}
+                  <ellipse cx="235" cy="190" rx="20" ry="22" fill="#ffffff" stroke="#ff7eb3" strokeWidth="3" />
+                  <ellipse cx="275" cy="190" rx="20" ry="22" fill="#ffffff" stroke="#ff7eb3" strokeWidth="3" />
+                  <path d="M255 190 L255 190" stroke="#ff7eb3" strokeWidth="3" />
+                  
+                  {/* Eye pupils */}
+                  <circle cx="235" cy="190" r="10" fill="#000000" />
+                  <circle cx="275" cy="190" r="10" fill="#000000" />
+                  <circle cx="232" cy="187" r="3" fill="#ffffff" />
+                  <circle cx="272" cy="187" r="3" fill="#ffffff" />
+                  
+                  {/* Beak */}
+                  <path d="M245 215 Q255 220 265 215 L300 240 Q265 250 245 250 Q225 250 190 240 Z" fill="#ffb347" />
+                  <path d="M245 250 Q255 245 265 250 L300 240 Q280 260 255 270 Q230 260 190 240 Z" fill="#ff9800" />
+                </svg>
               </div>
               <p className="text-lg mb-4">
                 Meet Flappy, your journaling companion!
