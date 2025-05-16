@@ -74,8 +74,8 @@ export function WelcomeDialog() {
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-center my-6 text-center">
-              <div className="w-40 h-40 rounded-full bg-primary flex items-center justify-center mb-4">
-                <Feather className="h-24 w-24 text-white" />
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-primary flex items-center justify-center mb-4">
+                <Feather className="h-16 w-16 md:h-24 md:w-24 text-white" />
               </div>
               <p className="text-lg mb-4">
                 Meet Flappy, your journaling companion!
