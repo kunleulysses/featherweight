@@ -114,6 +114,8 @@ export type UserPreferences = {
   firstName?: string;
   lastName?: string;
   bio?: string;
+  emailDeliveryTime?: string; // Time of day for daily emails, format: "HH:MM" in 24hr format
+  disableDailyEmails?: boolean; // Option to turn off daily inspirations
 };
 
 export type PaymentDetails = {

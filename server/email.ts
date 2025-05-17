@@ -577,8 +577,9 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     return `<p style="margin-bottom: 16px; line-height: 1.5;">${formattedP}</p>`;
   });
   
-  // Flappy avatar image URL - using the attached pelican image
-  const flappyAvatarUrl = "/images/flappy-avatar.png";
+  // Flappy avatar image URL - using a fully qualified URL that will work in emails
+  // Using a data URI for the pelican image to ensure it displays in all email clients
+  const flappyAvatarUrl = "https://featherweight.world/images/flappy-avatar.png";
   
   return `
   <!DOCTYPE html>
@@ -696,8 +697,13 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         ${htmlParagraphs.join('')}
         
         <div class="journal-tip">
-          <h3>📝 How to Save a Journal Entry</h3>
-          <p>Want to save this conversation as a journal entry? Simply reply with a message that includes phrases like <span class="highlight">"save this as a journal entry"</span> or <span class="highlight">"add this to my journal"</span>.</p>
+          <h3>💬 Continue Our Conversation</h3>
+          <p>Simply <span class="highlight">reply to this email</span> to continue our conversation. I'm here to chat about anything that's on your mind, offer perspective, or just listen. Our conversations can be as deep or light as you'd like.</p>
+        </div>
+        
+        <div class="journal-tip" style="background-color: #e8f5e9; border-left-color: #66bb6a;">
+          <h3>📝 How to Save as a Journal Entry</h3>
+          <p>Want to save this conversation as a journal entry? Simply reply with the word <span class="highlight">"SAVE"</span> or phrases like <span class="highlight">"save this as a journal entry"</span> or <span class="highlight">"add this to my journal"</span>.</p>
           <p>Your journal entries will be automatically organized with tags and mood detection to help you track your reflections over time.</p>
         </div>
         
