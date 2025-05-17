@@ -27,7 +27,7 @@ export function Advertisement({ adSlot, adFormat = "auto", className = "" }: AdP
         const adElement = document.createElement("ins");
         adElement.className = "adsbygoogle";
         adElement.style.display = "block";
-        adElement.setAttribute("data-ad-client", "ca-pub-1234567890123456"); // Replace with your publisher ID
+        adElement.setAttribute("data-ad-client", "ca-pub-7052935120099779");
         adElement.setAttribute("data-ad-slot", adSlot);
         
         // Set ad format
