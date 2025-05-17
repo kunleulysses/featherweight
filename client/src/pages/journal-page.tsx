@@ -6,7 +6,7 @@ import { JournalList } from "@/components/journal/journal-list";
 import { JournalSidebar } from "@/components/journal/journal-sidebar";
 import { JournalForm } from "@/components/journal/journal-form";
 import { WelcomeDialog } from "@/components/welcome-dialog";
-import { AdBanner } from "@/components/ads/ad-banner";
+import { MockAdvertisement } from "@/components/ui/advertisement";
 import { Button } from "@/components/ui/button";
 import { Helmet } from 'react-helmet';
 import { PlusCircle } from "lucide-react";

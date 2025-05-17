@@ -136,12 +136,21 @@ export default function BillingPage() {
                     )}
                     <div className="flex items-start gap-2 text-sm">
                       <CreditCard className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">Payment Method</p>
                         <p className="text-muted-foreground">
                           {isPremium ? "Visa ending in 4242" : "No payment method on file"}
                         </p>
                       </div>
+                      {isPremium && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleUpdatePaymentMethod}
+                        >
+                          Update
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
