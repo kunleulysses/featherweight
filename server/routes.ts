@@ -271,38 +271,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SendGrid Inbound Parse webhook for handling incoming emails
   app.post("/api/emails/webhook", async (req: Request, res: Response) => {
     try {
-      console.log("Received webhook from SendGrid:", req.body);
+      console.log("Received webhook from SendGrid - Headers:", req.headers);
+      console.log("Received webhook from SendGrid - Body:", req.body);
       
-      // SendGrid Parse webhook sends form data
-      const { from, to, subject, text, html, headers } = req.body;
+      // SendGrid Inbound Parse format can vary between raw email and parsed objects
+      // Extract email details from the request
+      let from = req.body.from || req.body.sender || '';
+      const to = req.body.to || req.body.recipient || '';
+      const subject = req.body.subject || '';
+      const text = req.body.text || '';
+      const html = req.body.html || '';
+      const inReplyTo = req.body.headers?.['In-Reply-To'] || req.body['In-Reply-To'] || '';
       
       // Extract the sender's email address
-      const senderEmail = typeof from === 'string' 
-        ? from.match(/<(.+)>/)?.[1] || from 
-        : from;
+      let senderEmail = from;
+      
+      // Handle the different formats SendGrid might provide for the from field
+      if (typeof from === 'string') {
+        // Format can be "John Doe <john@example.com>" or just "john@example.com"
+        const emailMatch = from.match(/<(.+@.+)>/) || from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+        senderEmail = emailMatch ? emailMatch[1] : from;
+      }
+      
+      console.log(`Processing email from: ${senderEmail}, subject: ${subject}`);
       
       // Find the user associated with this email
       const user = await storage.getUserByEmail(senderEmail);
       
       if (!user) {
         console.warn(`Email received from unregistered user: ${senderEmail}`);
-        return res.status(200).send('OK'); // Still return 200 to acknowledge receipt
+        
+        // For new users, we might want to create a welcome response or signup invitation
+        // For now, just acknowledge receipt
+        return res.status(200).send('OK');
       }
       
       // Determine if this is a reply based on subject or headers
-      const isReply = (headers && headers['In-Reply-To']) || 
-                      (subject && subject.toLowerCase().startsWith('re:'));
+      const isReply = inReplyTo || subject.toLowerCase().startsWith('re:');
       
       // Get the text content (prefer plain text over HTML)
       const content = text || (html ? html.replace(/<[^>]*>/g, '') : '');
+      
+      if (!content) {
+        console.warn("Email received with empty content");
+        return res.status(200).send('OK');
+      }
+      
+      console.log(`Processing email content of length ${content.length}`);
       
       // Process the incoming email
       await emailService.processIncomingEmail(
         senderEmail,
         subject || 'No Subject',
         content,
-        headers?.['In-Reply-To']
+        inReplyTo
       );
+      
+      console.log(`Successfully processed email from ${senderEmail}`);
       
       // Always return 200 OK to acknowledge receipt
       res.status(200).send('OK');

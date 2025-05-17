@@ -37,6 +37,8 @@ export const emailService = {
       const htmlContent = formatEmailHTML(content, isPremium);
       const textContent = content + (!isPremium ? '\n\n[Advertisement: Upgrade to premium for ad-free experiences]' : '');
       
+      console.log(`Sending email to: ${to}, subject: ${subject}`);
+      
       const msg = {
         to,
         from: {
@@ -60,15 +62,23 @@ export const emailService = {
             text: 'Featherweight - Your Journaling Companion\nReply to this email to continue your conversation with Flappy',
             html: '<p style="color: #9E9E9E; font-size: 12px;">Featherweight - Your Journaling Companion<br>Reply to this email to continue your conversation with Flappy</p>'
           }
+        },
+        // Adding custom headers to ensure threading works properly
+        headers: {
+          "X-Entity-Ref-ID": `flappy-${Date.now()}`,
+          "Reply-To": FROM_EMAIL
         }
       };
       
-      await sgMail.send(msg);
+      const [response] = await sgMail.send(msg);
+      console.log(`Email sent successfully to ${to}, status code: ${response?.statusCode}, message ID: ${response?.messageId || 'unknown'}`);
       
-      // Generate a message ID since SendGrid doesn't directly return one in the same way
-      return { messageId: `sg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}` };
+      // Use SendGrid message ID if available, otherwise generate one
+      const messageId = response?.messageId || `sg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      return { messageId };
     } catch (error) {
       console.error("Error sending email with SendGrid:", error);
+      console.error("Error details:", error.response?.body?.errors || error.message);
       throw new Error("Failed to send email");
     }
   },
@@ -159,12 +169,24 @@ export const emailService = {
   // Process an incoming email as a journal entry or conversation
   async processIncomingEmail(from: string, subject: string, content: string, inReplyTo?: string): Promise<void> {
     try {
+      console.log(`Beginning to process email from: ${from}`);
+      
       // Find the user by email
       const user = await storage.getUserByEmail(from);
       if (!user) {
         console.error(`No user found for email: ${from}`);
+        
+        // Send a welcome/invitation email to unregistered users
+        await this.sendEmail(
+          from,
+          "Welcome to Featherweight - Your Personal Journaling Companion",
+          `Hello there,\n\nThank you for reaching out to Flappy, the friendly pelican at Featherweight! It looks like you're not registered with us yet.\n\nFeatherweight is a journaling app that helps you capture your thoughts and reflections with the guidance of Flappy, your cosmic pelican guide.\n\nTo start your journaling journey, please visit our website to create an account. It only takes a minute!\n\nWarmly,\nFlappy the Pelican\nFeatherweight - Your Journaling Companion`,
+          false
+        );
         return;
       }
+      
+      console.log(`Processing email for user: ${user.id} (${user.email})`);
       
       // Clean the content (remove email signatures, quoted replies, etc.)
       const cleanedContent = cleanEmailContent(content);
@@ -172,8 +194,12 @@ export const emailService = {
       // Check if this is a reply to a previous email from Flappy
       let isReply = !!inReplyTo || (subject && subject.toLowerCase().startsWith('re:'));
       
+      console.log(`Email is ${isReply ? 'a reply' : 'not a reply'}, analyzing content...`);
+      
       // Determine if the user wants to save this as a journal entry
       const shouldSaveAsJournal = await this.shouldSaveAsJournal(cleanedContent);
+      
+      console.log(`Content should ${shouldSaveAsJournal ? '' : 'not '}be saved as journal entry`);
       
       if (shouldSaveAsJournal) {
         // This should be saved as a journal entry
@@ -192,6 +218,8 @@ export const emailService = {
           }
         }
         
+        console.log(`Creating journal entry for user ${user.id}`);
+        
         // Create the journal entry
         const journalEntry = await storage.createJournalEntry({
           userId: user.id,
@@ -206,13 +234,51 @@ export const emailService = {
         // Process journal content for memories
         await memoryService.processMessage(user.id, journalContent, 'journal_topic');
         
-        // Send a journal confirmation email
-        await this.sendFlappyEmail(user, "journalResponse", cleanedContent);
+        console.log(`Sending journal confirmation to ${user.email}`);
+        
+        // Send a journal confirmation email directly rather than using sendFlappyEmail
+        // This ensures an immediate response rather than going through the full process
+        const confirmationSubject = `📝 Journal Entry Saved - ${new Date().toLocaleDateString()}`;
+        const confirmationContent = `Hi ${user.firstName || user.username},
+
+Thank you for your journal entry! I've saved it to your Featherweight journal.
+
+**Entry Summary:**
+- Date: ${new Date().toLocaleDateString()}
+- Mood: ${detectMood(cleanedContent)}
+- Tags: ${extractTags(cleanedContent).join(', ') || 'None detected'}
+
+You can view this and all your journal entries anytime on your Featherweight dashboard.
+
+Is there anything specific you'd like to reflect on next? Feel free to reply to this email to continue our conversation.
+
+Warmly,
+Flappy 🐦`;
+
+        // Send the confirmation directly
+        const messageId = await this.sendEmail(
+          user.email,
+          confirmationSubject,
+          confirmationContent,
+          user.isPremium
+        );
+        
+        // Store the response in the database
+        await storage.createEmail({
+          userId: user.id,
+          subject: confirmationSubject,
+          content: confirmationContent,
+          type: 'journalResponse',
+          messageId: messageId.messageId,
+          isRead: false
+        });
         
         console.log(`Created journal entry ${journalEntry.id} from email for user ${user.id}`);
       } else {
         // This is a regular conversation with Flappy
         try {
+          console.log(`Generating conversation response for ${user.email}`);
+          
           // Generate Flappy's response using OpenAI
           const flappyResponse = await generateFlappyContent("emailConversation", cleanedContent, {
             username: user.username,
@@ -237,6 +303,7 @@ export const emailService = {
             );
             
             messageCount = conversationEmails.length + 1;
+            console.log(`Free user message count: ${messageCount} of 3 allowed`);
           }
           
           // Check if the free user has reached their message limit
@@ -247,8 +314,11 @@ export const emailService = {
           let responseSubject = `Re: ${subject}`;
           
           if (reachedFreeLimit) {
+            console.log(`User ${user.id} has reached free message limit`);
             responseContent += `\n\n---\n\nYou've reached the free message limit (3) for this conversation. To continue chatting with me and get unlimited responses, please upgrade to Premium.\n\nWith Premium, you'll also get SMS journaling, ad-free emails, and more personalized insights.`;
           }
+          
+          console.log(`Sending email response to ${user.email}`);
           
           // Send Flappy's response
           const messageId = await this.sendEmail(user.email, responseSubject, responseContent, user.isPremium);
@@ -263,17 +333,39 @@ export const emailService = {
             isRead: false
           });
           
-          console.log(`Sent conversation response to ${user.email} (Premium: ${user.isPremium})`);
+          console.log(`Successfully sent conversation response to ${user.email} (Premium: ${user.isPremium})`);
         } catch (error) {
           console.error("Error generating conversation response:", error);
           
           // Send a fallback response if something went wrong
-          await this.sendEmail(
+          const fallbackSubject = `Re: ${subject}`;
+          const fallbackContent = `Hi ${user.firstName || user.username},
+
+Thank you for your message! I'm having a moment of reflection and will get back to you soon.
+
+In the meantime, feel free to continue journaling or send me another message.
+
+Warmly,
+Flappy`;
+
+          console.log(`Sending fallback response to ${user.email} due to error`);
+          
+          const messageId = await this.sendEmail(
             user.email, 
-            `Re: ${subject}`, 
-            `Hi ${user.firstName || user.username},\n\nThank you for your message! I'm having a moment of reflection and will get back to you soon.\n\nIn the meantime, feel free to continue journaling or send me another message.\n\nWarmly,\nFlappy`, 
+            fallbackSubject, 
+            fallbackContent, 
             user.isPremium
           );
+          
+          // Store the fallback response
+          await storage.createEmail({
+            userId: user.id,
+            subject: fallbackSubject,
+            content: fallbackContent,
+            type: 'emailConversation',
+            messageId: messageId.messageId,
+            isRead: false
+          });
         }
       }
     } catch (error) {
