@@ -8,7 +8,7 @@ import { Helmet } from "react-helmet";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { Check, X, CreditCard } from "lucide-react";
+import { Check, X, CreditCard, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,12 +19,13 @@ import {
 } from "@/components/ui/card";
 import { useElements, useStripe, PaymentElement, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import type { StripeElementsOptions } from "@stripe/stripe-js";
 
 // Make sure to call loadStripe outside of a component's render to avoid
 // recreating the Stripe object on every render.
-// This is your test publishable API key.
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
+// The CheckoutForm component handles Stripe payment submission
 function CheckoutForm({ success }: { success: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -62,7 +63,7 @@ function CheckoutForm({ success }: { success: () => void }) {
           break;
       }
     });
-  }, [stripe]);
+  }, [stripe, success]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,9 +86,7 @@ function CheckoutForm({ success }: { success: () => void }) {
 
     // This point will only be reached if there is an immediate error when
     // confirming the payment. Otherwise, your customer will be redirected to
-    // your `return_url`. For some payment methods like iDEAL, your customer will
-    // be redirected to an intermediate site first to authorize the payment, then
-    // redirected to the `return_url`.
+    // your `return_url`.
     if (error.type === "card_error" || error.type === "validation_error") {
       setMessage(error.message || "An unexpected error occurred.");
       toast({
@@ -115,7 +114,7 @@ function CheckoutForm({ success }: { success: () => void }) {
         className="w-full mt-4"
         type="submit"
       >
-        {isLoading ? "Processing..." : "Subscribe Now - $4.99/month"}
+        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : "Subscribe Now - $4.99/month"}
       </Button>
       {/* Show any error or success messages */}
       {message && <div id="payment-message" className="mt-4 text-sm text-red-500">{message}</div>}
@@ -123,6 +122,7 @@ function CheckoutForm({ success }: { success: () => void }) {
   );
 }
 
+// Main subscription page component
 export default function SubscriptionPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -140,6 +140,7 @@ export default function SubscriptionPage() {
     }
   }, []);
 
+  // Function to update the subscription after successful payment
   const completeSubscription = async () => {
     if (!user) return;
     
@@ -166,9 +167,15 @@ export default function SubscriptionPage() {
       navigate("/sms");
     } catch (error) {
       console.error("Error completing subscription:", error);
+      toast({
+        title: "Subscription error",
+        description: "There was an error activating your subscription. Please contact support.",
+        variant: "destructive",
+      });
     }
   };
 
+  // Function to initiate the subscription process
   const handleStartSubscription = async () => {
     if (!user) {
       navigate("/auth");
@@ -206,6 +213,26 @@ export default function SubscriptionPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Stripe Elements appearance configuration
+  const appearance = {
+    theme: 'stripe',
+    variables: {
+      colorPrimary: '#4f46e5',
+      colorBackground: '#ffffff',
+      colorText: '#1f2937',
+      colorDanger: '#ef4444',
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      spacingUnit: '4px',
+      borderRadius: '8px',
+    },
+  };
+
+  // Options for the Stripe Elements
+  const options: StripeElementsOptions = {
+    clientSecret,
+    appearance,
   };
 
   return (
@@ -271,7 +298,7 @@ export default function SubscriptionPage() {
                   </CardContent>
                   <CardFooter>
                     <Button variant="outline" className="w-full" disabled>
-                      Current Plan
+                      {user?.isPremium ? "Free Plan" : "Current Plan"}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -327,10 +354,10 @@ export default function SubscriptionPage() {
                     <Button 
                       onClick={handleStartSubscription} 
                       className="w-full font-quicksand" 
-                      disabled={isProcessing || user?.isPremium}
+                      disabled={isLoading || user?.isPremium}
                     >
-                      {isProcessing 
-                        ? "Processing..." 
+                      {isLoading 
+                        ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> 
                         : user?.isPremium 
                           ? "Current Plan" 
                           : "Upgrade Now"}
@@ -339,238 +366,31 @@ export default function SubscriptionPage() {
                 </Card>
               </div>
               
-              {showPaymentForm && (
+              {showPaymentForm && clientSecret && (
                 <Card className="mt-8 border-2 border-primary">
                   <CardHeader>
-                    <CardTitle>Payment Information</CardTitle>
+                    <CardTitle className="flex items-center">
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Payment Information
+                    </CardTitle>
                     <CardDescription>
                       You'll be charged $4.99 today and on the same day each month.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="cardholderName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Cardholder Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John Doe" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="cardNumber"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Card Number</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="4242 4242 4242 4242" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="expiryMonth"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Expiry Month</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Month" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                                      <SelectItem 
-                                        key={month} 
-                                        value={month.toString().padStart(2, '0')}
-                                      >
-                                        {month.toString().padStart(2, '0')}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="expiryYear"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Expiry Year</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Year" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                                      <SelectItem key={year} value={year.toString()}>
-                                        {year}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="cvv"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>CVV</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="123" {...field} maxLength={4} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="billingAddress"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Billing Address</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="123 Main St" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="city"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>City</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="New York" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="state"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>State</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="NY" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="zipCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Zip Code</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="10001" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <FormField
-                          control={form.control}
-                          name="country"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Country</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select country" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="US">United States</SelectItem>
-                                  <SelectItem value="CA">Canada</SelectItem>
-                                  <SelectItem value="UK">United Kingdom</SelectItem>
-                                  <SelectItem value="AU">Australia</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="flex gap-4">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => setShowPaymentForm(false)}
-                            disabled={isProcessing}
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            className="flex-1"
-                            disabled={isProcessing}
-                          >
-                            {isProcessing ? "Processing..." : "Subscribe - $4.99/month"}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
+                    <Elements stripe={stripePromise} options={options}>
+                      <CheckoutForm success={completeSubscription} />
+                    </Elements>
+                    <div className="mt-4 p-3 bg-muted rounded-md text-sm">
+                      <p className="font-semibold mb-1">Test Card Information:</p>
+                      <p>Card number: 4242 4242 4242 4242</p>
+                      <p>Expiry date: Any future date</p>
+                      <p>CVC: Any 3 digits</p>
+                      <p>ZIP: Any 5 digits</p>
+                    </div>
                   </CardContent>
                 </Card>
               )}
-              
-              <div className="mt-10 p-4 bg-muted rounded-lg">
-                <h3 className="font-semibold mb-2">Money Back Guarantee</h3>
-                <p className="text-sm text-muted-foreground">
-                  Not satisfied with Premium? Cancel within 7 days and get a full refund, no questions asked.
-                </p>
-              </div>
             </div>
           </Container>
         </main>
