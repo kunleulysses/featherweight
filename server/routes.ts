@@ -902,6 +902,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Cron endpoint for scheduled hourly email delivery checks
+  // This should be called by an external service (e.g., cron-job.org) every hour
+  app.post("/api/cron/hourly-email-delivery", async (req: Request, res: Response) => {
+    // Optional API key security for the cron endpoint
+    const apiKey = req.headers['x-api-key'];
+    if (process.env.CRON_API_KEY && apiKey !== process.env.CRON_API_KEY) {
+      console.warn("Unauthorized cron job attempt with invalid API key");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      console.log("=== HOURLY CRON TRIGGERED ===");
+      console.log(`Current time: ${new Date().toISOString()}`);
+      
+      // The sendDailyInspiration function already has logic to:
+      // - Check the current hour
+      // - Filter users based on their preferred delivery time
+      // - Respect frequency preferences (daily, weekdays, etc.)
+      const result = await emailService.sendDailyInspiration();
+      
+      console.log(`Emails sent: ${result.count}`);
+      res.status(200).json({ 
+        message: "Hourly email delivery process completed", 
+        success: result.success, 
+        emailsSent: result.count 
+      });
+    } catch (error) {
+      console.error("Error in hourly email delivery:", error);
+      res.status(500).json({ 
+        message: "Failed to complete hourly email delivery", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
   // Manually trigger weekly insights emails (development only)
   app.post("/api/admin/send-weekly-insights", async (req: Request, res: Response) => {
     if (process.env.NODE_ENV === "production") {

@@ -94,6 +94,8 @@ export default function SettingsPage() {
       marketingEmails: user?.preferences?.marketingEmails || false,
       receiveInsights: user?.preferences?.receiveInsights || true,
       receiveSms: user?.preferences?.receiveSms || false,
+      emailDeliveryTime: user?.preferences?.emailDeliveryTime || "11:00",
+      disableDailyEmails: user?.preferences?.disableDailyEmails || false,
     },
   });
   
@@ -105,6 +107,8 @@ export default function SettingsPage() {
         marketingEmails: user.preferences.marketingEmails || false,
         receiveInsights: user.preferences.receiveInsights || true,
         receiveSms: user.preferences.receiveSms || false,
+        emailDeliveryTime: user.preferences.emailDeliveryTime || "11:00",
+        disableDailyEmails: user.preferences.disableDailyEmails || false,
       });
     }
   }, [user, emailPreferencesForm]);
