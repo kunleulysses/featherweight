@@ -6,7 +6,7 @@ import { JournalList } from "@/components/journal/journal-list";
 import { JournalSidebar } from "@/components/journal/journal-sidebar";
 import { JournalForm } from "@/components/journal/journal-form";
 import { WelcomeDialog } from "@/components/welcome-dialog";
-import { MockAdvertisement } from "@/components/ui/advertisement";
+import { Advertisement, MockAdvertisement } from "@/components/ui/advertisement";
 import { Button } from "@/components/ui/button";
 import { Helmet } from 'react-helmet';
 import { PlusCircle } from "lucide-react";
@@ -98,7 +98,7 @@ export default function JournalPage() {
                 {/* Bottom ad */}
                 {!user?.isPremium && (
                   <div className="mt-8">
-                    <MockAdvertisement className="w-full" />
+                    <Advertisement adSlot="8137349583" adFormat="auto" className="w-full" />
                   </div>
                 )}
               </div>
