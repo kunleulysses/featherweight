@@ -17,7 +17,7 @@ export function HeroSection() {
             <p className="text-lg md:text-xl text-foreground/80 dark:text-gray-200 mb-8 max-w-xl mx-auto lg:mx-0">
               Daily fun, easy journaling, and friendly check-ins — all through your inbox. Let Flappy brighten your day with cheerful messages and thoughtful questions.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4 relative z-20">
               <Link href={user ? "/journal" : "/auth"}>
                 <Button size="lg" className="font-quicksand font-medium shadow-md">
                   Start Your Journey
