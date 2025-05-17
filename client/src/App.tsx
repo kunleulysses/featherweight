@@ -17,6 +17,7 @@ import TermsPage from "@/pages/terms-page";
 import PrivacyPage from "@/pages/privacy-page";
 import ContactPage from "@/pages/contact-page";
 import BillingPage from "@/pages/billing-page";
+import HelpPage from "@/pages/help-page";
 import EmailTestPage from "@/pages/email-test";
 import SmsTestPage from "@/pages/sms-test";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/help" component={HelpPage} />
       <ProtectedRoute path="/journal" component={JournalPage} />
       <ProtectedRoute path="/mood-tracker" component={MoodTrackerPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
