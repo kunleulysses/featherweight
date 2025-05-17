@@ -130,28 +130,38 @@ export const twilioService = {
 
       // If this is a journal entry request, create a journal entry
       if (this.isJournalEntryRequest(body)) {
-        // Extract the journal content from the message
-        const journalContent = this.extractJournalContent(body);
-        
-        // Create a journal entry
-        const journalData: InsertJournalEntry = {
-          userId: user.id,
-          content: journalContent,
-          title: this.generateJournalTitle(journalContent)
-        };
+        try {
+          // Extract the journal content from the message - now async
+          const journalContent = await this.extractJournalContent(body, user.id, from);
+          
+          // Create a journal entry with a title based on the content
+          const journalTitle = this.generateJournalTitle(journalContent);
+          const journalData: InsertJournalEntry = {
+            userId: user.id,
+            content: journalContent,
+            title: journalTitle
+          };
 
-        const journalEntry = await storage.createJournalEntry(journalData);
-        
-        // Process journal content for memories
-        await memoryService.processMessage(user.id, journalContent, 'journal_topic');
-        
-        // Update the SMS message with the journal entry ID
-        await storage.updateSmsMessage(savedMessage.id, {
-          journalEntryId: journalEntry.id
-        });
+          const journalEntry = await storage.createJournalEntry(journalData);
+          
+          // Process journal content for memories
+          await memoryService.processMessage(user.id, journalContent, 'journal_topic');
+          
+          // Update the SMS message with the journal entry ID
+          await storage.updateSmsMessage(savedMessage.id, {
+            journalEntryId: journalEntry.id
+          });
 
-        // Respond with acknowledgment
-        await this.sendJournalAcknowledgment(user);
+          // Respond with acknowledgment
+          await this.sendJournalAcknowledgment(user);
+        } catch (error) {
+          console.error('Error creating journal entry from SMS:', error);
+          // Send a fallback response if creating journal entry fails
+          await safeSendMessage(
+            from,
+            "I had some trouble saving your journal entry. Please try again later or send your entry by email to flappy@featherweight.world."
+          );
+        }
       } else {
         // This is a conversation with Flappy
         await this.respondToConversation(user, body);
@@ -251,23 +261,22 @@ export const twilioService = {
     if (lowerMessage === "save") {
       if (userId) {
         // Get recent SMS messages for this user
-        const recentMessages = await storage.getSmsMessages(userId, { 
-          dateRange: "7days",
-          limit: 10
-        });
+        // Get SMS messages for this user (all recent ones)
+        const recentMessages = await storage.getSmsMessages(userId);
         
         if (recentMessages && recentMessages.length > 0) {
-          // Format the conversation into a journal entry
-          const conversation = recentMessages
+          // Take the 10 most recent messages
+          const recentConversation = recentMessages
+            .slice(0, 10) // Limit to 10 most recent
             .filter(msg => msg.content.toLowerCase() !== "save") // Exclude the SAVE command itself
             .map(msg => {
               const direction = msg.direction === 'inbound' ? 'You' : 'Flappy';
-              const timestamp = new Date(msg.sentAt || msg.createdAt).toLocaleTimeString();
+              const timestamp = new Date(msg.sentAt).toLocaleTimeString();
               return `${direction} (${timestamp}): ${msg.content}`;
             })
             .join("\n\n");
             
-          return this.formatJournalContent(`Conversation with Flappy\n\n${conversation}`);
+          return this.formatJournalContent(`Conversation with Flappy\n\n${recentConversation}`);
         } else {
           return this.formatJournalContent("No recent conversation found to save.");
         }
