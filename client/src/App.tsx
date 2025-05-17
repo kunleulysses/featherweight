@@ -18,6 +18,7 @@ import PrivacyPage from "@/pages/privacy-page";
 import ContactPage from "@/pages/contact-page";
 import BillingPage from "@/pages/billing-page";
 import EmailTestPage from "@/pages/email-test";
+import SmsTestPage from "@/pages/sms-test";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -37,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/billing" component={BillingPage} />
       <ProtectedRoute path="/conversation" component={ConversationPage} />
       <ProtectedRoute path="/email-test" component={EmailTestPage} />
+      <ProtectedRoute path="/sms-test" component={SmsTestPage} />
       <Route component={NotFound} />
     </Switch>
   );
