@@ -1,19 +1,24 @@
-import nodemailer from "nodemailer";
 import { User, Email, InsertEmail } from "@shared/schema";
 import { storage } from "./storage";
 import { generateFlappyContent, FlappyContentType } from "./openai";
 import { memoryService } from "./memory-service";
+import OpenAI from "openai";
+import sgMail from "@sendgrid/mail";
 
-// Configure email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtp.ethereal.email",
-  port: parseInt(process.env.EMAIL_PORT || "587"),
-  secure: process.env.EMAIL_SECURE === "true",
-  auth: {
-    user: process.env.EMAIL_USER || "ethereal.user@ethereal.email",
-    pass: process.env.EMAIL_PASSWORD || "ethereal_password",
-  },
+// Initialize OpenAI with the API key
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 30000, // 30 second timeout
+  maxRetries: 2
 });
+
+// Configure SendGrid
+if (!process.env.SENDGRID_API_KEY) {
+  console.warn('SendGrid API key is not configured. Email functionality will be limited.');
+} else {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  console.log('SendGrid initialized successfully');
+}
 
 // Email from address
 const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@featherweight.world";
@@ -21,20 +26,49 @@ const FROM_NAME = "Flappy from Featherweight";
 
 // Export email service functions
 export const emailService = {
-  // Send a single email
+  // Send a single email using SendGrid
   async sendEmail(to: string, subject: string, content: string, isPremium: boolean = false): Promise<{ messageId: string }> {
     try {
-      const info = await transporter.sendMail({
-        from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
-        to,
-        subject,
-        html: formatEmailHTML(content, isPremium),
-        text: content + (!isPremium ? '\n\n[Advertisement: Upgrade to premium for ad-free experiences]' : ''),
-      });
+      if (!process.env.SENDGRID_API_KEY) {
+        console.warn('SendGrid API key is not configured. Cannot send email.');
+        return { messageId: `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}` };
+      }
       
-      return { messageId: info.messageId };
+      const htmlContent = formatEmailHTML(content, isPremium);
+      const textContent = content + (!isPremium ? '\n\n[Advertisement: Upgrade to premium for ad-free experiences]' : '');
+      
+      const msg = {
+        to,
+        from: {
+          email: FROM_EMAIL,
+          name: FROM_NAME
+        },
+        subject,
+        text: textContent,
+        html: htmlContent,
+        trackingSettings: {
+          clickTracking: {
+            enable: true
+          },
+          openTracking: {
+            enable: true
+          }
+        },
+        mailSettings: {
+          footer: {
+            enable: true,
+            text: 'Featherweight - Your Journaling Companion\nReply to this email to continue your conversation with Flappy',
+            html: '<p style="color: #9E9E9E; font-size: 12px;">Featherweight - Your Journaling Companion<br>Reply to this email to continue your conversation with Flappy</p>'
+          }
+        }
+      };
+      
+      await sgMail.send(msg);
+      
+      // Generate a message ID since SendGrid doesn't directly return one in the same way
+      return { messageId: `sg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}` };
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error("Error sending email with SendGrid:", error);
       throw new Error("Failed to send email");
     }
   },
@@ -282,16 +316,22 @@ export const emailService = {
   },
   
   // Send daily inspirational emails to all users
-  async sendDailyInspiration(): Promise<void> {
+  async sendDailyInspiration(): Promise<{ success: boolean; count: number }> {
     try {
-      // This would typically be called by a scheduled job
-      const allUsers = Array.from(storage["users"].values()) as User[];
+      // Get all active users from the database
+      const allUsers = await getAllActiveUsers();
+      let sentCount = 0;
       
       for (const user of allUsers) {
         // Check user preferences
         const frequency = user.preferences?.emailFrequency || "daily";
         const today = new Date();
         const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+        
+        // Skip users who don't want daily inspirations
+        if (user.preferences?.disableDailyInspirations) {
+          continue;
+        }
         
         // Skip based on frequency preferences
         if (
@@ -303,9 +343,14 @@ export const emailService = {
         }
         
         await this.sendFlappyEmail(user, "dailyInspiration");
+        sentCount++;
       }
+      
+      console.log(`Sent daily inspiration to ${sentCount} users`);
+      return { success: true, count: sentCount };
     } catch (error) {
       console.error("Error sending daily inspiration:", error);
+      return { success: false, count: 0 };
     }
   },
   

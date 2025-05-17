@@ -25,7 +25,7 @@ try {
 }
 
 // Type definitions
-export type FlappyContentType = 'dailyInspiration' | 'journalResponse' | 'weeklyInsight';
+export type FlappyContentType = 'dailyInspiration' | 'journalResponse' | 'weeklyInsight' | 'emailConversation';
 export type FlappyContent = {
   subject: string;
   content: string;
@@ -260,6 +260,32 @@ Format your response as JSON:
 }`;
 
     default:
+      // Add support for email conversations
+      if (contentType === 'emailConversation') {
+        return `${basePrompt}
+        
+Respond to this email message from a user conversing with Flappy:
+
+"${context}"
+
+For the 'subject' field, create a friendly subject line that references their message with an appropriate emoji.
+
+For the 'content' field, include:
+1. A warm, personal greeting using the name "${userName}"
+2. A direct, friendly response to what they've shared
+3. A thoughtful insight or question that builds on the conversation
+4. A helpful suggestion or tip related to their message
+5. Your signature with a touch of pelican personality
+
+Keep your response under 180 words. Be conversational, helpful, and friendly. Make sure your response sounds like a natural email conversation between friends.
+
+Format your response as JSON:
+{
+  "subject": "Re: [Brief Theme]",
+  "content": "[Your conversational response with appropriate formatting and line breaks]"
+}`;
+      }
+      
       return basePrompt;
   }
 }
@@ -352,6 +378,23 @@ What was your favorite moment this week? I'd love to hear about it when you have
 
 ${farewell}
 ${signature}`
+      };
+      
+    case 'emailConversation':
+      return {
+        subject: "🌊 Riding the waves of conversation!",
+        content: `${userGreeting}
+
+Thanks for your message! I was just taking a break from my beach patrol (very important pelican business) to read what you sent.
+
+That's really interesting! It reminds me of the time I spent watching the sunset yesterday - sometimes the most ordinary moments can bring us the greatest insights.
+
+Is there anything specific about this that you'd like to explore more? I'm here to chat whenever you'd like - my wings are always ready for a friendly conversation!
+
+${farewell}
+${signature}
+
+P.S. Feel free to reply anytime - I love our chats!`
       };
   }
 }
