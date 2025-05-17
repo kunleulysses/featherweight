@@ -116,7 +116,7 @@ export function WelcomeDialog() {
                 <div>
                   <h4 className="text-sm font-medium mb-1">Reply to Journal</h4>
                   <p className="text-sm text-muted-foreground">
-                    Simply reply to Flappy's emails or send a new email to <span className="font-medium">flappy@featherweight.app</span> anytime to create journal entries.
+                    Simply reply to Flappy's emails or send a new email to <span className="font-medium">flappy@featherweight.world</span> anytime to create journal entries.
                   </p>
                 </div>
               </div>
