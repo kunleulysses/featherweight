@@ -45,6 +45,10 @@ const emailPreferencesSchema = z.object({
   marketingEmails: z.boolean().default(false),
   receiveInsights: z.boolean().default(true),
   receiveSms: z.boolean().default(false),
+  emailDeliveryTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: "Please enter a valid time in 24-hour format (HH:MM)"
+  }).default("11:00"),
+  disableDailyEmails: z.boolean().default(false),
 });
 
 type EmailPreferencesValues = z.infer<typeof emailPreferencesSchema>;
@@ -483,6 +487,30 @@ export default function SettingsPage() {
                       <form onSubmit={emailPreferencesForm.handleSubmit(onEmailPreferencesSubmit)} className="space-y-6">
                         <FormField
                           control={emailPreferencesForm.control}
+                          name="disableDailyEmails"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">Daily Inspiration Emails</FormLabel>
+                                <FormDescription>
+                                  Daily inspiration emails from Flappy to help with your journaling practice
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm text-muted-foreground">Enabled</span>
+                                  <Switch
+                                    checked={!field.value}
+                                    onCheckedChange={(checked) => field.onChange(!checked)}
+                                  />
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={emailPreferencesForm.control}
                           name="emailFrequency"
                           render={({ field }) => (
                             <FormItem>
@@ -490,6 +518,7 @@ export default function SettingsPage() {
                               <Select 
                                 onValueChange={field.onChange} 
                                 defaultValue={field.value}
+                                disabled={emailPreferencesForm.watch("disableDailyEmails")}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -510,6 +539,28 @@ export default function SettingsPage() {
                             </FormItem>
                           )}
                         />
+                        
+                        <FormField
+                          control={emailPreferencesForm.control}
+                          name="emailDeliveryTime"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Delivery Time</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="time"
+                                  {...field}
+                                  disabled={emailPreferencesForm.watch("disableDailyEmails")}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Choose the time of day when you'd like to receive your daily inspiration emails (default: 11:00 AM)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
                         <FormField
                           control={emailPreferencesForm.control}
                           name="receiveInsights"
