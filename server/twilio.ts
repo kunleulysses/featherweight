@@ -220,9 +220,15 @@ export const twilioService = {
    * or use hashtags like #journal
    */
   isJournalEntryRequest(message: string): boolean {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // Check for the "SAVE" command (case insensitive)
+    if (lowerMessage === "save") {
+      return true;
+    }
+    
     // Check for prefixes at the beginning of the message
     const journalPrefixes = ['journal:', 'journal entry:', 'dear journal:', 'entry:', 'log:', 'diary:', 'note:'];
-    const lowerMessage = message.toLowerCase().trim();
     
     // Check for prefixes
     if (journalPrefixes.some(prefix => lowerMessage.startsWith(prefix))) {
@@ -237,9 +243,45 @@ export const twilioService = {
   /**
    * Extract the journal content from a prefixed message and format it
    */
-  extractJournalContent(message: string): string {
+  async extractJournalContent(message: string, userId?: number, phoneNumber?: string): Promise<string> {
     const originalMessage = message.trim();
     const lowerMessage = originalMessage.toLowerCase();
+    
+    // Handle the "SAVE" command - retrieve recent conversation
+    if (lowerMessage === "save") {
+      if (userId) {
+        // Get recent SMS messages for this user
+        const recentMessages = await storage.getSmsMessages(userId, { 
+          dateRange: "7days",
+          limit: 10
+        });
+        
+        if (recentMessages && recentMessages.length > 0) {
+          // Format the conversation into a journal entry
+          const conversation = recentMessages
+            .filter(msg => msg.content.toLowerCase() !== "save") // Exclude the SAVE command itself
+            .map(msg => {
+              const direction = msg.direction === 'inbound' ? 'You' : 'Flappy';
+              const timestamp = new Date(msg.sentAt || msg.createdAt).toLocaleTimeString();
+              return `${direction} (${timestamp}): ${msg.content}`;
+            })
+            .join("\n\n");
+            
+          return this.formatJournalContent(`Conversation with Flappy\n\n${conversation}`);
+        } else {
+          return this.formatJournalContent("No recent conversation found to save.");
+        }
+      } else if (phoneNumber) {
+        // Try to find the user by phone number
+        const user = await storage.getUserByPhoneNumber(phoneNumber);
+        if (user) {
+          return this.extractJournalContent("save", user.id);
+        }
+      }
+      
+      // Fallback if we can't find messages
+      return this.formatJournalContent("SMS Conversation with Flappy (saved)");
+    }
     
     // First check prefixes
     const journalPrefixes = ['journal:', 'journal entry:', 'dear journal:', 'entry:', 'log:', 'diary:', 'note:'];
