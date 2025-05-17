@@ -268,6 +268,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // SendGrid Inbound Parse webhook for handling incoming emails
+  app.post("/api/emails/webhook", async (req: Request, res: Response) => {
+    try {
+      console.log("Received webhook from SendGrid:", req.body);
+      
+      // SendGrid Parse webhook sends form data
+      const { from, to, subject, text, html, headers } = req.body;
+      
+      // Extract the sender's email address
+      const senderEmail = typeof from === 'string' 
+        ? from.match(/<(.+)>/)?.[1] || from 
+        : from;
+      
+      // Find the user associated with this email
+      const user = await storage.getUserByEmail(senderEmail);
+      
+      if (!user) {
+        console.warn(`Email received from unregistered user: ${senderEmail}`);
+        return res.status(200).send('OK'); // Still return 200 to acknowledge receipt
+      }
+      
+      // Determine if this is a reply based on subject or headers
+      const isReply = (headers && headers['In-Reply-To']) || 
+                      (subject && subject.toLowerCase().startsWith('re:'));
+      
+      // Get the text content (prefer plain text over HTML)
+      const content = text || (html ? html.replace(/<[^>]*>/g, '') : '');
+      
+      // Process the incoming email
+      await emailService.processIncomingEmail(
+        senderEmail,
+        subject || 'No Subject',
+        content,
+        headers?.['In-Reply-To']
+      );
+      
+      // Always return 200 OK to acknowledge receipt
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('Error processing webhook:', error);
+      // Still return 200 to acknowledge receipt (SendGrid will retry on non-200)
+      res.status(200).send('Error processed');
+    }
+  });
+  
   // =========== User Preferences Routes ===========
   
   // Update user profile information

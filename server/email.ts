@@ -122,7 +122,7 @@ export const emailService = {
     }
   },
 
-  // Process an incoming email as a journal entry
+  // Process an incoming email as a journal entry or conversation
   async processIncomingEmail(from: string, subject: string, content: string, inReplyTo?: string): Promise<void> {
     try {
       // Find the user by email
@@ -135,38 +135,149 @@ export const emailService = {
       // Clean the content (remove email signatures, quoted replies, etc.)
       const cleanedContent = cleanEmailContent(content);
       
-      // Extract title from the first line or use a default
-      const lines = cleanedContent.trim().split('\n');
-      const title = lines[0].length > 5 ? lines[0].substring(0, 50) : "Journal Entry";
-      const journalContent = lines.length > 1 ? cleanedContent : cleanedContent;
+      // Check if this is a reply to a previous email from Flappy
+      let isReply = !!inReplyTo || (subject && subject.toLowerCase().startsWith('re:'));
       
-      // Try to find the original email if this is a reply
-      let emailId: string | undefined;
-      if (inReplyTo) {
-        const emails = await storage.getEmails(user.id);
-        const originalEmail = emails.find(email => email.messageId === inReplyTo);
-        if (originalEmail) {
-          emailId = originalEmail.messageId;
+      // Determine if the user wants to save this as a journal entry
+      const shouldSaveAsJournal = await this.shouldSaveAsJournal(cleanedContent);
+      
+      if (shouldSaveAsJournal) {
+        // This should be saved as a journal entry
+        // Extract title from the first line or use a default
+        const lines = cleanedContent.trim().split('\n');
+        const title = lines[0].length > 5 ? lines[0].substring(0, 50) : "Journal Entry";
+        const journalContent = lines.length > 1 ? cleanedContent : cleanedContent;
+        
+        // Try to find the original email if this is a reply
+        let emailId: string | undefined;
+        if (inReplyTo) {
+          const emails = await storage.getEmails(user.id);
+          const originalEmail = emails.find(email => email.messageId === inReplyTo);
+          if (originalEmail) {
+            emailId = originalEmail.messageId;
+          }
+        }
+        
+        // Create the journal entry
+        const journalEntry = await storage.createJournalEntry({
+          userId: user.id,
+          title,
+          content: journalContent,
+          mood: detectMood(cleanedContent),
+          tags: extractTags(cleanedContent),
+          emailId,
+          source: 'email'
+        });
+        
+        // Process journal content for memories
+        await memoryService.processMessage(user.id, journalContent, 'journal_topic');
+        
+        // Send a journal confirmation email
+        await this.sendFlappyEmail(user, "journalResponse", cleanedContent);
+        
+        console.log(`Created journal entry ${journalEntry.id} from email for user ${user.id}`);
+      } else {
+        // This is a regular conversation with Flappy
+        try {
+          // Generate Flappy's response using OpenAI
+          const flappyResponse = await generateFlappyContent("emailConversation", cleanedContent, {
+            username: user.username,
+            email: user.email,
+            userId: user.id,
+            firstName: user.firstName || undefined,
+            lastName: user.lastName || undefined
+          });
+          
+          // Keep track of message count for free users
+          let messageCount = 1;
+          if (!user.isPremium) {
+            // Look through previous emails to count this conversation
+            const emails = await storage.getEmails(user.id, {
+              dateRange: "7days"
+            });
+            
+            // Count messages in this conversation (those with the same subject or thread)
+            const conversationEmails = emails.filter(email => 
+              email.subject.toLowerCase().includes(subject.toLowerCase()) ||
+              (inReplyTo && email.messageId === inReplyTo)
+            );
+            
+            messageCount = conversationEmails.length + 1;
+          }
+          
+          // Check if the free user has reached their message limit
+          const reachedFreeLimit = !user.isPremium && messageCount > 3;
+          
+          // Customize the response if they've reached the limit
+          let responseContent = flappyResponse.content;
+          let responseSubject = `Re: ${subject}`;
+          
+          if (reachedFreeLimit) {
+            responseContent += `\n\n---\n\nYou've reached the free message limit (3) for this conversation. To continue chatting with me and get unlimited responses, please upgrade to Premium.\n\nWith Premium, you'll also get SMS journaling, ad-free emails, and more personalized insights.`;
+          }
+          
+          // Send Flappy's response
+          const messageId = await this.sendEmail(user.email, responseSubject, responseContent, user.isPremium);
+          
+          // Store the email in the database
+          await storage.createEmail({
+            userId: user.id,
+            subject: responseSubject,
+            content: responseContent,
+            type: 'emailConversation',
+            messageId: messageId.messageId,
+            isRead: false
+          });
+          
+          console.log(`Sent conversation response to ${user.email} (Premium: ${user.isPremium})`);
+        } catch (error) {
+          console.error("Error generating conversation response:", error);
+          
+          // Send a fallback response if something went wrong
+          await this.sendEmail(
+            user.email, 
+            `Re: ${subject}`, 
+            `Hi ${user.firstName || user.username},\n\nThank you for your message! I'm having a moment of reflection and will get back to you soon.\n\nIn the meantime, feel free to continue journaling or send me another message.\n\nWarmly,\nFlappy`, 
+            user.isPremium
+          );
         }
       }
-      
-      // Create the journal entry
-      const journalEntry = await storage.createJournalEntry({
-        userId: user.id,
-        title,
-        content: journalContent,
-        mood: detectMood(cleanedContent),
-        tags: extractTags(cleanedContent),
-        emailId,
-      });
-      
-      // Process journal content for memories
-      await memoryService.processMessage(user.id, journalContent, 'journal_topic');
-      
-      // Send an acknowledgment email
-      await this.sendFlappyEmail(user, "journalResponse", cleanedContent);
     } catch (error) {
       console.error("Error processing incoming email:", error);
+    }
+  },
+  
+  // Determine if an email should be saved as a journal entry
+  async shouldSaveAsJournal(content: string): Promise<boolean> {
+    try {
+      // Try using OpenAI to detect intent
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        messages: [
+          {
+            role: "system",
+            content: "You are an analyzer for Featherweight, a journaling app. Determine if this email indicates the user wants to save content as a journal entry. Look for phrases like 'save this', 'add to my journal', 'put this in my journal', etc. Respond with only 'true' or 'false'."
+          },
+          {
+            role: "user",
+            content
+          }
+        ],
+      });
+      
+      const result = response.choices[0].message.content.toLowerCase().trim();
+      return result === 'true';
+    } catch (error) {
+      console.error("Error analyzing journal intent:", error);
+      
+      // Fallback analysis if OpenAI fails
+      const lowerContent = content.toLowerCase();
+      return lowerContent.includes('save this') || 
+             lowerContent.includes('journal entry') ||
+             lowerContent.includes('add to my journal') ||
+             lowerContent.includes('put this in my journal') ||
+             lowerContent.includes('save as journal') ||
+             lowerContent.includes('record this');
     }
   },
   
