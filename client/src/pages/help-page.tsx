@@ -56,32 +56,34 @@ export default function HelpPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-5xl mx-auto">
-              <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-8 gap-1">
-                <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
-                  <HelpCircle className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>Overview</span>
-                </TabsTrigger>
-                <TabsTrigger value="journal" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
-                  <BookOpen className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>Journaling</span>
-                </TabsTrigger>
-                <TabsTrigger value="email" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
-                  <Mail className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>Email</span>
-                </TabsTrigger>
-                <TabsTrigger value="sms" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
-                  <MessageSquare className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>SMS</span>
-                </TabsTrigger>
-                <TabsTrigger value="billing" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
-                  <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>Billing</span>
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
-                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>Settings</span>
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto pb-2 -mx-3 px-3">
+                <TabsList className="w-full flex md:grid md:grid-cols-6 mb-4 md:mb-8 gap-1">
+                  <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-2 px-2 text-xs md:text-sm whitespace-nowrap min-w-[70px]">
+                    <HelpCircle className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>Overview</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="journal" className="flex flex-col items-center gap-1 py-2 px-2 text-xs md:text-sm whitespace-nowrap min-w-[70px]">
+                    <BookOpen className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>Journal</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="flex flex-col items-center gap-1 py-2 px-2 text-xs md:text-sm whitespace-nowrap min-w-[70px]">
+                    <Mail className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>Email</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="sms" className="flex flex-col items-center gap-1 py-2 px-2 text-xs md:text-sm whitespace-nowrap min-w-[70px]">
+                    <MessageSquare className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>SMS</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="billing" className="flex flex-col items-center gap-1 py-2 px-2 text-xs md:text-sm whitespace-nowrap min-w-[70px]">
+                    <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>Billing</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="flex flex-col items-center gap-1 py-2 px-2 text-xs md:text-sm whitespace-nowrap min-w-[70px]">
+                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>Settings</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="overview" className="space-y-8">
                 <section className="mb-6 md:mb-8">
