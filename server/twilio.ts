@@ -216,41 +216,107 @@ export const twilioService = {
 
   /**
    * Check if the message is intended as a journal entry
-   * Users can prefix their message with "Journal:" or similar
+   * Users can prefix their message with "Journal:" or similar,
+   * or use hashtags like #journal
    */
   isJournalEntryRequest(message: string): boolean {
-    const journalPrefixes = ['journal:', 'journal entry:', 'dear journal:', 'entry:'];
+    // Check for prefixes at the beginning of the message
+    const journalPrefixes = ['journal:', 'journal entry:', 'dear journal:', 'entry:', 'log:', 'diary:', 'note:'];
     const lowerMessage = message.toLowerCase().trim();
     
-    return journalPrefixes.some(prefix => lowerMessage.startsWith(prefix));
+    // Check for prefixes
+    if (journalPrefixes.some(prefix => lowerMessage.startsWith(prefix))) {
+      return true;
+    }
+    
+    // Check for hashtags anywhere in the message
+    const journalHashtags = ['#journal', '#entry', '#diary', '#note', '#log'];
+    return journalHashtags.some(tag => lowerMessage.includes(tag));
   },
 
   /**
-   * Extract the journal content from a prefixed message
+   * Extract the journal content from a prefixed message and format it
    */
   extractJournalContent(message: string): string {
-    const lowerMessage = message.toLowerCase().trim();
-    const journalPrefixes = ['journal:', 'journal entry:', 'dear journal:', 'entry:'];
+    const originalMessage = message.trim();
+    const lowerMessage = originalMessage.toLowerCase();
+    
+    // First check prefixes
+    const journalPrefixes = ['journal:', 'journal entry:', 'dear journal:', 'entry:', 'log:', 'diary:', 'note:'];
     
     for (const prefix of journalPrefixes) {
-      if (lowerMessage.startsWith(prefix)) {
-        return message.slice(prefix.length).trim();
+      if (lowerMessage.startsWith(prefix.toLowerCase())) {
+        // Extract the actual content without the prefix
+        const content = originalMessage.slice(prefix.length).trim();
+        return this.formatJournalContent(content);
       }
     }
     
-    // If no prefix found, return the whole message
-    return message;
+    // If using hashtags, remove them from the content
+    const journalHashtags = ['#journal', '#entry', '#diary', '#note', '#log'];
+    let content = originalMessage;
+    
+    for (const tag of journalHashtags) {
+      content = content.replace(new RegExp(tag, 'gi'), '');
+    }
+    
+    return this.formatJournalContent(content.trim());
+  },
+  
+  /**
+   * Format journal content for better readability
+   */
+  formatJournalContent(content: string): string {
+    // Add date stamp if not present
+    const dateStamp = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    if (!content.includes(dateStamp)) {
+      content = `${dateStamp}\n\n${content}`;
+    }
+    
+    return content;
   },
 
   /**
    * Generate a title for the journal entry based on content
    */
   generateJournalTitle(content: string): string {
-    // Simple algorithm to extract first few words or sentence
-    const words = content.split(' ');
-    const firstFewWords = words.slice(0, 5).join(' ');
+    // Remove the date stamp if it exists at the beginning
+    const datePattern = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}\s*/i;
+    const contentWithoutDate = content.replace(datePattern, '').trim();
     
-    // Add ellipsis if we truncated
-    return words.length > 5 ? `${firstFewWords}...` : firstFewWords;
+    // Try to find the first sentence for a more meaningful title
+    const sentences = contentWithoutDate.split(/[.!?]\s+/);
+    const firstSentence = sentences[0];
+    
+    if (firstSentence.length <= 50) {
+      // If the first sentence is a good length, use it as the title
+      return firstSentence;
+    } else {
+      // Otherwise, extract key words or a shorter phrase
+      const words = contentWithoutDate.split(' ');
+      
+      // Try to find a natural break point (like a comma or semicolon)
+      let breakPoint = contentWithoutDate.indexOf(',');
+      if (breakPoint === -1 || breakPoint > 50) {
+        breakPoint = contentWithoutDate.indexOf(';');
+      }
+      if (breakPoint === -1 || breakPoint > 50) {
+        breakPoint = 5; // Default to first 5 words if no natural break
+      } else {
+        // Use the natural break only if it's not too close to the beginning
+        breakPoint = Math.max(breakPoint, Math.min(content.length, 3));
+      }
+      
+      const firstFewWords = words.slice(0, breakPoint).join(' ');
+      
+      // Add ellipsis if we truncated
+      return words.length > breakPoint ? `${firstFewWords}...` : firstFewWords;
+    }
   }
 };
