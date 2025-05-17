@@ -56,29 +56,29 @@ export default function HelpPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-5xl mx-auto">
-              <TabsList className="grid grid-cols-2 md:grid-cols-6 mb-8">
-                <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-3">
-                  <HelpCircle className="h-5 w-5" />
+              <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-8 gap-1">
+                <TabsTrigger value="overview" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
+                  <HelpCircle className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="journal" className="flex flex-col items-center gap-1 py-3">
-                  <BookOpen className="h-5 w-5" />
+                <TabsTrigger value="journal" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
+                  <BookOpen className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Journaling</span>
                 </TabsTrigger>
-                <TabsTrigger value="email" className="flex flex-col items-center gap-1 py-3">
-                  <Mail className="h-5 w-5" />
+                <TabsTrigger value="email" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
+                  <Mail className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Email</span>
                 </TabsTrigger>
-                <TabsTrigger value="sms" className="flex flex-col items-center gap-1 py-3">
-                  <MessageSquare className="h-5 w-5" />
+                <TabsTrigger value="sms" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
+                  <MessageSquare className="h-4 w-4 md:h-5 md:w-5" />
                   <span>SMS</span>
                 </TabsTrigger>
-                <TabsTrigger value="billing" className="flex flex-col items-center gap-1 py-3">
-                  <CreditCard className="h-5 w-5" />
+                <TabsTrigger value="billing" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
+                  <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Billing</span>
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex flex-col items-center gap-1 py-3">
-                  <Settings className="h-5 w-5" />
+                <TabsTrigger value="settings" className="flex flex-col items-center gap-1 py-2 px-1 text-xs md:text-sm">
+                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Settings</span>
                 </TabsTrigger>
               </TabsList>
@@ -86,16 +86,16 @@ export default function HelpPage() {
               <TabsContent value="overview" className="space-y-8">
                 <section className="mb-8">
                   <h2 className="text-2xl font-bold mb-4">What is Featherweight?</h2>
-                  <div className="grid md:grid-cols-2 gap-8">
+                  <div className="grid md:grid-cols-2 gap-4 md:gap-8">
                     <div>
-                      <p className="mb-4">
+                      <p className="mb-3 md:mb-4 text-sm md:text-base">
                         Featherweight is an innovative email-driven journaling companion that transforms personal reflection into an engaging, interactive experience through Flappy, your cosmic pelican guide.
                       </p>
-                      <p className="mb-4">
+                      <p className="mb-3 md:mb-4 text-sm md:text-base">
                         Unlike traditional journaling apps, Featherweight uses the familiar interface of email and SMS to help you maintain a consistent practice of self-reflection and mindfulness.
                       </p>
-                      <h3 className="text-xl font-semibold mb-2">Key Features:</h3>
-                      <ul className="list-disc pl-6 space-y-2">
+                      <h3 className="text-lg md:text-xl font-semibold mb-2">Key Features:</h3>
+                      <ul className="list-disc pl-5 md:pl-6 space-y-1 md:space-y-2 text-sm md:text-base">
                         <li>Daily inspirational messages from Flappy</li>
                         <li>Email-based journaling workflow</li>
                         <li>SMS journaling for premium users</li>
@@ -104,19 +104,24 @@ export default function HelpPage() {
                         <li>Conversation memory for more personalized interactions</li>
                       </ul>
                     </div>
-                    <div className="bg-muted/40 rounded-lg p-6 border border-border">
-                      <h3 className="text-xl font-semibold mb-4">Meet Flappy</h3>
+                    <div className="bg-muted/40 rounded-lg p-4 md:p-6 border border-border">
+                      <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Meet Flappy</h3>
                       <div className="flex justify-center mb-4">
-                        <img 
-                          src="/assets/flappy-avatar.png" 
-                          alt="Flappy the cosmic pelican" 
-                          className="w-32 h-32 rounded-full object-cover"
-                        />
+                        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden">
+                          <img 
+                            src="/images/flappy-avatar.png" 
+                            alt="Flappy the cosmic pelican" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = "https://placehold.co/200x200/5f7adb/white?text=Flappy";
+                            }}
+                          />
+                        </div>
                       </div>
-                      <p className="mb-4">
+                      <p className="mb-3 text-sm md:text-base">
                         Flappy is your personal cosmic pelican guide with ancient wisdom and a playful personality. As old as the starlight itself, Flappy has seen the cosmos evolve and brings that perspective to your journaling practice.
                       </p>
-                      <p>
+                      <p className="text-sm md:text-base">
                         Flappy communicates with you through email and SMS (for premium users), sending daily inspiration, responding to your journal entries, and engaging in meaningful conversations.
                       </p>
                     </div>
