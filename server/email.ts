@@ -358,7 +358,7 @@ export const emailService = {
   async sendWeeklyInsights(): Promise<{ success: boolean; count: number }> {
     try {
       // Get all active users from the database
-      const allUsers = await getAllActiveUsers();
+      const allUsers = await this.getAllActiveUsers();
       let sentCount = 0;
       
       for (const user of allUsers) {
