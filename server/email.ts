@@ -319,7 +319,7 @@ export const emailService = {
   async sendDailyInspiration(): Promise<{ success: boolean; count: number }> {
     try {
       // Get all active users from the database
-      const allUsers = await getAllActiveUsers();
+      const allUsers = await this.getAllActiveUsers();
       let sentCount = 0;
       
       for (const user of allUsers) {
@@ -355,10 +355,11 @@ export const emailService = {
   },
   
   // Send weekly insights based on user's journal entries
-  async sendWeeklyInsights(): Promise<void> {
+  async sendWeeklyInsights(): Promise<{ success: boolean; count: number }> {
     try {
-      // This would typically be called by a scheduled job
-      const allUsers = Array.from(storage["users"].values()) as User[];
+      // Get all active users from the database
+      const allUsers = await getAllActiveUsers();
+      let sentCount = 0;
       
       for (const user of allUsers) {
         // Skip users who don't want insights
@@ -367,9 +368,6 @@ export const emailService = {
         }
         
         // Get the user's journal entries from the past week
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        
         const recentEntries = await storage.getJournalEntries(user.id, {
           dateRange: "7days"
         });
@@ -385,9 +383,35 @@ export const emailService = {
           .join('\n\n');
         
         await this.sendFlappyEmail(user, "weeklyInsight", context);
+        sentCount++;
       }
+      
+      console.log(`Sent weekly insights to ${sentCount} users`);
+      return { success: true, count: sentCount };
     } catch (error) {
       console.error("Error sending weekly insights:", error);
+      return { success: false, count: 0 };
+    }
+  },
+  
+  /**
+   * Helper function to get all active users
+   * Gets users from the database and filters them based on activity status
+   */
+  async getAllActiveUsers(): Promise<User[]> {
+    try {
+      // Get all users from the database
+      const allUsers = await storage.getAllUsers();
+      
+      // Filter out inactive users
+      return allUsers.filter(user => {
+        // We don't have a deactivated flag in our schema yet, so we consider all users active
+        // In the future, we could add more sophisticated filtering here
+        return true;
+      });
+    } catch (error) {
+      console.error("Error getting active users:", error);
+      return [];
     }
   }
 };

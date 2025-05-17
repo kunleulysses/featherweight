@@ -19,6 +19,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUserProfile(userId: number, profileData: { username: string; email: string; firstName?: string; lastName?: string; bio?: string }): Promise<User>;
   updateUserPreferences(userId: number, preferences: UpdateUserPreferences): Promise<User>;
