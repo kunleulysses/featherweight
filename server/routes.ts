@@ -271,9 +271,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // SendGrid Inbound Parse webhook for handling incoming emails
   app.post("/api/emails/webhook", async (req: Request, res: Response) => {
+    console.log('=== SENDGRID WEBHOOK REQUEST RECEIVED ===');
+    console.log(`Request received at: ${new Date().toISOString()}`);
+    console.log(`Content-Type: ${req.headers['content-type']}`);
+    console.log(`Content-Length: ${req.headers['content-length']}`);
+    
     try {
-      console.log("Received webhook from SendGrid - Headers:", req.headers);
-      console.log("Received webhook from SendGrid - Body:", req.body);
+      console.log("=== WEBHOOK HEADERS ===");
+      Object.entries(req.headers).forEach(([key, value]) => {
+        console.log(`${key}: ${value}`);
+      });
+      
+      console.log("=== WEBHOOK BODY STRUCTURE ===");
+      if (req.body) {
+        const bodyKeys = Object.keys(req.body);
+        console.log(`Body keys: ${bodyKeys.join(', ')}`);
+      } else {
+        console.log("Request body is empty or undefined");
+      }
+      
+      // Validate critical fields
+      if (!req.body) {
+        console.error("Critical error: Webhook body is missing");
+        return res.status(200).send('Error: Missing body data');
+      }
       
       // SendGrid Inbound Parse format can vary between raw email and parsed objects
       // Extract email details from the request
@@ -284,6 +305,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const html = req.body.html || '';
       const inReplyTo = req.body.headers?.['In-Reply-To'] || req.body['In-Reply-To'] || '';
       
+      console.log("=== PARSED EMAIL DATA ===");
+      console.log(`From (raw): ${from}`);
+      console.log(`To: ${to}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Text content length: ${text?.length || 0}`);
+      console.log(`HTML content length: ${html?.length || 0}`);
+      console.log(`In-Reply-To: ${inReplyTo || 'Not a reply'}`);
+      
       // Extract the sender's email address
       let senderEmail = from;
       
@@ -292,33 +321,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Format can be "John Doe <john@example.com>" or just "john@example.com"
         const emailMatch = from.match(/<(.+@.+)>/) || from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
         senderEmail = emailMatch ? emailMatch[1] : from;
+        console.log(`Extracted sender email: ${senderEmail}`);
+      } else {
+        console.warn("From field is not a string, may cause parsing issues");
       }
       
-      console.log(`Processing email from: ${senderEmail}, subject: ${subject}`);
-      
       // Find the user associated with this email
+      console.log(`Looking up user with email: ${senderEmail}`);
       const user = await storage.getUserByEmail(senderEmail);
       
       if (!user) {
-        console.warn(`Email received from unregistered user: ${senderEmail}`);
+        console.warn(`No registered user found for email: ${senderEmail}`);
         
         // For new users, we might want to create a welcome response or signup invitation
         // For now, just acknowledge receipt
+        console.log("Sending welcome email to non-registered user");
+        
+        try {
+          await emailService.sendEmail(
+            senderEmail,
+            "Welcome to Featherweight - Your Personal Journaling Companion",
+            `Hello there,\n\nThank you for reaching out to Flappy, the friendly pelican at Featherweight! It looks like you're not registered with us yet.\n\nFeatherweight is a journaling app that helps you capture your thoughts and reflections with the guidance of Flappy, your cosmic pelican guide.\n\nTo start your journaling journey, please visit our website to create an account. It only takes a minute!\n\nWarmly,\nFlappy the Pelican\nFeatherweight - Your Journaling Companion`,
+            false
+          );
+          console.log(`Welcome email sent successfully to ${senderEmail}`);
+        } catch (emailError) {
+          console.error(`Failed to send welcome email to ${senderEmail}:`, emailError);
+        }
+        
         return res.status(200).send('OK');
       }
       
+      console.log(`Found user: ID=${user.id}, Username=${user.username}, Premium=${user.isPremium}`);
+      
       // Determine if this is a reply based on subject or headers
       const isReply = inReplyTo || subject.toLowerCase().startsWith('re:');
+      console.log(`Email categorized as: ${isReply ? 'Reply to previous conversation' : 'New conversation'}`);
       
       // Get the text content (prefer plain text over HTML)
       const content = text || (html ? html.replace(/<[^>]*>/g, '') : '');
       
       if (!content) {
-        console.warn("Email received with empty content");
+        console.warn("Email received with empty content, cannot process");
         return res.status(200).send('OK');
       }
       
-      console.log(`Processing email content of length ${content.length}`);
+      console.log(`Email has valid content of length ${content.length}, processing...`);
       
       // Process the incoming email
       await emailService.processIncomingEmail(
@@ -328,12 +376,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         inReplyTo
       );
       
-      console.log(`Successfully processed email from ${senderEmail}`);
+      console.log(`=== EMAIL SUCCESSFULLY PROCESSED ===`);
+      console.log(`Time completed: ${new Date().toISOString()}`);
       
       // Always return 200 OK to acknowledge receipt
       res.status(200).send('OK');
     } catch (error) {
-      console.error('Error processing webhook:', error);
+      console.error('=== ERROR PROCESSING WEBHOOK ===');
+      console.error(`Error occurred at: ${new Date().toISOString()}`);
+      console.error(`Error type: ${error instanceof Error ? error.constructor.name : 'Unknown'}`);
+      console.error(`Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error(`Error stack: ${error instanceof Error ? error.stack : 'No stack trace available'}`);
+      
       // Still return 200 to acknowledge receipt (SendGrid will retry on non-200)
       res.status(200).send('Error processed');
     }

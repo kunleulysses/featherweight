@@ -31,16 +31,28 @@ console.log("Using email FROM address:", FROM_EMAIL);
 export const emailService = {
   // Send a single email using SendGrid
   async sendEmail(to: string, subject: string, content: string, isPremium: boolean = false): Promise<{ messageId: string }> {
+    console.log('=== EMAIL SENDING PROCESS STARTED ===');
+    console.log(`Target email: ${to}`);
+    console.log(`Email subject: ${subject}`);
+    console.log(`Content length: ${content.length} characters`);
+    
     try {
       if (!process.env.SENDGRID_API_KEY) {
-        console.warn('SendGrid API key is not configured. Cannot send email.');
-        return { messageId: `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}` };
+        console.warn('⚠️ SendGrid API key is not configured. Cannot send email.');
+        const localId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        console.log(`Generated local message ID: ${localId}`);
+        return { messageId: localId };
       }
       
+      console.log('Formatting HTML content');
       const htmlContent = formatEmailHTML(content, isPremium);
+      
+      console.log('Preparing text content');
       const textContent = content + (!isPremium ? '\n\n[Advertisement: Upgrade to premium for ad-free experiences]' : '');
       
-      console.log(`Sending email to: ${to}, subject: ${subject}`);
+      console.log(`FROM_EMAIL: ${FROM_EMAIL}`);
+      console.log(`FROM_NAME: ${FROM_NAME}`);
+      console.log(`Preparing to send email to: ${to}, subject: ${subject}`);
       
       const msg = {
         to,
@@ -73,16 +85,41 @@ export const emailService = {
         }
       };
       
-      const [response] = await sgMail.send(msg);
-      console.log(`Email sent successfully to ${to}, status code: ${response?.statusCode}, message ID: ${response?.messageId || 'unknown'}`);
+      console.log('Email message object prepared, attempting to send via SendGrid');
       
-      // Use SendGrid message ID if available, otherwise generate one
-      const messageId = response?.messageId || `sg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      return { messageId };
+      try {
+        const [response] = await sgMail.send(msg);
+        console.log('=== EMAIL SENT SUCCESSFULLY ===');
+        console.log(`Status code: ${response?.statusCode}`);
+        console.log(`Message ID: ${response?.messageId || 'unknown'}`);
+        console.log(`Headers: ${JSON.stringify(response?.headers || {})}`);
+        
+        // Use SendGrid message ID if available, otherwise generate one
+        const messageId = response?.messageId || `sg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        return { messageId };
+      } catch (sendGridError) {
+        console.error('=== SENDGRID SENDING ERROR ===');
+        console.error(`Error code: ${sendGridError.code || 'N/A'}`);
+        console.error(`Error message: ${sendGridError.message || 'No message'}`);
+        
+        if (sendGridError.response) {
+          console.error('SendGrid response error details:');
+          console.error(`Status code: ${sendGridError.response.statusCode || 'N/A'}`);
+          console.error(`Body: ${JSON.stringify(sendGridError.response.body || {})}`);
+          console.error(`Headers: ${JSON.stringify(sendGridError.response.headers || {})}`);
+        }
+        
+        throw sendGridError;
+      }
     } catch (error) {
-      console.error("Error sending email with SendGrid:", error);
-      console.error("Error details:", error.response?.body?.errors || error.message);
-      throw new Error("Failed to send email");
+      console.error("=== GENERAL EMAIL SENDING ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      if (error.response?.body?.errors) {
+        console.error("SendGrid error details:", JSON.stringify(error.response?.body?.errors));
+      }
+      throw new Error(`Failed to send email: ${error.message}`);
     }
   },
 
@@ -171,13 +208,20 @@ export const emailService = {
 
   // Process an incoming email as a journal entry or conversation
   async processIncomingEmail(from: string, subject: string, content: string, inReplyTo?: string): Promise<void> {
+    console.log('=== INCOMING EMAIL PROCESSING STARTED ===');
+    console.log(`From: ${from}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Content length: ${content.length} characters`);
+    console.log(`Reply-To Message ID: ${inReplyTo || 'Not a reply'}`);
+    
     try {
-      console.log(`Beginning to process email from: ${from}`);
+      console.log('Step 1: Looking up user by email address');
       
       // Find the user by email
       const user = await storage.getUserByEmail(from);
       if (!user) {
         console.error(`No user found for email: ${from}`);
+        console.log('Sending welcome email to unregistered user');
         
         // Send a welcome/invitation email to unregistered users
         await this.sendEmail(
@@ -186,23 +230,28 @@ export const emailService = {
           `Hello there,\n\nThank you for reaching out to Flappy, the friendly pelican at Featherweight! It looks like you're not registered with us yet.\n\nFeatherweight is a journaling app that helps you capture your thoughts and reflections with the guidance of Flappy, your cosmic pelican guide.\n\nTo start your journaling journey, please visit our website to create an account. It only takes a minute!\n\nWarmly,\nFlappy the Pelican\nFeatherweight - Your Journaling Companion`,
           false
         );
+        console.log('Welcome email sent, exiting process');
         return;
       }
       
-      console.log(`Processing email for user: ${user.id} (${user.email})`);
+      console.log(`Step 2: Found user - ID: ${user.id}, Email: ${user.email}, Username: ${user.username}`);
+      console.log(`User premium status: ${user.isPremium ? 'Premium' : 'Free'}`);
       
+      console.log('Step 3: Cleaning email content (removing signatures, quoted replies, etc.)');
       // Clean the content (remove email signatures, quoted replies, etc.)
       const cleanedContent = cleanEmailContent(content);
+      console.log(`Original content length: ${content.length}, Cleaned content length: ${cleanedContent.length}`);
       
       // Check if this is a reply to a previous email from Flappy
       let isReply = !!inReplyTo || (subject && subject.toLowerCase().startsWith('re:'));
       
-      console.log(`Email is ${isReply ? 'a reply' : 'not a reply'}, analyzing content...`);
+      console.log(`Step 4: Determining email type - ${isReply ? 'Reply to previous email' : 'New conversation'}`);
       
+      console.log('Step 5: Analyzing content to determine if it should be a journal entry');
       // Determine if the user wants to save this as a journal entry
       const shouldSaveAsJournal = await this.shouldSaveAsJournal(cleanedContent);
       
-      console.log(`Content should ${shouldSaveAsJournal ? '' : 'not '}be saved as journal entry`);
+      console.log(`Content analysis result: ${shouldSaveAsJournal ? 'Save as journal entry' : 'Process as conversation'}`);
       
       if (shouldSaveAsJournal) {
         // This should be saved as a journal entry

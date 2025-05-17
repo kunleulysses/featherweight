@@ -9,6 +9,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Helmet } from "react-helmet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { AlertCircle, Send, Inbox, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function EmailTestPage() {
   const { user } = useAuth();
@@ -16,20 +22,27 @@ export default function EmailTestPage() {
   const [emailContent, setEmailContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [responseInfo, setResponseInfo] = useState<string | null>(null);
+  const [responseDetails, setResponseDetails] = useState<Record<string, any> | null>(null);
+  const [testType, setTestType] = useState<"simulate" | "request">("simulate");
+  const [isRequestingInspiration, setIsRequestingInspiration] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSimulateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailContent.trim()) return;
 
     setIsSending(true);
+    setResponseInfo(null);
+    setResponseDetails(null);
+    
     try {
       const response = await apiRequest("POST", "/api/emails/simulate-reply", { 
         content: emailContent,
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to simulate email");
+        throw new Error(responseData.message || "Failed to simulate email");
       }
 
       toast({
@@ -38,10 +51,85 @@ export default function EmailTestPage() {
       });
 
       setResponseInfo("Test email processed! Check your inbox for Flappy's response.");
+      setResponseDetails(responseData);
       setEmailContent("");
     } catch (error) {
       toast({
         title: "Failed to simulate email",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive"
+      });
+      setResponseInfo("Error: " + (error instanceof Error ? error.message : "Something went wrong"));
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleRequestInspiration = async () => {
+    setIsRequestingInspiration(true);
+    setResponseInfo(null);
+    setResponseDetails(null);
+    
+    try {
+      const response = await apiRequest("POST", "/api/emails/request-inspiration");
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(responseData.message || "Failed to request inspiration");
+      }
+
+      toast({
+        title: "Inspiration requested",
+        description: "Flappy is sending you an inspiration email. Check your inbox!",
+      });
+
+      setResponseInfo("Inspiration email sent! Check your inbox for Flappy's message.");
+      setResponseDetails(responseData);
+    } catch (error) {
+      toast({
+        title: "Failed to request inspiration",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive"
+      });
+      setResponseInfo("Error: " + (error instanceof Error ? error.message : "Something went wrong"));
+    } finally {
+      setIsRequestingInspiration(false);
+    }
+  };
+
+  const testWebhook = async () => {
+    setIsSending(true);
+    setResponseInfo("Testing webhook...");
+    
+    try {
+      // Create a simple test webhook request to check if the endpoint is properly configured
+      const testData = {
+        from: user?.email || "test@example.com",
+        to: "flappy@featherweight.world",
+        subject: "Webhook Test",
+        text: "This is a test of the webhook endpoint.",
+        html: "<p>This is a test of the webhook endpoint.</p>",
+        headers: {
+          "In-Reply-To": ""
+        }
+      };
+      
+      const response = await apiRequest("POST", "/api/emails/webhook", testData);
+      
+      if (response.ok) {
+        setResponseInfo("Webhook test received by server! Check server logs for details.");
+        toast({
+          title: "Webhook test sent",
+          description: "The test webhook was received by the server. This doesn't guarantee emails will work, but confirms the endpoint is functioning.",
+        });
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || "Webhook test failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Webhook test failed",
         description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive"
       });
@@ -101,63 +189,148 @@ export default function EmailTestPage() {
             <div className="mb-8">
               <h1 className="font-quicksand font-bold text-3xl mb-2">Email Test</h1>
               <p className="text-foreground/70">
-                Test Flappy's email responses without sending a real email
+                Test and troubleshoot Flappy's email functionality
               </p>
             </div>
             
+            <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <AlertTitle>Important Note</AlertTitle>
+              <AlertDescription>
+                SendGrid domain verification may take 24-48 hours to fully propagate. 
+                If emails aren't working, domain verification might still be pending.
+              </AlertDescription>
+            </Alert>
+            
             <Card className="max-w-3xl mx-auto">
               <CardHeader>
-                <CardTitle>Simulate an Email to Flappy</CardTitle>
+                <CardTitle>Email Testing Tools</CardTitle>
                 <CardDescription>
-                  This will send a simulated email from your account ({user.email}) to Flappy and trigger a response.
+                  Test Flappy's email functionality using these tools
                 </CardDescription>
               </CardHeader>
-              <form onSubmit={handleSubmit}>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Textarea
-                        placeholder="Type your message to Flappy..."
-                        className="min-h-[150px]"
-                        value={emailContent}
-                        onChange={(e) => setEmailContent(e.target.value)}
-                      />
+              <CardContent>
+                <Tabs defaultValue={testType} onValueChange={(value) => setTestType(value as "simulate" | "request")}>
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="simulate">Simulate Email Reply</TabsTrigger>
+                    <TabsTrigger value="request">Request Inspiration</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="simulate">
+                    <form onSubmit={handleSimulateEmail}>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="email-content" className="mb-2 block">Test Email Content</Label>
+                          <Textarea
+                            id="email-content"
+                            placeholder="Type your message to Flappy..."
+                            className="min-h-[150px]"
+                            value={emailContent}
+                            onChange={(e) => setEmailContent(e.target.value)}
+                          />
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 sm:flex-row sm:gap-0 sm:justify-between">
+                          <Button 
+                            type="submit" 
+                            disabled={isSending || !emailContent.trim()}
+                            className="justify-center"
+                          >
+                            <Send className="mr-2 h-4 w-4" />
+                            {isSending ? "Sending..." : "Simulate Email Reply"}
+                          </Button>
+                          
+                          <Button 
+                            type="button"
+                            variant="outline"
+                            onClick={testWebhook}
+                            disabled={isSending}
+                            className="justify-center"
+                          >
+                            <Inbox className="mr-2 h-4 w-4" />
+                            Test Webhook
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  </TabsContent>
+                  
+                  <TabsContent value="request">
+                    <div className="space-y-4">
+                      <p>
+                        Request a fresh inspiration email from Flappy. This will send an actual email to your 
+                        account ({user.email}).
+                      </p>
+                      
+                      <Button 
+                        onClick={handleRequestInspiration}
+                        disabled={isRequestingInspiration}
+                        className="w-full sm:w-auto"
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        {isRequestingInspiration ? "Requesting..." : "Request Inspiration Email"}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+                
+                {responseInfo && (
+                  <div className="mt-6">
+                    <Separator className="my-4" />
+                    <h3 className="font-medium text-lg mb-2">Response</h3>
+                    <div className={`p-4 rounded-md ${responseInfo.startsWith("Error") ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                      {responseInfo}
                     </div>
                     
-                    {responseInfo && (
-                      <div className={`p-4 rounded-md ${responseInfo.startsWith("Error") ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-                        {responseInfo}
+                    {responseDetails && (
+                      <div className="mt-4 p-4 rounded-md bg-muted overflow-auto">
+                        <h4 className="text-sm font-medium mb-2">Response Details:</h4>
+                        <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(responseDetails, null, 2)}</pre>
                       </div>
                     )}
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    type="submit" 
-                    disabled={isSending || !emailContent.trim()}
-                  >
-                    {isSending ? "Sending..." : "Simulate Email"}
-                  </Button>
-                </CardFooter>
-              </form>
+                )}
+              </CardContent>
             </Card>
             
             <div className="mt-8 max-w-3xl mx-auto">
               <Card>
                 <CardHeader>
-                  <CardTitle>Email Troubleshooting</CardTitle>
+                  <CardTitle>Email Troubleshooting Guide</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-medium">If you're not receiving responses from Flappy:</h3>
+                      <h3 className="text-lg font-medium">Email Configuration Requirements</h3>
                       <ul className="list-disc pl-6 mt-2 space-y-2">
-                        <li>Check your spam folder</li>
-                        <li>Make sure your SendGrid domain authentication is properly set up</li>
-                        <li>Verify the MX records are correctly pointing to SendGrid</li>
-                        <li>Confirm the Inbound Parse webhook is configured in SendGrid</li>
-                        <li>Check if your email's "Reply-To" address is correctly set to flappy@featherweight.world</li>
+                        <li><strong>SendGrid API Key:</strong> Ensure SENDGRID_API_KEY environment variable is set</li>
+                        <li><strong>Domain Verification:</strong> Domain must be verified in SendGrid (can take 24-48 hours)</li>
+                        <li><strong>MX Records:</strong> Should point to mx.sendgrid.net (priority 1)</li>
+                        <li><strong>SPF Record:</strong> Should include sendgrid.net (v=spf1 include:sendgrid.net ~all)</li>
+                        <li><strong>DKIM:</strong> Should be configured for your domain in SendGrid</li>
+                        <li><strong>Inbound Parse Webhook:</strong> Should be configured to point to /api/emails/webhook</li>
                       </ul>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium">Common Issues</h3>
+                      <ul className="list-disc pl-6 mt-2 space-y-2">
+                        <li>Check your spam/junk folder for Flappy's emails</li>
+                        <li>Verify that the FROM_EMAIL (flappy@featherweight.world) is correctly set</li>
+                        <li>Make sure the domain has proper reverse DNS records</li>
+                        <li>Some email providers might delay delivery of new domain emails</li>
+                        <li>If simulated emails work but real emails don't, check Inbound Parse webhook configuration</li>
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium">Testing Steps</h3>
+                      <ol className="list-decimal pl-6 mt-2 space-y-2">
+                        <li>Use "Simulate Email Reply" to test the email generation and sending functionality</li>
+                        <li>Use "Request Inspiration" to test direct email sending</li>
+                        <li>Use "Test Webhook" to verify the webhook endpoint is working properly</li>
+                        <li>If all tests pass but emails aren't being received, check your email provider's spam filters</li>
+                      </ol>
                     </div>
                   </div>
                 </CardContent>
