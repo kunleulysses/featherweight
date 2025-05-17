@@ -93,8 +93,8 @@ export default function ContactPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <a href="mailto:hello@featherweight.app" className="text-primary hover:underline">
-                      hello@featherweight.app
+                    <a href="mailto:hello@featherweight.world" className="text-primary hover:underline">
+                      hello@featherweight.world
                     </a>
                     <p className="text-sm text-muted-foreground mt-2">
                       For general inquiries and support
@@ -143,14 +143,14 @@ export default function ContactPage() {
                   <CardContent className="space-y-3">
                     <div>
                       <p className="font-medium">For press:</p>
-                      <a href="mailto:press@featherweight.app" className="text-primary hover:underline">
-                        press@featherweight.app
+                      <a href="mailto:press@featherweight.world" className="text-primary hover:underline">
+                        press@featherweight.world
                       </a>
                     </div>
                     <div>
                       <p className="font-medium">For partnerships:</p>
-                      <a href="mailto:partners@featherweight.app" className="text-primary hover:underline">
-                        partners@featherweight.app
+                      <a href="mailto:partners@featherweight.world" className="text-primary hover:underline">
+                        partners@featherweight.world
                       </a>
                     </div>
                   </CardContent>
@@ -267,7 +267,7 @@ export default function ContactPage() {
                     <CardTitle className="text-lg">I'm having trouble with my account. What should I do?</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>Please email us at support@featherweight.app with details about your issue. Include your username and any error messages you're seeing.</p>
+                    <p>Please email us at support@featherweight.world with details about your issue. Include your username and any error messages you're seeing.</p>
                   </CardContent>
                 </Card>
                 
@@ -276,7 +276,7 @@ export default function ContactPage() {
                     <CardTitle className="text-lg">Do you offer refunds for premium subscriptions?</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>Yes, we offer a 30-day money-back guarantee for premium subscriptions. Contact billing@featherweight.app to request a refund.</p>
+                    <p>Yes, we offer a 30-day money-back guarantee for premium subscriptions. Contact billing@featherweight.world to request a refund.</p>
                   </CardContent>
                 </Card>
                 

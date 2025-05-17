@@ -189,8 +189,8 @@ export default function PrivacyPage() {
                   If you have any questions or concerns about this Privacy Policy or our data practices, please contact us at:
                 </p>
                 <p className="mt-2">
-                  <a href="mailto:privacy@featherweight.app" className="text-primary hover:underline">
-                    privacy@featherweight.app
+                  <a href="mailto:privacy@featherweight.world" className="text-primary hover:underline">
+                    privacy@featherweight.world
                   </a>
                 </p>
               </CardContent>

@@ -613,7 +613,7 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
           <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px;">
             <p style="font-weight: bold; margin-bottom: 10px; color: #3b82f6;">Upgrade to Premium</p>
             <p style="margin-bottom: 15px; font-size: 14px;">Remove ads, unlock SMS journaling, and enjoy an enhanced experience with Flappy.</p>
-            <a href="https://featherweight.app/subscription" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">Upgrade Now</a>
+            <a href="https://featherweight.world/subscription" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">Upgrade Now</a>
           </div>
         </div>
         ` : ''}

@@ -134,8 +134,8 @@ export default function AboutPage() {
                 </p>
                 <div className="flex items-center gap-2 text-primary">
                   <Mail className="h-5 w-5" />
-                  <a href="mailto:hello@featherweight.app" className="hover:underline">
-                    hello@featherweight.app
+                  <a href="mailto:hello@featherweight.world" className="hover:underline">
+                    hello@featherweight.world
                   </a>
                 </div>
                 <div className="flex items-center gap-2 text-primary">
