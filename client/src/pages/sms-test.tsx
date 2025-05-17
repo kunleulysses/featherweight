@@ -251,7 +251,10 @@ export default function SmsTestPage() {
                           onChange={(e) => setSmsContent(e.target.value)}
                         />
                         <p className="text-xs text-muted-foreground mt-2">
-                          Tip: Start with "Journal:" to save as a journal entry
+                          Tips: 
+                          <br />• Start with "Journal:" to save as a journal entry
+                          <br />• Text "SAVE" to convert your recent conversation into a journal entry
+                          <br />• Use hashtags like #journal anywhere in your message to create a journal entry
                         </p>
                       </div>
                     </div>
