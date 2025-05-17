@@ -29,21 +29,25 @@ export default function BillingPage() {
         window.location.href = '/subscription';
         return;
       } else {
-        // Handle cancellation
-        const res = await apiRequest("PATCH", "/api/user/subscription", {
-          isPremium: false,
-          durationMonths: 0,
-        });
+        // Use the dedicated cancel subscription endpoint
+        const res = await apiRequest("POST", "/api/cancel-subscription", {});
 
         if (!res.ok) {
           throw new Error("Failed to cancel subscription");
         }
 
+        const data = await res.json();
+        
+        // Update the UI with the new user data
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        
+        // Get the formatted date for the end of subscription
+        const accessUntil = data.accessUntil ? new Date(data.accessUntil) : null;
+        const formattedDate = accessUntil ? formatDate(accessUntil) : "the end of your billing period";
         
         toast({
           title: "Subscription Cancelled",
-          description: "Your subscription has been cancelled. You'll have access until the end of your billing period.",
+          description: `Your subscription has been cancelled. You'll have access until ${formattedDate}.`,
         });
       }
     } catch (error) {
@@ -55,6 +59,11 @@ export default function BillingPage() {
     } finally {
       setIsUpdating(false);
     }
+  };
+  
+  // Function to update payment method
+  const handleUpdatePaymentMethod = () => {
+    window.location.href = '/subscription?updatePayment=true';
   };
   
   // Format date as Month DD, YYYY

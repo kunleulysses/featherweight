@@ -506,6 +506,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Cancel a subscription with Stripe
+  app.post("/api/cancel-subscription", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      // Check if user has a subscription to cancel
+      if (!req.user.isPremium) {
+        return res.status(400).json({ message: "User does not have an active premium subscription" });
+      }
+      
+      const subscriptionId = req.user.stripeSubscriptionId;
+      
+      if (subscriptionId) {
+        // Cancel the subscription with Stripe
+        await stripeService.cancelSubscription(subscriptionId);
+      }
+      
+      // Update the user's subscription status in our database
+      // Note: We'll keep premium access until the end of the billing period
+      const today = new Date();
+      const endDate = new Date();
+      endDate.setMonth(today.getMonth() + 1); // End access one month from now
+      
+      const updatedUser = await storage.updateUserSubscription(
+        req.user.id,
+        true, // Keep premium true until end date
+        endDate // Access expires at end of billing period
+      );
+      
+      // Set a flag to indicate the subscription is cancelled but still active
+      // This is for UI display purposes
+      await storage.updateUserPreferences(req.user.id, {
+        subscriptionCancelled: true
+      });
+      
+      // Filter out password from the response
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json({
+        message: "Subscription cancelled successfully",
+        user: userWithoutPassword,
+        accessUntil: endDate
+      });
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ 
+        message: "Failed to cancel subscription",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get payment methods for the current user
+  app.get("/api/payment-methods", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const paymentMethods = await stripeService.getUserPaymentMethods(req.user.id);
+      res.json(paymentMethods);
+    } catch (error) {
+      console.error("Error retrieving payment methods:", error);
+      res.status(500).json({ 
+        message: "Failed to retrieve payment methods",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
   // Update user subscription status
   app.patch("/api/user/subscription", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
