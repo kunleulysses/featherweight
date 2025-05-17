@@ -44,7 +44,7 @@ export default function JournalPage() {
           <Container>
             {!user?.isPremium && (
               <div className="mb-6">
-                <MockAdvertisement className="w-full" />
+                <Advertisement adSlot="8137349583" adFormat="horizontal" className="w-full" />
               </div>
             )}
           
@@ -86,7 +86,7 @@ export default function JournalPage() {
                 {/* Vertical ad for desktop */}
                 {!user?.isPremium && (
                   <div className="hidden md:block mt-6">
-                    <MockAdvertisement className="mx-auto" />
+                    <Advertisement adSlot="8137349583" adFormat="vertical" className="mx-auto" />
                   </div>
                 )}
               </div>
