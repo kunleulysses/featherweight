@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Container } from "@/components/ui/container";
@@ -8,9 +8,7 @@ import { Helmet } from "react-helmet";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Check, X, CreditCard } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,101 +17,137 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Check, X } from "lucide-react";
+import { useElements, useStripe, PaymentElement, Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 
-// Define the payment form schema
-const paymentFormSchema = z.object({
-  cardNumber: z.string()
-    .min(16, "Card number must be 16 digits")
-    .max(19, "Card number cannot exceed 19 digits")
-    .regex(/^[0-9\s]+$/, "Card number must contain only digits"),
-  cardholderName: z.string()
-    .min(3, "Cardholder name must be at least 3 characters")
-    .max(100, "Cardholder name cannot exceed 100 characters"),
-  expiryMonth: z.string()
-    .min(1, "Expiry month is required"),
-  expiryYear: z.string()
-    .min(1, "Expiry year is required"),
-  cvv: z.string()
-    .min(3, "CVV must be 3-4 digits")
-    .max(4, "CVV cannot exceed 4 digits")
-    .regex(/^[0-9]+$/, "CVV must contain only digits"),
-  billingAddress: z.string()
-    .min(5, "Billing address must be at least 5 characters"),
-  city: z.string()
-    .min(2, "City must be at least 2 characters"),
-  state: z.string()
-    .min(2, "State must be at least 2 characters"),
-  zipCode: z.string()
-    .min(5, "Zip code must be at least 5 characters")
-    .regex(/^[0-9-]+$/, "Zip code must contain only digits and hyphens"),
-  country: z.string()
-    .min(2, "Country is required"),
-});
+// Make sure to call loadStripe outside of a component's render to avoid
+// recreating the Stripe object on every render.
+// This is your test publishable API key.
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-type PaymentFormValues = z.infer<typeof paymentFormSchema>;
+function CheckoutForm({ success }: { success: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [message, setMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!stripe) {
+      return;
+    }
+
+    const clientSecret = new URLSearchParams(window.location.search).get(
+      "payment_intent_client_secret"
+    );
+
+    if (!clientSecret) {
+      return;
+    }
+
+    stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      switch (paymentIntent?.status) {
+        case "succeeded":
+          setMessage("Payment succeeded!");
+          success();
+          break;
+        case "processing":
+          setMessage("Your payment is processing.");
+          break;
+        case "requires_payment_method":
+          setMessage("Your payment was not successful, please try again.");
+          break;
+        default:
+          setMessage("Something went wrong.");
+          break;
+      }
+    });
+  }, [stripe]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      // Stripe.js hasn't yet loaded.
+      // Make sure to disable form submission until Stripe.js has loaded.
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        // Make sure to change this to your payment completion page
+        return_url: window.location.origin + "/subscription?success=true",
+      },
+    });
+
+    // This point will only be reached if there is an immediate error when
+    // confirming the payment. Otherwise, your customer will be redirected to
+    // your `return_url`. For some payment methods like iDEAL, your customer will
+    // be redirected to an intermediate site first to authorize the payment, then
+    // redirected to the `return_url`.
+    if (error.type === "card_error" || error.type === "validation_error") {
+      setMessage(error.message || "An unexpected error occurred.");
+      toast({
+        title: "Payment failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } else {
+      setMessage("An unexpected error occurred.");
+      toast({
+        title: "Payment failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <form id="payment-form" onSubmit={handleSubmit}>
+      <PaymentElement id="payment-element" />
+      <Button 
+        disabled={isLoading || !stripe || !elements} 
+        className="w-full mt-4"
+        type="submit"
+      >
+        {isLoading ? "Processing..." : "Subscribe Now - $4.99/month"}
+      </Button>
+      {/* Show any error or success messages */}
+      {message && <div id="payment-message" className="mt-4 text-sm text-red-500">{message}</div>}
+    </form>
+  );
+}
 
 export default function SubscriptionPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState("");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Initialize form with default values
-  const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentFormSchema),
-    defaultValues: {
-      cardNumber: "",
-      cardholderName: "",
-      expiryMonth: "",
-      expiryYear: "",
-      cvv: "",
-      billingAddress: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "US",
-    },
-  });
-
-  const onSubmit = async (values: PaymentFormValues) => {
-    if (!user) {
-      navigate("/auth");
-      return;
+  useEffect(() => {
+    // Check for success parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      // Payment was successful, update user subscription
+      completeSubscription();
     }
+  }, []);
 
-    setIsProcessing(true);
+  const completeSubscription = async () => {
+    if (!user) return;
+    
     try {
-      // In a real app, this would validate the payment with Stripe or another provider
-      // For now, we'll simulate a successful payment
-      
       // Update user subscription after payment is processed
       const res = await apiRequest("PATCH", "/api/user/subscription", {
         isPremium: true,
         durationMonths: 1,
-        paymentDetails: {
-          lastFour: values.cardNumber.slice(-4),
-          expiryMonth: values.expiryMonth,
-          expiryYear: values.expiryYear,
-          billingDate: new Date().getDate(), // Bill on the same day each month
-        }
       });
 
       if (!res.ok) {
@@ -125,23 +159,22 @@ export default function SubscriptionPage() {
       
       toast({
         title: "Subscription activated",
-        description: "Welcome to Featherweight Premium! You now have access to all premium features. You will be billed $4.99 monthly on the " + new Date().getDate() + "th of each month.",
+        description: "Welcome to Featherweight Premium! You now have access to all premium features, including SMS journaling.",
       });
       
-      // Navigate to the journal page
-      navigate("/journal");
+      // Navigate to the SMS page to showcase new premium feature
+      navigate("/sms");
     } catch (error) {
-      toast({
-        title: "Subscription failed",
-        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+      console.error("Error completing subscription:", error);
     }
   };
-  
-  const handleStartSubscription = () => {
+
+  const handleStartSubscription = async () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    
     if (user?.isPremium) {
       toast({
         title: "Already subscribed",
@@ -149,7 +182,30 @@ export default function SubscriptionPage() {
       });
       return;
     }
-    setShowPaymentForm(true);
+    
+    setIsLoading(true);
+    
+    try {
+      // Create subscription payment intent on server
+      const response = await apiRequest("POST", "/api/create-subscription", {});
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create subscription");
+      }
+      
+      const data = await response.json();
+      setClientSecret(data.clientSecret);
+      setShowPaymentForm(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to start subscription process",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
