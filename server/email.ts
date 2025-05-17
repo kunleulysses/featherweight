@@ -462,35 +462,75 @@ Flappy`;
   // Send daily inspirational emails to all users
   async sendDailyInspiration(): Promise<{ success: boolean; count: number }> {
     try {
+      console.log("=== STARTING DAILY INSPIRATION EMAIL DELIVERY ===");
+      console.log(`Current server time: ${new Date().toISOString()}`);
+      
+      // Get current hour in 24hr format (e.g., "11:00")
+      const now = new Date();
+      const currentHour = `${now.getHours().toString().padStart(2, '0')}:00`;
+      console.log(`Current hour for scheduling: ${currentHour}`);
+      
       // Get all active users from the database
       const allUsers = await this.getAllActiveUsers();
-      let sentCount = 0;
       
-      for (const user of allUsers) {
-        // Check user preferences
-        const frequency = user.preferences?.emailFrequency || "daily";
-        const today = new Date();
-        const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
-        
-        // Skip users who don't want daily inspirations
-        if (user.preferences?.disableDailyInspirations) {
-          continue;
-        }
-        
-        // Skip based on frequency preferences
-        if (
-          (frequency === "weekdays" && (dayOfWeek === 0 || dayOfWeek === 6)) ||
-          (frequency === "weekends" && !(dayOfWeek === 0 || dayOfWeek === 6)) ||
-          (frequency === "weekly" && dayOfWeek !== 1) // Send on Mondays for weekly
-        ) {
-          continue;
-        }
-        
-        await this.sendFlappyEmail(user, "dailyInspiration");
-        sentCount++;
+      if (!allUsers.length) {
+        console.log("No active users found for daily inspiration");
+        return { success: true, count: 0 };
       }
       
-      console.log(`Sent daily inspiration to ${sentCount} users`);
+      console.log(`Found ${allUsers.length} total active users`);
+      let sentCount = 0;
+      let skippedCount = 0;
+      
+      for (const user of allUsers) {
+        try {
+          // Check if user has disabled daily emails
+          if (user.preferences?.disableDailyEmails) {
+            console.log(`Skipping user ${user.id}: daily emails disabled in preferences`);
+            skippedCount++;
+            continue;
+          }
+          
+          // Check email frequency preference
+          const frequency = user.preferences?.emailFrequency || "daily";
+          const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          
+          // Skip based on frequency preferences
+          if ((frequency === "weekdays" && isWeekend) || 
+              (frequency === "weekends" && !isWeekend) ||
+              (frequency === "weekly" && dayOfWeek !== 1)) { // Send weekly emails on Mondays
+            console.log(`Skipping user ${user.id}: frequency ${frequency} doesn't match current day`);
+            skippedCount++;
+            continue;
+          }
+          
+          // Check delivery time preference (default to 11:00 AM if not set)
+          const preferredTime = user.preferences?.emailDeliveryTime || "11:00";
+          
+          // Only send if current hour matches preferred hour
+          if (preferredTime.substring(0, 2) + ":00" !== currentHour) {
+            console.log(`Skipping user ${user.id}: preferred time ${preferredTime} doesn't match current hour ${currentHour}`);
+            skippedCount++;
+            continue;
+          }
+          
+          console.log(`Sending daily inspiration to user ${user.id} (${user.email})`);
+          // Send daily inspiration email
+          await this.sendFlappyEmail(user, "dailyInspiration");
+          sentCount++;
+          console.log(`Successfully sent daily inspiration to user ${user.id}`);
+        } catch (error) {
+          console.error(`Failed to send daily inspiration to user ${user.id}:`, error);
+        }
+      }
+      
+      console.log(`=== DAILY INSPIRATION SUMMARY ===`);
+      console.log(`Total users: ${allUsers.length}`);
+      console.log(`Successfully sent: ${sentCount}`);
+      console.log(`Skipped: ${skippedCount}`);
+      console.log(`Failed: ${allUsers.length - sentCount - skippedCount}`);
+      
       return { success: true, count: sentCount };
     } catch (error) {
       console.error("Error sending daily inspiration:", error);
