@@ -10,6 +10,7 @@ import { twilioService } from "./twilio";
 import { journalImageUpload, getFileUrl } from "./file-upload";
 import { generateFlappyContent } from "./openai";
 import { memoryService } from "./memory-service";
+import { stripeService } from "./stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -462,6 +463,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a subscription with Stripe
+  app.post("/api/create-subscription", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      // Check if user is already premium
+      if (req.user.isPremium) {
+        return res.status(400).json({ message: "User already has a premium subscription" });
+      }
+      
+      // Create a temporary setup intent (this will be replaced with a subscription on completion)
+      // This is needed to collect payment details without charging yet
+      const price_id = "price_monthly"; // This would be an actual price ID in production
+      
+      // If user doesn't have a Stripe customer ID, create one
+      let customerId = req.user.stripeCustomerId;
+      if (!customerId) {
+        customerId = await stripeService.createCustomer(req.user);
+        await storage.updateUserStripeCustomerId(req.user.id, customerId);
+      }
+      
+      // Create payment intent for subscription
+      const paymentIntent = await stripeService.createPaymentIntent(
+        499, // $4.99 in cents
+        'usd',
+        customerId
+      );
+      
+      res.json({
+        clientSecret: paymentIntent.clientSecret,
+        paymentIntentId: paymentIntent.paymentIntentId,
+      });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ 
+        message: "Failed to create subscription",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
   // Update user subscription status
   app.patch("/api/user/subscription", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
