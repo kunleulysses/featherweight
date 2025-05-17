@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { useElements, useStripe, PaymentElement, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import type { StripeElementsOptions } from "@stripe/stripe-js";
+import type { StripeElementsOptions, Appearance } from "@stripe/stripe-js";
 
 // Make sure to call loadStripe outside of a component's render to avoid
 // recreating the Stripe object on every render.
@@ -272,8 +272,35 @@ export default function SubscriptionPage() {
                   : "Enhance your journaling experience with Flappy"}
               </p>
               
-              <div className="grid md:grid-cols-2 gap-8 mt-8">
-                {/* Free Tier */}
+              {/* Show payment update form or subscription options based on URL parameter */}
+              {window.location.search.includes('updatePayment=true') ? (
+                <div className="max-w-md mx-auto bg-background border border-border rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-medium mb-4">Update Payment Method</h2>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Your subscription will continue with the new payment method.
+                    Your billing date will remain the same.
+                  </p>
+                  
+                  {clientSecret ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+                      <CheckoutForm success={() => navigate('/billing?updated=true')} />
+                    </Elements>
+                  ) : (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 text-center">
+                    <Button variant="outline" onClick={() => navigate('/billing')}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid md:grid-cols-2 gap-8 mt-8">
+                  {/* Free Tier */}
                 <Card className="border-2 border-border">
                   <CardHeader className="pb-4">
                     <CardTitle className="font-quicksand text-2xl">Free</CardTitle>
@@ -411,6 +438,8 @@ export default function SubscriptionPage() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+              </>
               )}
             </div>
           </Container>
