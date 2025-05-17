@@ -50,13 +50,9 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
-      const result = await pool.query(`
-        SELECT * FROM users 
-        WHERE username = $1 
-        LIMIT 1
-      `, [username]);
-      
-      return result.rows[0] as User | undefined;
+      // Using Drizzle ORM to handle column name mappings automatically
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user;
     } catch (error) {
       console.error("Error getting user by username:", error);
       return undefined;
@@ -65,13 +61,9 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      const result = await pool.query(`
-        SELECT * FROM users 
-        WHERE email = $1 
-        LIMIT 1
-      `, [email]);
-      
-      return result.rows[0] as User | undefined;
+      // Using Drizzle ORM to handle column name mappings automatically
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      return user;
     } catch (error) {
       console.error("Error getting user by email:", error);
       return undefined;
