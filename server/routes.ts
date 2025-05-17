@@ -537,11 +537,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate // Access expires at end of billing period
       );
       
-      // Set a flag to indicate the subscription is cancelled but still active
-      // This is for UI display purposes
-      await storage.updateUserPreferences(req.user.id, {
-        subscriptionCancelled: true
-      });
+      // Update the user record to indicate subscription is ending
+      // We'll maintain the premium status until the end date
       
       // Filter out password from the response
       const { password, ...userWithoutPassword } = updatedUser;
