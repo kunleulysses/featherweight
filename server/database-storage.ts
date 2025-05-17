@@ -28,6 +28,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     try {
+      // Using direct Drizzle ORM query instead of SQL to avoid column name mismatches
       const allUsers = await db.select().from(users);
       return allUsers;
     } catch (error) {
@@ -38,13 +39,9 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     try {
-      const result = await pool.query(`
-        SELECT * FROM users 
-        WHERE id = $1 
-        LIMIT 1
-      `, [id]);
-      
-      return result.rows[0] as User | undefined;
+      // Using Drizzle ORM to handle column name mappings automatically
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
     } catch (error) {
       console.error("Error getting user by id:", error);
       return undefined;
