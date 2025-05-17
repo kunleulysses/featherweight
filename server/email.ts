@@ -529,7 +529,7 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
   });
   
   // Flappy avatar image URL - using the attached pelican image
-  const flappyAvatarUrl = "https://raw.githubusercontent.com/replit-user/featherweight-assets/main/flappy-avatar.png";
+  const flappyAvatarUrl = "/images/flappy-avatar.png";
   
   return `
   <!DOCTYPE html>
