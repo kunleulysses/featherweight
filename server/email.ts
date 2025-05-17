@@ -528,6 +528,9 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     return `<p style="margin-bottom: 16px; line-height: 1.5;">${formattedP}</p>`;
   });
   
+  // Flappy avatar image URL - using the attached pelican image
+  const flappyAvatarUrl = "https://raw.githubusercontent.com/replit-user/featherweight-assets/main/flappy-avatar.png";
+  
   return `
   <!DOCTYPE html>
   <html>
@@ -560,14 +563,15 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         border-bottom: 1px solid #E0E0E0;
       }
       .logo {
-        width: 40px;
-        height: 40px;
-        background-color: #64B5F6;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         margin-right: 12px;
+        overflow: hidden;
+      }
+      .logo img {
+        width: 100%;
+        height: auto;
       }
       .title {
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
@@ -597,37 +601,75 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         border-radius: 12px;
         margin-top: 20px;
       }
+      .journal-tip {
+        margin: 25px 0;
+        padding: 15px;
+        background-color: #e3f2fd;
+        border-left: 4px solid #64B5F6;
+        border-radius: 8px;
+      }
+      .journal-tip h3 {
+        margin-top: 0;
+        color: #1565C0;
+        font-size: 18px;
+      }
+      .highlight {
+        font-weight: bold;
+        color: #1565C0;
+        background-color: #f0f7ff;
+        padding: 2px 5px;
+        border-radius: 3px;
+      }
+      .premium-badge {
+        display: inline-block;
+        background-color: #8b5cf6;
+        color: white;
+        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
         <div class="logo">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+          <img src="${flappyAvatarUrl}" alt="Flappy the Pelican" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z%22></path><line x1=%2216%22 y1=%228%22 x2=%222%22 y2=%2222%22></line><line x1=%2217.5%22 y1=%2215%22 x2=%229%22 y2=%2215%22></line></svg>'; this.style.backgroundColor='#64B5F6';">
         </div>
-        <h1 class="title">Featherweight</h1>
+        <div>
+          <h1 class="title">Flappy ${isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}</h1>
+          <div style="color: #64B5F6; font-size: 14px;">Your Journaling Companion</div>
+        </div>
       </div>
       <div class="content">
         ${htmlParagraphs.join('')}
+        
+        <div class="journal-tip">
+          <h3>📝 How to Save a Journal Entry</h3>
+          <p>Want to save this conversation as a journal entry? Simply reply with a message that includes phrases like <span class="highlight">"save this as a journal entry"</span> or <span class="highlight">"add this to my journal"</span>.</p>
+          <p>Your journal entries will be automatically organized with tags and mood detection to help you track your reflections over time.</p>
+        </div>
         
         ${!isPremium ? `
         <div style="margin: 30px 0; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; text-align: center;">
           <p style="margin-bottom: 10px; font-size: 14px; color: #757575;">Advertisement</p>
           <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px;">
             <p style="font-weight: bold; margin-bottom: 10px; color: #3b82f6;">Upgrade to Premium</p>
-            <p style="margin-bottom: 15px; font-size: 14px;">Remove ads, unlock SMS journaling, and enjoy an enhanced experience with Flappy.</p>
+            <p style="margin-bottom: 15px; font-size: 14px;">Remove ads, unlock SMS journaling, and enjoy unlimited conversations with Flappy.</p>
             <a href="https://featherweight.world/subscription" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">Upgrade Now</a>
           </div>
         </div>
         ` : ''}
         
         <div style="text-align: center">
-          <a href="mailto:${FROM_EMAIL}" class="reply-button">Reply to Journal</a>
+          <a href="mailto:${FROM_EMAIL}" class="reply-button">Reply to Flappy</a>
         </div>
       </div>
       <div class="footer">
+        <p>Simply reply to this email to continue your conversation with Flappy.</p>
         <p>© ${new Date().getFullYear()} Featherweight. All rights reserved.</p>
-        <p>To adjust your email preferences, visit your <a href="#" style="color: #64B5F6;">settings page</a>.</p>
       </div>
     </div>
   </body>
