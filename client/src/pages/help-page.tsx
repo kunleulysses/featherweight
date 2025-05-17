@@ -46,11 +46,11 @@ export default function HelpPage() {
       </Helmet>
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow py-8 bg-background">
-          <Container>
-            <div className="mb-8">
-              <h1 className="font-quicksand font-bold text-3xl mb-2">Help & Support</h1>
-              <p className="text-foreground/70 max-w-3xl">
+        <main className="flex-grow py-4 md:py-8 bg-background">
+          <Container className="px-3 md:px-6">
+            <div className="mb-4 md:mb-8">
+              <h1 className="font-quicksand font-bold text-2xl md:text-3xl mb-2">Help & Support</h1>
+              <p className="text-foreground/70 max-w-3xl text-sm md:text-base">
                 Welcome to the Featherweight help center. Here you'll find detailed guides on how to use every feature of your AI-powered email companion and journaling application.
               </p>
             </div>
@@ -84,46 +84,50 @@ export default function HelpPage() {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-8">
-                <section className="mb-8">
-                  <h2 className="text-2xl font-bold mb-4">What is Featherweight?</h2>
-                  <div className="grid md:grid-cols-2 gap-4 md:gap-8">
-                    <div>
-                      <p className="mb-3 md:mb-4 text-sm md:text-base">
+                <section className="mb-6 md:mb-8">
+                  <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">What is Featherweight?</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div className="space-y-3 md:space-y-4">
+                      <p className="text-sm md:text-base">
                         Featherweight is an innovative email-driven journaling companion that transforms personal reflection into an engaging, interactive experience through Flappy, your cosmic pelican guide.
                       </p>
-                      <p className="mb-3 md:mb-4 text-sm md:text-base">
+                      <p className="text-sm md:text-base">
                         Unlike traditional journaling apps, Featherweight uses the familiar interface of email and SMS to help you maintain a consistent practice of self-reflection and mindfulness.
                       </p>
-                      <h3 className="text-lg md:text-xl font-semibold mb-2">Key Features:</h3>
-                      <ul className="list-disc pl-5 md:pl-6 space-y-1 md:space-y-2 text-sm md:text-base">
-                        <li>Daily inspirational messages from Flappy</li>
-                        <li>Email-based journaling workflow</li>
-                        <li>SMS journaling for premium users</li>
-                        <li>Mood tracking and insights</li>
-                        <li>Organized journal entries with smart tagging</li>
-                        <li>Conversation memory for more personalized interactions</li>
-                      </ul>
+                      <div>
+                        <h3 className="text-lg md:text-xl font-semibold mb-2">Key Features:</h3>
+                        <ul className="list-disc pl-5 md:pl-6 space-y-1 md:space-y-2 text-sm md:text-base">
+                          <li>Daily inspirational messages from Flappy</li>
+                          <li>Email-based journaling workflow</li>
+                          <li>SMS journaling for premium users</li>
+                          <li>Mood tracking and insights</li>
+                          <li>Organized journal entries with smart tagging</li>
+                          <li>Conversation memory for more personalized interactions</li>
+                        </ul>
+                      </div>
                     </div>
                     <div className="bg-muted/40 rounded-lg p-4 md:p-6 border border-border">
                       <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Meet Flappy</h3>
                       <div className="flex justify-center mb-4">
-                        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden">
+                        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-primary/10">
                           <img 
                             src="/images/flappy-avatar.png" 
                             alt="Flappy the cosmic pelican" 
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             onError={(e) => {
                               e.currentTarget.src = "https://placehold.co/200x200/5f7adb/white?text=Flappy";
                             }}
                           />
                         </div>
                       </div>
-                      <p className="mb-3 text-sm md:text-base">
-                        Flappy is your personal cosmic pelican guide with ancient wisdom and a playful personality. As old as the starlight itself, Flappy has seen the cosmos evolve and brings that perspective to your journaling practice.
-                      </p>
-                      <p className="text-sm md:text-base">
-                        Flappy communicates with you through email and SMS (for premium users), sending daily inspiration, responding to your journal entries, and engaging in meaningful conversations.
-                      </p>
+                      <div className="space-y-3">
+                        <p className="text-sm md:text-base">
+                          Flappy is your personal cosmic pelican guide with ancient wisdom and a playful personality. As old as the starlight itself, Flappy has seen the cosmos evolve and brings that perspective to your journaling practice.
+                        </p>
+                        <p className="text-sm md:text-base">
+                          Flappy communicates with you through email and SMS (for premium users), sending daily inspiration, responding to your journal entries, and engaging in meaningful conversations.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </section>
