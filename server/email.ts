@@ -20,9 +20,12 @@ if (!process.env.SENDGRID_API_KEY) {
   console.log('SendGrid initialized successfully');
 }
 
-// Email from address
+// Email from address 
 const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@featherweight.world";
 const FROM_NAME = "Flappy from Featherweight";
+
+// Log the FROM_EMAIL to ensure it's correctly set
+console.log("Using email FROM address:", FROM_EMAIL);
 
 // Export email service functions
 export const emailService = {
