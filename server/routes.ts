@@ -506,6 +506,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint to update payment method for existing subscribers
+  app.post("/api/update-payment-method", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      if (!req.user.isPremium) {
+        return res.status(400).json({ message: "Only premium users can update payment methods" });
+      }
+      
+      // Get customer ID from user
+      const customerId = req.user.stripeCustomerId;
+      
+      if (!customerId) {
+        return res.status(400).json({ message: "No payment information found" });
+      }
+      
+      // Create a SetupIntent to update the payment method
+      const setupIntent = await stripeService.createSetupIntent({
+        customerId: customerId
+      });
+      
+      res.json({
+        clientSecret: setupIntent.client_secret,
+        message: "Setup intent created"
+      });
+    } catch (error) {
+      console.error("Error creating setup intent:", error);
+      res.status(500).json({ 
+        message: "Failed to set up payment method update",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
   // Cancel a subscription with Stripe
   app.post("/api/cancel-subscription", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {

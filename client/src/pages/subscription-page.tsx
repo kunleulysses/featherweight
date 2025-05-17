@@ -114,7 +114,13 @@ function CheckoutForm({ success }: { success: () => void }) {
         className="w-full mt-4"
         type="submit"
       >
-        {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : "Subscribe Now - $4.99/month"}
+        {isLoading ? (
+          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
+        ) : (
+          window.location.search.includes('updatePayment=true') 
+            ? "Update Payment Method" 
+            : "Subscribe Now - $4.99/month"
+        )}
       </Button>
       {/* Show any error or success messages */}
       {message && <div id="payment-message" className="mt-4 text-sm text-red-500">{message}</div>}
@@ -238,17 +244,32 @@ export default function SubscriptionPage() {
   return (
     <>
       <Helmet>
-        <title>Premium Subscription - Featherweight</title>
-        <meta name="description" content="Upgrade to Featherweight Premium and unlock advanced features like SMS journaling, advanced insights, and more." />
+        <title>
+          {window.location.search.includes('updatePayment=true') 
+            ? "Update Payment Method - Featherweight" 
+            : "Premium Subscription - Featherweight"}
+        </title>
+        <meta 
+          name="description" 
+          content={window.location.search.includes('updatePayment=true')
+            ? "Update your payment method for your Featherweight Premium subscription."
+            : "Upgrade to Featherweight Premium and unlock advanced features like SMS journaling, advanced insights, and more."}
+        />
       </Helmet>
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-grow py-12 bg-background">
           <Container>
             <div className="max-w-3xl mx-auto mb-8">
-              <h1 className="font-quicksand font-bold text-4xl mb-3 text-center">Upgrade to Premium</h1>
+              <h1 className="font-quicksand font-bold text-4xl mb-3 text-center">
+                {window.location.search.includes('updatePayment=true') 
+                  ? "Update Payment Method" 
+                  : "Upgrade to Premium"}
+              </h1>
               <p className="text-foreground/70 text-center mb-8">
-                Enhance your journaling experience with Flappy
+                {window.location.search.includes('updatePayment=true')
+                  ? "Update your card information for your Premium subscription"
+                  : "Enhance your journaling experience with Flappy"}
               </p>
               
               <div className="grid md:grid-cols-2 gap-8 mt-8">

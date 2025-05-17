@@ -226,4 +226,37 @@ export const stripeService = {
       throw new Error('Failed to get billing history');
     }
   },
+
+  /**
+   * Create a setup intent for updating payment methods
+   */
+  async createSetupIntent({ customerId }: { customerId: string }): Promise<Stripe.SetupIntent> {
+    try {
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+      });
+      
+      return setupIntent;
+    } catch (error) {
+      console.error('Error creating setup intent:', error);
+      throw new Error('Failed to create setup intent');
+    }
+  },
+  
+  /**
+   * Update the default payment method for a customer
+   */
+  async updateDefaultPaymentMethod(customerId: string, paymentMethodId: string): Promise<void> {
+    try {
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+    } catch (error) {
+      console.error('Error updating default payment method:', error);
+      throw new Error('Failed to update default payment method');
+    }
+  },
 };
