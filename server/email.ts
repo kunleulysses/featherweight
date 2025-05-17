@@ -48,6 +48,7 @@ export const emailService = {
           email: FROM_EMAIL,
           name: FROM_NAME
         },
+        replyTo: FROM_EMAIL, // This is the correct way to set Reply-To header in SendGrid
         subject,
         text: textContent,
         html: htmlContent,
@@ -66,10 +67,9 @@ export const emailService = {
             html: '<p style="color: #9E9E9E; font-size: 12px;">Featherweight - Your Journaling Companion<br>Reply to this email to continue your conversation with Flappy</p>'
           }
         },
-        // Adding custom headers to ensure threading works properly
+        // Adding custom headers for threading, but NOT using reserved headers
         headers: {
-          "X-Entity-Ref-ID": `flappy-${Date.now()}`,
-          "Reply-To": FROM_EMAIL
+          "X-Entity-Ref-ID": `flappy-${Date.now()}`
         }
       };
       
