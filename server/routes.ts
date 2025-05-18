@@ -398,19 +398,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
               
-              if (senderEmail && parsed.subject) {
-                // Process the email with our service
-                await emailService.processIncomingEmail(
-                  senderEmail, 
-                  parsed.subject, 
-                  parsed.text || parsed.html || '',
-                  parsed.inReplyTo || ''
-                );
-                
-                console.log('✅ Email processed successfully via mailparser');
-                return res.status(200).send('OK: Email processed successfully');
-              }
-            } catch (parseError: any) {
+              try {
+                if (senderEmail && parsed.subject) {
+                  // Process the email with our service
+                  await emailService.processIncomingEmail(
+                    senderEmail, 
+                    parsed.subject, 
+                    parsed.text || parsed.html || '',
+                    parsed.inReplyTo || ''
+                  );
+                  
+                  console.log('✅ Email processed successfully via mailparser');
+                  return res.status(200).send('OK: Email processed successfully');
+                }
+              } catch (parseError: any) {
               console.error("⚠️ Error parsing raw email:", parseError);
               console.log("Falling back to traditional parsing...");
             }
