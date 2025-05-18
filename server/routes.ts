@@ -412,11 +412,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   return res.status(200).send('OK: Email processed successfully');
                 }
               } catch (parseError: any) {
-              console.error("⚠️ Error parsing raw email:", parseError);
-              console.log("Falling back to traditional parsing...");
+                console.error("⚠️ Error parsing raw email:", parseError);
+                console.log("Falling back to traditional parsing...");
+              }
             }
-          }
-        } else if (Buffer.isBuffer(req.body)) {
+          } else if (Buffer.isBuffer(req.body)) {
           console.log('Body is a Buffer of length:', req.body.length);
         } else if (typeof req.body === 'string') {
           console.log(`Body is a string of length: ${req.body.length}`);
