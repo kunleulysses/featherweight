@@ -112,6 +112,23 @@ export default function AuthPage() {
       password: "",
     },
   });
+  
+  // Forgot password form
+  const forgotPasswordForm = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+  
+  // Reset password form
+  const resetPasswordForm = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
     const { confirmPassword, ...userData } = data;
@@ -130,6 +147,58 @@ export default function AuthPage() {
         navigate("/journal");
       }
     });
+  };
+  
+  const onForgotPasswordSubmit = async (data: ForgotPasswordFormValues) => {
+    try {
+      setForgotPasswordStatus("loading");
+      const response = await apiRequest("POST", "/api/forgot-password", data);
+      const result = await response.json();
+      
+      if (response.ok) {
+        setForgotPasswordStatus("success");
+        setForgotPasswordMessage(result.message || "If your email exists in our system, you'll receive a reset link shortly.");
+      } else {
+        setForgotPasswordStatus("error");
+        setForgotPasswordMessage(result.message || "An error occurred. Please try again.");
+      }
+    } catch (error) {
+      setForgotPasswordStatus("error");
+      setForgotPasswordMessage("An error occurred. Please try again.");
+    }
+  };
+  
+  const onResetPasswordSubmit = async (data: ResetPasswordFormValues) => {
+    if (!resetToken) return;
+    
+    try {
+      setResetStatus("loading");
+      const response = await apiRequest("POST", "/api/reset-password", {
+        token: resetToken,
+        newPassword: data.password
+      });
+      const result = await response.json();
+      
+      if (response.ok) {
+        setResetStatus("success");
+        setResetMessage("Your password has been reset successfully. You can now log in with your new password.");
+        
+        // Clear the token from URL after successful reset
+        window.history.replaceState({}, document.title, "/auth");
+        
+        // Auto-redirect to login after 3 seconds
+        setTimeout(() => {
+          setResetToken(null);
+          setActiveTab("login");
+        }, 3000);
+      } else {
+        setResetStatus("error");
+        setResetMessage(result.message || "Failed to reset password. Please try again or request a new reset link.");
+      }
+    } catch (error) {
+      setResetStatus("error");
+      setResetMessage("An error occurred. Please try again.");
+    }
   };
 
   return (
@@ -196,6 +265,23 @@ export default function AuthPage() {
                             >
                               {loginMutation.isPending ? "Signing in..." : "Sign in"}
                             </Button>
+                            
+                            <div className="flex justify-between items-center w-full mt-4">
+                              <button
+                                type="button"
+                                className="text-xs text-muted-foreground hover:text-primary"
+                                onClick={() => setShowForgotPassword(true)}
+                              >
+                                Forgot password?
+                              </button>
+                              <button
+                                type="button"
+                                className="text-xs text-muted-foreground hover:text-primary"
+                                onClick={() => setActiveTab("register")}
+                              >
+                                Don't have an account? Register
+                              </button>
+                            </div>
                           </form>
                         </Form>
                       </TabsContent>

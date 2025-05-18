@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
 import { insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessageSchema, User } from "@shared/schema";
 import { emailService } from "./email";
@@ -11,6 +11,7 @@ import { journalImageUpload, getFileUrl } from "./file-upload";
 import { generateFlappyContent } from "./openai";
 import { memoryService } from "./memory-service";
 import { stripeService } from "./stripe";
+import crypto from "crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
