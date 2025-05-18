@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // SendGrid Inbound Parse webhook for handling incoming emails
   app.post("/api/emails/webhook", async (req: Request, res: Response) => {
-    console.log('=== SENDGRID WEBHOOK REQUEST RECEIVED ===');
+    console.log('🔔 === SENDGRID WEBHOOK REQUEST RECEIVED === 🔔');
     console.log(`Request received at: ${new Date().toISOString()}`);
     console.log(`Content-Type: ${req.headers['content-type']}`);
     console.log(`Content-Length: ${req.headers['content-length']}`);
@@ -322,15 +322,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`${key}: ${value}`);
       });
       
+      // More detailed logging of body structure
       console.log("=== WEBHOOK BODY STRUCTURE ===");
       if (req.body) {
-        const bodyKeys = Object.keys(req.body);
-        console.log(`Body keys: ${bodyKeys.join(', ')}`);
+        if (typeof req.body === 'object') {
+          const bodyKeys = Object.keys(req.body);
+          console.log(`Body is an object with keys: ${bodyKeys.join(', ')}`);
+          
+          // Check for raw email content
+          if (req.body.email) {
+            console.log('🔍 Raw email content found in email field');
+            
+            // Try to parse the raw email using mailparser
+            try {
+              const { simpleParser } = require('mailparser');
+              console.log('Parsing raw email with mailparser...');
+              
+              const parsed = await simpleParser(req.body.email);
+              console.log('✅ Raw email parsed successfully');
+              
+              console.log("=== PARSED EMAIL DETAILS ===");
+              console.log(`From: ${parsed.from?.text}`);
+              console.log(`To: ${parsed.to?.text}`);
+              console.log(`Subject: ${parsed.subject}`);
+              console.log(`Date: ${parsed.date}`);
+              console.log(`Text Body Length: ${parsed.text?.length || 0}`);
+              console.log(`HTML Body Length: ${parsed.html?.length || 0}`);
+              console.log(`In-Reply-To: ${parsed.inReplyTo || 'none'}`);
+              
+              // Extract sender's email from parsed result
+              let senderEmail = '';
+              if (parsed.from && parsed.from.value && parsed.from.value.length > 0) {
+                senderEmail = parsed.from.value[0].address;
+                console.log(`Extracted sender from mailparser: ${senderEmail}`);
+              } else if (parsed.from?.text) {
+                const match = parsed.from.text.match(/<([^>]+)>/) || [null, parsed.from.text];
+                senderEmail = match[1] || parsed.from.text;
+                console.log(`Extracted sender from text: ${senderEmail}`);
+              }
+              
+              if (senderEmail && parsed.subject) {
+                // Process the email with our service
+                await emailService.processIncomingEmail(
+                  senderEmail, 
+                  parsed.subject, 
+                  parsed.text || parsed.html || '',
+                  parsed.inReplyTo || ''
+                );
+                
+                console.log('✅ Email processed successfully via mailparser');
+                return res.status(200).send('OK: Email processed successfully');
+              }
+            } catch (parseError) {
+              console.error("⚠️ Error parsing raw email:", parseError);
+              console.log("Falling back to traditional parsing...");
+            }
+          }
+        } else if (Buffer.isBuffer(req.body)) {
+          console.log('Body is a Buffer of length:', req.body.length);
+        } else if (typeof req.body === 'string') {
+          console.log(`Body is a string of length: ${req.body.length}`);
+        } else {
+          console.log(`Body is type: ${typeof req.body}`);
+        }
       } else {
         console.log("Request body is empty or undefined");
       }
       
-      // Validate critical fields
+      // Validate critical fields for traditional parsing
       if (!req.body) {
         console.error("Critical error: Webhook body is missing");
         return res.status(200).send('Error: Missing body data');
@@ -345,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const html = req.body.html || '';
       const inReplyTo = req.body.headers?.['In-Reply-To'] || req.body['In-Reply-To'] || '';
       
-      console.log("=== PARSED EMAIL DATA ===");
+      console.log("=== TRADITIONAL PARSING RESULTS ===");
       console.log(`From (raw): ${from}`);
       console.log(`To: ${to}`);
       console.log(`Subject: ${subject}`);
@@ -363,7 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderEmail = emailMatch ? emailMatch[1] : from;
         console.log(`Extracted sender email: ${senderEmail}`);
       } else {
-        console.warn("From field is not a string, may cause parsing issues");
+        console.warn("⚠️ From field is not a string, may cause parsing issues");
       }
       
       // Find the user associated with this email
