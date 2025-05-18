@@ -20,8 +20,8 @@ if (!process.env.SENDGRID_API_KEY) {
   console.log('SendGrid initialized successfully');
 }
 
-// Email from address 
-const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@em8032.featherweight.world";
+// Email from address - using the verified SendGrid domain
+const FROM_EMAIL = "flappy@em8032.featherweight.world";
 const FROM_NAME = "Flappy from Featherweight";
 
 // Log the FROM_EMAIL to ensure it's correctly set
