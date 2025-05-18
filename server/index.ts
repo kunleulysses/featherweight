@@ -43,10 +43,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Register direct conversation routes before main routes
-  addConversationRoutes(app);
-  
+  // First register main routes which includes auth setup
   const server = await registerRoutes(app);
+  
+  // Then register conversation routes after auth is configured
+  addConversationRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
