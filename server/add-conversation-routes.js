@@ -1,7 +1,7 @@
-import { db } from "./db.js";
-import { conversations, journalEntries } from "../shared/schema.js";
+import { db } from "./db";
+import { conversations, journalEntries } from "../shared/schema";
 import { eq } from "drizzle-orm";
-import { generateFlappyContent } from "./openai.js";
+import { generateFlappyContent } from "./openai";
 
 /**
  * Add conversation routes to Express app

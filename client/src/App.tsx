@@ -20,6 +20,7 @@ import BillingPage from "@/pages/billing-page";
 import HelpPage from "@/pages/help-page";
 import EmailTestPage from "@/pages/email-test";
 import SmsTestPage from "@/pages/sms-test";
+import ConversationCenterPage from "@/pages/conversation-center-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -40,6 +41,7 @@ function Router() {
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/billing" component={BillingPage} />
       <ProtectedRoute path="/conversation" component={ConversationPage} />
+      <ProtectedRoute path="/conversation-center" component={ConversationCenterPage} />
       <ProtectedRoute path="/email-test" component={EmailTestPage} />
       <ProtectedRoute path="/sms-test" component={SmsTestPage} />
       <Route component={NotFound} />
