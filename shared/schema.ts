@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -113,6 +113,18 @@ export const conversationMemories = pgTable("conversation_memories", {
   context: text("context").notNull(), // Brief context about this topic
   relatedEntryIds: json("related_entry_ids").$type<number[]>(), // IDs of related journal entries
   isResolved: boolean("is_resolved").default(false), // Whether this topic has been resolved
+});
+
+// Email queue table for asynchronous processing
+export const emailQueue = pgTable("email_queue", {
+  id: serial("id").primaryKey(),
+  payload: jsonb("payload").notNull(),
+  status: text("status").default("pending").notNull(), // pending, processing, completed, failed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  processAttempts: integer("process_attempts").default(0).notNull(),
+  errorMessage: text("error_message"),
+  processedAt: timestamp("processed_at"),
 });
 
 // Types for JSON fields

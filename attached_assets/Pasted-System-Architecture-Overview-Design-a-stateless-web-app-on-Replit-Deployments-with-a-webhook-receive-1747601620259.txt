@@ -1,0 +1,190 @@
+System Architecture Overview
+Design a stateless web app on Replit Deployments with a webhook receiver and a background worker. Use SendGrid’s Inbound Parse (or similar) to POST incoming emails to your Replit endpoint. Immediately enqueue each event (e.g. inserting into a Postgres “email_queue” table) and return HTTP 200 before processing
+learn.fotoware.com
+shortcut.com
+. This prevents webhook timeouts and lets SendGrid auto-retry on failure
+twilio.com
+twilio.com
+. The background worker (in the same app under a reserved VM/always-on deployment) will poll the queue, parse and store emails, generate replies, and send outbound mail.
+Receiving Inbound Emails
+Webhook Setup: Register a subdomain with SendGrid’s Inbound Parse. Configure its MX records to route mail to SendGrid, and set the Parse Webhook URL to your Replit app (e.g. https://yourapp.replit.app/api/inbound). On receipt SendGrid will parse MIME and POST to your endpoint. (Alternatively, Resend or Mailgun can be used for parsing, but SendGrid is well-documented and free for low volumes
+twilio.com
+.)
+Fast Response: In your /api/inbound route (using Flask/FastAPI), do minimal work: parse only basic metadata and insert a row into a queue table. Immediately return a 2xx status. SendGrid will stop retrying once it gets 2xx
+twilio.com
+. Use [Fotoware’s advice]: “webhook request handlers return as soon as possible… costly, long-running operations… should be offloaded to background workers”
+learn.fotoware.com
+.
+Handling Spam & MIME Parsing
+Spam Filtering: Before heavy processing, optionally check each email with a spam-scoring API (e.g. Postmark’s free SpamCheck
+postmarkapp.com
+ or Mailgun’s tools). If the score exceeds a threshold, mark the email as spam (log it and skip reply generation). This avoids processing clearly junk content. Also inspect common spam headers (like X-Spam-Score if present) in your code.
+Robust Parsing: Use a mature email parser (Python’s email library or a package like mail-parser) to decode MIME, handle attachments, and extract text/HTML. Wrap parsing in try/catch: on failure, log the error and store a fallback note in the database. If you enabled “Send Raw” on the Parse Webhook, you’ll get full MIME to feed into email.message_from_bytes
+twilio.com
+twilio.com
+. Otherwise, Parse Webhook provides form fields; be careful to handle attachments separately
+twilio.com
+twilio.com
+.
+Storing Emails in PostgreSQL
+Replit Postgres: Use Replit’s built-in PostgreSQL (Neon) database
+docs.replit.com
+. Define tables like incoming_emails and outgoing_emails. Fields should include id, from_address, to_address, subject, body_text, body_html, received_at, status, plus any metadata (spam score, SendGrid Message-ID, etc.). Keep attachments as references (e.g. store in Replit Object Storage
+blog.replit.com
+ and save URLs in the DB) to avoid bloating your tables.
+Environment Variables: Replit deploys expose DB credentials via env vars
+docs.replit.com
+. Use them in your code to connect (e.g. with psycopg2 or asyncpg). Ensure you create indexes on queue/status fields for efficient polling.
+Queueing & Background Processing
+Enqueue Quickly: On webhook receipt, insert a new job in a “queue” table (or Redis list, but Postgres suffices). Include at least the raw payload or reference to the parsed data. Then return immediately to the caller. This decouples processing
+learn.fotoware.com
+shortcut.com
+.
+Background Worker: In your Replit app, spawn a background worker/thread on startup. For example, using FastAPI:
+python
+Copy
+Edit
+@app.on_event("startup")
+def start_worker():
+    thread = Thread(target=process_queue_loop)
+    thread.daemon = True
+    thread.start()
+In process_queue_loop, continuously poll the queue table for new rows. For each entry: fetch it (marking it “in-progress” to avoid duplication), then parse its contents, perform spam checks, and insert data into the incoming_emails table. Use short sleeps when the queue is empty. By polling the DB, you avoid relying on Replit cron; a reserved VM instance will keep this loop running.
+Retries & Acknowledgement: If processing fails (DB error, parse exception, etc.), the worker should catch the error, log it, and re-queue the job (with a retry count). Since you already responded 2xx to SendGrid, you must handle retries yourself. A common pattern is to track attempts and, after N failures, move the item to a “dead letter” table for manual review. This follows the advice to “persist all webhook attempts in storage… allow you to retry failed attempts”
+svix.com
+.
+Generating AI Replies
+OpenAI Integration: When an email is successfully stored, generate a reply using the OpenAI API. For a “character-driven” reply, craft a prompt that includes: the user’s email content, a brief persona/instructions (e.g. “Respond as a helpful support agent named X”), and any relevant conversation context. Use GPT-3.5 or GPT-4 via OpenAI’s Python client. Example snippet:
+python
+Copy
+Edit
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+      {"role": "system", "content": "You are a friendly assistant ..."},
+      {"role": "user", "content": f"User wrote:\n{user_email_body}"}
+    ]
+)
+reply_text = response.choices[0].message.content
+Backoff & Error Handling: Wrap the API call in retry logic. If you hit a rate limit or network error, catch openai.error.RateLimitError or APIConnectionError and retry with exponential backoff. OpenAI advises exponential backoff for 429 errors: “performing a short sleep… then retrying… increase sleep length… until success or max retries”
+help.openai.com
+. Use a library like tenacity or backoff in Python. Also catch generic exceptions: on failure after retries, log the incident with all context and (optionally) enqueue a notification.
+Sending Outbound Emails
+Email API Choice: Send the reply using a transactional email API. Resend.com offers 100 free emails/day
+resend.com
+resend.com
+ and has a simple Python SDK. SendGrid also has a free tier (100 emails/day)
+sendgrid.com
+. Whichever you choose, keep the code modular. For example, using Resend’s Python package:
+python
+Copy
+Edit
+import resend
+client = resend.Client(api_key=RESEND_API_KEY)
+resp = client.emails.send(
+    from_email="no-reply@yourdomain.com",
+    to=[user_email],
+    subject=f"Re: {incoming_subject}",
+    html_content=reply_text
+)
+Logging and DB Update: After sending, log the message ID and status. Insert a row into outgoing_emails (with fields like to_address, subject, body, sent_at, message_id, status). Update the original email’s record to link to this response. This gives a complete trail: inbound, processing, outbound.
+Retries on Failure: If sending fails (timeout or API error), retry with backoff like with OpenAI. Many email APIs auto-retry transient failures, but your code should also catch exceptions and retry (up to a limit). On persistent failure, mark the email’s status as failed and alert.
+Logging & Monitoring
+Structured Logging: Use Python’s logging library at INFO/DEBUG levels. Log each major step with identifiers (e.g. email DB ID). Examples: “Received inbound email from X (msg_id Y)”, “Stored email in DB (id=123)”, “Generated reply (size=## chars)”, “Sent email msg_id=abc”. Logs to stdout are captured by Replit’s Console
+docs.replit.com
+.
+Persistent Logs: For critical events (errors, spam flagged, retries exhausted), write details to the database or send to a monitoring channel (e.g. Slack webhook or email alerts). Replit’s Deployment Monitoring tool shows real-time logs and metrics
+docs.replit.com
+. You can also log to a file in Object Storage if needed.
+Metrics & Health: Track metrics like queue depth, processing time, and send success rate. (Even simple prints or counters in a console log can be monitored.) Monitor your Postgres for failed queries. If possible, subscribe to email API webhooks for bounces/deliveries to log unexpected issues (Resend provides webhooks for delivery events).
+Keeping the Endpoint “Hot”
+Reserved VM / Always-On: To prevent cold starts or idling, use Replit’s Reserved VM deployment (starts at $10/month)
+replit.com
+. This guarantees a continuously-running server (99.9% uptime) suitable for background tasks
+docs.replit.com
+replit.com
+. In practice, this means your Flask/FastAPI process never sleeps.
+External Ping: If Reserved VM is not used, set up an external ping (free services like UptimeRobot or BetterUptime). Have it request a lightweight endpoint (e.g. /health) every 5 minutes to keep the app awake. Historically, community solutions involved a separate “keepalive” script that pings your Repl via Replit’s API
+replit.com
+blog.replit.com
+. Even with a paid plan, a periodic ping ensures your endpoint stays warm.
+Scheduled Tasks: For additional resilience, you could use Replit’s Scheduled Deployments ($1/month) to run periodic tasks (e.g. retry jobs). However, the main queue worker makes this largely unnecessary if always-on.
+Retry & Fallback Strategies
+Database Failures: Wrap all DB operations in try/catch. On a transient failure (e.g. connection error), retry a few times before giving up. Use transactions to ensure idempotency: include unique constraints on message IDs so repeated runs don’t create duplicates.
+Email API Failures: As noted, implement retries with exponential backoff for sending emails and AI calls
+help.openai.com
+. Limit retries (e.g. 5 attempts) and on final failure, record the error and, if critical, switch to a backup plan (e.g. enqueue for manual processing).
+Dead-Letter Handling: For any job that exceeds retry limits, move it to a “failed_jobs” table. Record the error and stack trace. A monitoring dashboard or simple alert (email, SMS, Slack) should notify you of dead letters so you can intervene.
+Idempotency: Include message IDs (from SendGrid or SMTP headers) to detect duplicates. If a webhook is retried by the mail service (e.g. due to 2xx not received), ensure your code can handle reprocessing the same message without side effects (e.g. ignore if message_id already in DB).
+Example Code Structure
+A sample Python project might look like:
+pgsql
+Copy
+Edit
+email_app/
+├── app.py            # FastAPI app: defines /api/inbound endpoint and starts background worker
+├── database.py       # DB connection and ORM/model definitions (incoming_emails, outgoing_emails, queue table)
+├── email_processor.py# Functions to parse emails, spam check, insert into DB
+├── ai_reply.py       # OpenAI integration: build prompts, call API with backoff
+├── email_sender.py   # Wrapper for sending emails via SendGrid/Resend API
+├── worker.py         # Queue polling loop (could be in app.py as well)
+├── config.py         # Loads environment vars (DB URL, API keys)
+└── requirements.txt  # Python libraries: fastapi, uvicorn, httpx/requests, openai, resend (or sendgrid), psycopg2/asyncpg, etc.
+In app.py, use FastAPI to handle webhooks:
+python
+Copy
+Edit
+from fastapi import FastAPI, Request
+from database import db_session, IncomingQueue, IncomingEmail
+from email_processor import parse_email, check_spam
+from ai_reply import generate_reply
+from email_sender import send_email
+
+app = FastAPI()
+
+@app.post("/api/inbound")
+async def inbound_webhook(request: Request):
+    data = await request.form()
+    # Quickly enqueue raw data
+    db = db_session()
+    job = IncomingQueue(payload=data["email"], ...)
+    db.add(job); db.commit()
+    return {"message": "ok"}  # 2xx to SendGrid
+
+# Background worker (startup event or separate thread)
+def process_queue_loop():
+    while True:
+        job = db_session().query(IncomingQueue).filter_by(processed=False).first()
+        if not job:
+            time.sleep(5); continue
+        try:
+            msg = parse_email(job.payload)  # parse MIME
+            if check_spam(msg): 
+                job.processed = True; db.commit(); continue
+            # Store in DB
+            email_id = IncomingEmail.create_from_message(msg)
+            # Generate AI reply
+            reply = generate_reply(msg.body)
+            send_resp = send_email(to=msg.sender, subject=f"Re: {msg.subject}", body=reply)
+            # Log outgoing
+            OutgoingEmail.create(to=msg.sender, subject=..., body=reply, send_id=send_resp.id)
+            job.processed = True; db.commit()
+        except Exception as e:
+            job.attempts += 1
+            if job.attempts > 5:
+                move_to_dead_letter(job, error=str(e))
+            db.commit()
+This outline shows: webhook → enqueue → background loop. Each function (parsing, spam check, reply, send) should include try/catch and logging. Sources: We follow SendGrid’s webhook best practices
+twilio.com
+twilio.com
+, background-processing guidelines
+learn.fotoware.com
+shortcut.com
+, Replit Deployments for Postgres and always-on VM
+docs.replit.com
+replit.com
+, and OpenAI’s recommended retry strategy
+help.openai.com
+. Use Replit’s console and Deployment monitoring for logs
+docs.replit.com
+. This design ensures emails are never lost (all steps are logged and retried) and replies are sent promptly.
