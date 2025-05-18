@@ -337,12 +337,12 @@ export default function EmailTestPage() {
                                 style={{ lineHeight: 1.8 }}
                               >
                                 {paragraph.split('\n').map((line, lineIdx, arr) => (
-                                  <React.Fragment key={lineIdx}>
+                                  <span key={lineIdx}>
                                     {lineIdx > 0 && <br />}
                                     {line}
                                     {lineIdx === arr.length - 1 && line.trim().endsWith('?') && 
                                       <span className="text-[#5D7CFA] inline-block ml-1 animate-pulse">▌</span>}
-                                  </React.Fragment>
+                                  </span>
                                 ))}
                               </p>
                             ))}
