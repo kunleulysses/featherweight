@@ -42,6 +42,7 @@ function Router() {
       <ProtectedRoute path="/billing" component={BillingPage} />
       <ProtectedRoute path="/conversation" component={ConversationPage} />
       <ProtectedRoute path="/conversation-center" component={ConversationCenterPage} />
+      <ProtectedRoute path="/direct-chat" component={ConversationCenterPage} />
       <ProtectedRoute path="/email-test" component={EmailTestPage} />
       <ProtectedRoute path="/sms-test" component={SmsTestPage} />
       <Route component={NotFound} />
