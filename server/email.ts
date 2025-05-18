@@ -817,71 +817,63 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       }
       .reply-button {
         display: inline-block;
-        background-color: #5D7CFA;
-        color: white;
+        background-color: #FFFFFF;
+        color: #5D7CFA;
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 600;
+        font-size: 16px;
+        letter-spacing: 0.5px;
         text-decoration: none;
-        padding: 14px 32px;
-        border-radius: 12px;
-        margin-top: 25px;
-        box-shadow: 0 5px 10px rgba(93, 124, 250, 0.25);
+        padding: 12px 26px;
+        border-radius: 8px;
+        margin-top: 16px;
+        box-shadow: 0 3px 8px rgba(93, 124, 250, 0.15);
         transition: all 0.3s ease;
-        background-image: linear-gradient(135deg, #5D7CFA 0%, #4C6CE7 100%);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border: 1.5px solid #5D7CFA;
         position: relative;
-        overflow: hidden;
-      }
-      .reply-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 40%;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
-        border-radius: 10px 10px 30px 30px;
       }
       .reply-button:hover {
-        background-color: #4C6CE7;
-        box-shadow: 0 6px 8px rgba(93, 124, 250, 0.35);
+        background-color: #F5F8FF;
+        box-shadow: 0 4px 10px rgba(93, 124, 250, 0.2);
       }
       .journal-tip {
-        margin: 35px 0;
-        padding: 25px;
-        background-color: #e3f2fd;
-        border-left: 5px solid #64B5F6;
-        border-radius: 14px;
-        font-size: 17px;
-        box-shadow: 0 4px 12px rgba(93, 124, 250, 0.1);
-        background-image: linear-gradient(to right, rgba(100, 181, 246, 0.08), rgba(255, 255, 255, 0) 80%);
+        margin: 25px 0;
+        padding: 16px 20px;
+        background-color: #f5f9ff;
+        border-left: 3px solid #64B5F6;
+        border-radius: 8px;
+        font-size: 15px;
+        box-shadow: 0 2px 8px rgba(93, 124, 250, 0.07);
+        background-image: linear-gradient(to right, rgba(100, 181, 246, 0.05), rgba(255, 255, 255, 0) 80%);
         position: relative;
+        border: 1px solid rgba(100, 181, 246, 0.1);
       }
       .journal-tip:before {
         content: "💡";
         position: absolute;
-        right: 20px;
-        top: 12px;
-        font-size: 24px;
-        opacity: 0.5;
+        right: 15px;
+        top: 10px;
+        font-size: 18px;
+        opacity: 0.4;
       }
       .journal-tip h3 {
         margin-top: 0;
+        margin-bottom: 5px;
         color: #1565C0;
-        font-size: 22px;
+        font-size: 17px;
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 600;
         letter-spacing: 0.2px;
       }
       .highlight {
-        font-weight: bold;
+        font-weight: 600;
         color: #5D7CFA;
         background-color: #f0f7ff;
-        padding: 5px 10px;
-        border-radius: 8px;
-        font-size: 17px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 15px;
         display: inline-block;
-        box-shadow: 0 2px 4px rgba(93, 124, 250, 0.15);
+        box-shadow: 0 1px 3px rgba(93, 124, 250, 0.1);
         border: 1px solid rgba(93, 124, 250, 0.1);
       }
       .premium-badge {
