@@ -44,7 +44,7 @@ Flappy 🌊`,
             </div>
             <div>
               <p className="font-quicksand font-medium text-foreground">Flappy from Featherweight</p>
-              <p className="text-sm text-muted-foreground">flappy@featherweight.world</p>
+              <p className="text-sm text-muted-foreground">flappy@em8032.featherweight.world</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground">{time}</p>
