@@ -829,4 +829,79 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+  
+  // Email queue methods
+  async enqueueEmail(queueItem: InsertEmailQueue): Promise<EmailQueueItem> {
+    const [newItem] = await db
+      .insert(emailQueue)
+      .values(queueItem)
+      .returning();
+      
+    return newItem;
+  }
+  
+  async getNextPendingEmail(): Promise<EmailQueueItem | undefined> {
+    const [nextItem] = await db
+      .select()
+      .from(emailQueue)
+      .where(eq(emailQueue.status, "pending"))
+      .orderBy(emailQueue.createdAt)
+      .limit(1);
+      
+    return nextItem;
+  }
+  
+  async markEmailProcessing(id: number): Promise<EmailQueueItem | undefined> {
+    const [updatedItem] = await db
+      .update(emailQueue)
+      .set({
+        status: "processing",
+        updatedAt: new Date()
+      })
+      .where(eq(emailQueue.id, id))
+      .returning();
+      
+    return updatedItem;
+  }
+  
+  async markEmailCompleted(id: number): Promise<EmailQueueItem | undefined> {
+    const [updatedItem] = await db
+      .update(emailQueue)
+      .set({
+        status: "completed",
+        processedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(emailQueue.id, id))
+      .returning();
+      
+    return updatedItem;
+  }
+  
+  async markEmailFailed(id: number, errorMessage: string): Promise<EmailQueueItem | undefined> {
+    const [updatedItem] = await db
+      .update(emailQueue)
+      .set({
+        status: "failed",
+        errorMessage,
+        updatedAt: new Date()
+      })
+      .where(eq(emailQueue.id, id))
+      .returning();
+      
+    return updatedItem;
+  }
+  
+  async incrementEmailAttempts(id: number): Promise<EmailQueueItem | undefined> {
+    const [updatedItem] = await db
+      .update(emailQueue)
+      .set({
+        processAttempts: sql`${emailQueue.processAttempts} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(emailQueue.id, id))
+      .returning();
+      
+    return updatedItem;
+  }
 }

@@ -326,12 +326,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const bodyKeys = Object.keys(req.body);
           console.log(`Body is an object with keys: ${bodyKeys.join(', ')}`);
           
-          // Check for raw email content
-          if (req.body.email) {
-            console.log('🔍 Raw email content found in email field');
-            
-            // Try to parse the raw email using mailparser
-            try {
+          // Instead of processing immediately, enqueue the webhook payload
+          const queueItem = {
+            payload: req.body, // Store the complete webhook payload
+            status: "pending"
+          };
+          
+          // Add to processing queue
+          await storage.enqueueEmail(queueItem);
+          console.log('✅ Email successfully queued for processing');
+          
+          // Return 200 OK immediately to acknowledge receipt
+          return res.status(200).send('OK: Email queued for processing');
+        } else if (Buffer.isBuffer(req.body)) {
+          console.log('Body is a Buffer of length:', req.body.length);
+          
+          // Create a queue item with the buffer data
+          const queueItem = {
+            payload: { buffer: req.body.toString('base64') },
+            status: "pending"
+          };
+          
+          await storage.enqueueEmail(queueItem);
+          console.log('✅ Buffer data queued for processing');
+          
+          return res.status(200).send('OK: Email data queued for processing');
+        } else if (typeof req.body === 'string') {
+          console.log(`Body is a string of length: ${req.body.length}`);
+          
+          // Create a queue item with the string data
+          const queueItem = {
+            payload: { text: req.body },
+            status: "pending"
+          };
+          
+          await storage.enqueueEmail(queueItem);
+          console.log('✅ String data queued for processing');
+          
+          return res.status(200).send('OK: Email data queued for processing');
+        } else {
+          console.log(`Body is of unexpected type: ${typeof req.body}`);
+          
+          // Still queue whatever we received
+          const queueItem = {
+            payload: { data: JSON.stringify(req.body) },
+            status: "pending"
+          };
+          
+          await storage.enqueueEmail(queueItem);
+          console.log('✅ Unknown data type queued for analysis');
+          
+          return res.status(200).send('OK: Data queued for processing');
+        }
+      } else {
               const { simpleParser } = require('mailparser');
               console.log('Parsing raw email with mailparser...');
               
