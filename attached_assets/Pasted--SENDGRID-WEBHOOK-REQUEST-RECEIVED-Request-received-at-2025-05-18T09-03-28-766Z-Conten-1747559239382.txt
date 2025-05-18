@@ -1,0 +1,60 @@
+🔔 === SENDGRID WEBHOOK REQUEST RECEIVED === 🔔
+Request received at: 2025-05-18T09:03:28.766Z
+Content-Type: application/json
+Content-Length: 136
+=== WEBHOOK HEADERS ===
+host: localhost:5000
+user-agent: curl/8.7.1
+accept: */*
+content-type: application/json
+content-length: 136
+=== WEBHOOK BODY STRUCTURE ===
+Body is an object with keys: from, to, subject, text
+=== TRADITIONAL PARSING RESULTS ===
+From (raw): test@example.com
+To: flappy@featherweight.world
+Subject: Direct Webhook Test
+Text content length: 33
+HTML content length: 0
+In-Reply-To: Not a reply
+Extracted sender email: test@example.com
+Looking up user with email: test@example.com
+Found user: ID=1, Username=testuser, Premium=false
+Email categorized as: New conversation
+Email has valid content of length 33, processing...
+=== INCOMING EMAIL PROCESSING STARTED ===
+From: test@example.com
+Subject: Direct Webhook Test
+Content length: 33 characters
+Reply-To Message ID: Not a reply
+Step 1: Looking up user by email address
+Step 2: Found user - ID: 1, Email: test@example.com, Username: testuser
+User premium status: Free
+Step 3: Cleaning email content (removing signatures, quoted replies, etc.)
+Original content length: 33, Cleaned content length: 33
+Step 4: Determining email type - New conversation
+Step 5: Analyzing content to determine if it should be a journal entry
+Content analysis result: Process as conversation
+Generating conversation response for test@example.com
+Free user message count: 1 of 3 allowed
+Sending email response to test@example.com
+=== EMAIL SENDING PROCESS STARTED ===
+Target email: test@example.com
+Email subject: Re: Direct Webhook Test
+Content length: 658 characters
+Formatting HTML content
+Preparing text content
+FROM_EMAIL: flappy@em8032.featherweight.world
+FROM_NAME: Flappy from Featherweight
+Preparing to send email to: test@example.com, subject: Re: Direct Webhook Test
+Email message object prepared, attempting to send via SendGrid
+=== EMAIL SENT SUCCESSFULLY ===
+Status code: 202
+Message ID: unknown
+Headers: {"server":"nginx","date":"Sun, 18 May 2025 09:03:32 GMT","content-length":"0","connection":"keep-alive","x-message-id":"nOrKl7MgQPaxsGApVwNL5w","access-control-allow-origin":"https://sendgrid.api-docs.io","access-control-allow-methods":"POST","access-control-allow-headers":"Authorization, Content-Type, On-behalf-of, x-sg-elas-acl","access-control-max-age":"600","x-no-cors-reason":"https://sendgrid.com/docs/Classroom/Basics/API/cors.html","strict-transport-security":"max-age=31536000; includeSubDomains","content-security-policy":"frame-ancestors 'none'","cache-control":"no-cache","x-content-type-options":"no-sniff","referrer-policy":"strict-origin-when-cross-origin"}
+Successfully sent conversation response to test@example.com (Premium: false)
+=== EMAIL SUCCESSFULLY PROCESSED ===
+Time completed: 2025-05-18T09:03:32.977Z
+9:03:32 AM [express] POST /api/emails/webhook 200 in 4211ms
+9:05:25 AM [express] GET /api/user 304 in 2796ms :: {"id":12,"username":"Flappy Flap","email":"hispe…
+9:05:26 AM [express] GET /api/user 304 in 2314ms :: {"id":12,"username":"Flappy Flap","email":"hispe…
