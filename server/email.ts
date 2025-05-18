@@ -683,12 +683,13 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         padding: 0 10px;
       }
       .footer {
-        margin-top: 30px;
-        padding-top: 20px;
+        margin-top: 35px;
+        padding-top: 25px;
         border-top: 1px solid #E0E0E0;
-        font-size: 12px;
-        color: #9E9E9E;
+        font-size: 14px;
+        color: #757575;
         text-align: center;
+        line-height: 1.5;
       }
       .reply-button {
         display: inline-block;
@@ -718,8 +719,9 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         font-weight: bold;
         color: #1565C0;
         background-color: #f0f7ff;
-        padding: 2px 5px;
-        border-radius: 3px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 16px;
       }
       .premium-badge {
         display: inline-block;
