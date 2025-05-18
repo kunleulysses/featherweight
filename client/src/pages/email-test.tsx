@@ -372,7 +372,7 @@ export default function EmailTestPage() {
                           
                           <div className="text-center mt-10">
                             <a 
-                              href="#" 
+                              href="mailto:flappy@featherweight.world" 
                               className="inline-block bg-[#5D7CFA] text-white font-quicksand font-semibold px-8 py-4 rounded-xl shadow-lg transition-all hover:bg-[#4C6CE7] hover:shadow-xl"
                               style={{ 
                                 boxShadow: '0 4px 6px rgba(93, 124, 250, 0.25)'
