@@ -23,31 +23,31 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
     await storage.markEmailProcessing(queueItem.id);
     
     // Extract data from the payload
-    const payload = queueItem.payload;
+    const payload = queueItem.payload as any;
     
     // Handle different payload formats
-    if (payload.buffer) {
+    if (payload && payload.buffer) {
       // If we have base64 encoded buffer data
-      const buffer = Buffer.from(payload.buffer, 'base64');
+      const buffer = Buffer.from(payload.buffer as string, 'base64');
       await processRawEmail(buffer);
       
-    } else if (payload.text) {
+    } else if (payload && payload.text) {
       // If we have text data
-      await processEmailFromText(payload.text);
+      await processEmailFromText(payload.text as string);
       
-    } else if (payload.email) {
+    } else if (payload && payload.email) {
       // If we have a raw email
-      const parsed = await simpleParser(payload.email);
+      const parsed = await simpleParser(payload.email as string);
       await processEmailFromParsed(parsed);
       
-    } else if (typeof payload === 'object') {
+    } else if (payload && typeof payload === 'object') {
       // If we have a SendGrid parsed object format
-      let from = payload.from || payload.sender || '';
-      const to = payload.to || '';
-      const subject = payload.subject || 'No Subject';
-      const text = payload.text || '';
-      const html = payload.html || '';
-      const inReplyTo = payload.headers?.['In-Reply-To'] || payload['In-Reply-To'] || '';
+      let from = (payload.from as string) || (payload.sender as string) || '';
+      const to = (payload.to as string) || '';
+      const subject = (payload.subject as string) || 'No Subject';
+      const text = (payload.text as string) || '';
+      const html = (payload.html as string) || '';
+      const inReplyTo = (payload.headers && (payload.headers['In-Reply-To'] as string)) || (payload['In-Reply-To'] as string) || '';
       
       // Extract the sender's email address
       let senderEmail = from;

@@ -3,6 +3,7 @@ import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { addConversationRoutes } from "./add-conversation-routes";
+import { startEmailProcessor } from "./email-processor";
 
 const app = express();
 app.use(express.json());
@@ -48,6 +49,9 @@ app.use((req, res, next) => {
   
   // Then register conversation routes after auth is configured
   addConversationRoutes(app);
+  
+  // Start the email processor for background processing of email queue
+  startEmailProcessor();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
