@@ -410,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.log('✅ Email processed successfully via mailparser');
                 return res.status(200).send('OK: Email processed successfully');
               }
-            }catch(parseError){
+            } catch(parseError) {
               console.error("⚠️ Error parsing raw email:", parseError);
               console.log("Falling back to traditional parsing...");
             }
