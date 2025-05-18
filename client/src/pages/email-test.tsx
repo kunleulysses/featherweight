@@ -140,6 +140,51 @@ export default function EmailTestPage() {
       setIsSending(false);
     }
   };
+  
+  // Test incoming email handler with direct API call
+  const [incomingFrom, setIncomingFrom] = useState(user?.email || "");
+  const [incomingSubject, setIncomingSubject] = useState("Test Reply to Flappy");
+  const [incomingContent, setIncomingContent] = useState("Hi Flappy, this is a test message to see if you reply back to me!");
+  
+  const handleTestIncomingEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setIsSending(true);
+    setResponseInfo("Processing test email...");
+    setResponseDetails(null);
+    
+    try {
+      const response = await apiRequest("POST", "/api/emails/test-incoming", {
+        from: incomingFrom,
+        to: "flappy@featherweight.world",
+        subject: incomingSubject,
+        content: incomingContent
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setResponseInfo("Test email processed successfully! Check your inbox for Flappy's response.");
+        setResponseDetails(data);
+        
+        toast({
+          title: "Email Processed",
+          description: "Flappy should be sending a response to your email address soon!",
+        });
+      } else {
+        throw new Error(data.message || "Failed to process test email");
+      }
+    } catch (error) {
+      toast({
+        title: "Test Failed",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive"
+      });
+      setResponseInfo("Error: " + (error instanceof Error ? error.message : "Something went wrong"));
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -212,11 +257,12 @@ export default function EmailTestPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue={testType} onValueChange={(value) => setTestType(value as "simulate" | "request" | "preview")}>
-                  <TabsList className="grid w-full grid-cols-3 mb-4">
+                <Tabs defaultValue={testType} onValueChange={(value) => setTestType(value as "simulate" | "request" | "preview" | "incoming")}>
+                  <TabsList className="grid w-full grid-cols-4 mb-4">
                     <TabsTrigger value="simulate">Simulate Email Reply</TabsTrigger>
                     <TabsTrigger value="request">Request Inspiration</TabsTrigger>
                     <TabsTrigger value="preview">Email Preview</TabsTrigger>
+                    <TabsTrigger value="incoming">Test Reply System</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="simulate">
@@ -273,6 +319,61 @@ export default function EmailTestPage() {
                         <RefreshCw className="mr-2 h-4 w-4" />
                         {isRequestingInspiration ? "Requesting..." : "Request Inspiration Email"}
                       </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="incoming">
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-medium mb-2">Test Email Replies</h3>
+                        <p className="text-muted-foreground mb-4">
+                          This simulates sending an email to Flappy and receiving a response. It uses the direct API instead of the email service, so it works even if your DNS is not properly configured.
+                        </p>
+                        
+                        <form onSubmit={handleTestIncomingEmail} className="space-y-4">
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                              <Label htmlFor="incoming-from">Your Email Address</Label>
+                              <Input 
+                                id="incoming-from" 
+                                value={incomingFrom} 
+                                onChange={(e) => setIncomingFrom(e.target.value)}
+                                placeholder="your-email@example.com"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="incoming-subject">Subject</Label>
+                              <Input 
+                                id="incoming-subject" 
+                                value={incomingSubject} 
+                                onChange={(e) => setIncomingSubject(e.target.value)}
+                                placeholder="Subject line"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="incoming-content">Email Content</Label>
+                            <Textarea
+                              id="incoming-content"
+                              value={incomingContent}
+                              onChange={(e) => setIncomingContent(e.target.value)}
+                              placeholder="Type your message to Flappy..."
+                              className="min-h-[150px]"
+                              required
+                            />
+                          </div>
+                          
+                          <Button 
+                            type="submit"
+                            disabled={isSending}
+                            className="w-full sm:w-auto"
+                          >
+                            {isSending ? "Processing..." : "Test Email Reply"}
+                          </Button>
+                        </form>
+                      </div>
                     </div>
                   </TabsContent>
                   
