@@ -997,6 +997,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // =========== Password Reset Routes ===========
+  
+  // Request password reset
+  app.post("/api/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        // For security reasons, still return success even if user not found
+        return res.status(200).json({ 
+          message: "If your email exists in our system, you will receive a password reset link shortly." 
+        });
+      }
+      
+      // Generate unique reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour from now
+      
+      // Save token to user record
+      await storage.updateUserResetToken(user.id, resetToken, resetTokenExpires);
+      
+      // Build reset URL - using client-side route
+      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
+      
+      // Send email with reset link
+      const emailSubject = "Featherweight Password Reset Request";
+      const emailContent = `
+        <h1>Reset Your Password</h1>
+        <p>Hello ${user.firstName || user.username || 'there'},</p>
+        <p>We received a request to reset your Featherweight password. Click the button below to reset it:</p>
+        <p><a href="${resetUrl}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 500;">Reset Password</a></p>
+        <p>This link is valid for one hour.</p>
+        <p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>
+        <p>Best,<br>The Featherweight Team</p>
+      `;
+      
+      await emailService.sendEmail(user.email, emailSubject, emailContent, user.isPremium);
+      
+      res.status(200).json({ 
+        message: "If your email exists in our system, you will receive a password reset link shortly." 
+      });
+    } catch (error) {
+      console.error("Error in forgot password:", error);
+      res.status(500).json({ 
+        message: "An error occurred while processing your request." 
+      });
+    }
+  });
+  
+  // Reset password with token
+  app.post("/api/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+      
+      // Find user with this token
+      const user = await storage.getUserByResetToken(token);
+      
+      if (!user || !user.resetTokenExpires) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+      
+      // Check if token is expired
+      if (new Date() > new Date(user.resetTokenExpires)) {
+        return res.status(400).json({ message: "Reset token has expired" });
+      }
+      
+      // Hash the new password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update user password and clear reset token
+      await storage.updateUserPasswordAndClearToken(user.id, hashedPassword);
+      
+      res.status(200).json({ message: "Password has been reset successfully" });
+    } catch (error) {
+      console.error("Error in reset password:", error);
+      res.status(500).json({ 
+        message: "An error occurred while resetting your password" 
+      });
+    }
+  });
+  
   // =========== Analytics Routes ===========
   
   // Get mood analytics
