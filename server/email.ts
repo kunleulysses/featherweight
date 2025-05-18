@@ -614,12 +614,13 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     // Convert line breaks within paragraphs
     formattedP = formattedP.replace(/\n/g, '<br>');
     
-    return `<p style="margin-bottom: 16px; line-height: 1.5;">${formattedP}</p>`;
+    // Increased font size for better readability
+    return `<p style="margin-bottom: 18px; line-height: 1.6; font-size: 16px;">${formattedP}</p>`;
   });
   
-  // Flappy avatar image URL - using a fully qualified URL that will work in emails
-  // Using a data URI for the pelican image to ensure it displays in all email clients
-  const flappyAvatarUrl = "https://featherweight.world/images/flappy-avatar.png";
+  // Flappy avatar image URL - we'll upload this to the domain for emails
+  // This is the cute pelican mascot image that should be used in all emails
+  const flappyAvatarUrl = "https://featherweight.world/flappy-pelican.png";
   
   return `
   <!DOCTYPE html>
@@ -636,11 +637,12 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         background-color: #F5F7FA;
         margin: 0;
         padding: 0;
+        font-size: 16px;
       }
       .container {
-        max-width: 600px;
+        max-width: 650px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 25px;
         background-color: #ffffff;
         border-radius: 12px;
         border-left: 4px solid #64B5F6;
@@ -648,26 +650,34 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       .header {
         display: flex;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 20px;
+        margin-bottom: 25px;
+        padding-bottom: 22px;
         border-bottom: 1px solid #E0E0E0;
       }
       .logo {
-        width: 50px;
-        height: 50px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
-        margin-right: 12px;
+        margin-right: 15px;
         overflow: hidden;
+        background-color: #5D7CFA;
       }
       .logo img {
         width: 100%;
         height: auto;
+        display: block;
       }
       .title {
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 700;
         color: #64B5F6;
         margin: 0;
+        font-size: 24px;
+      }
+      .subtitle {
+        color: #5D7CFA;
+        font-size: 16px;
+        margin-top: 5px;
       }
       .content {
         padding: 0 10px;
@@ -692,16 +702,17 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         margin-top: 20px;
       }
       .journal-tip {
-        margin: 25px 0;
-        padding: 15px;
+        margin: 28px 0;
+        padding: 18px;
         background-color: #e3f2fd;
         border-left: 4px solid #64B5F6;
         border-radius: 8px;
+        font-size: 16px;
       }
       .journal-tip h3 {
         margin-top: 0;
         color: #1565C0;
-        font-size: 18px;
+        font-size: 20px;
       }
       .highlight {
         font-weight: bold;
@@ -726,11 +737,11 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     <div class="container">
       <div class="header">
         <div class="logo">
-          <img src="${flappyAvatarUrl}" alt="Flappy the Pelican" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z%22></path><line x1=%2216%22 y1=%228%22 x2=%222%22 y2=%2222%22></line><line x1=%2217.5%22 y1=%2215%22 x2=%229%22 y2=%2215%22></line></svg>'; this.style.backgroundColor='#64B5F6';">
+          <img src="${flappyAvatarUrl}" alt="Flappy the Pelican" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z%22></path><line x1=%2216%22 y1=%228%22 x2=%222%22 y2=%2222%22></line><line x1=%2217.5%22 y1=%2215%22 x2=%229%22 y2=%2215%22></line></svg>'; this.style.backgroundColor='#5D7CFA';">
         </div>
         <div>
           <h1 class="title">Flappy ${isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}</h1>
-          <div style="color: #64B5F6; font-size: 14px;">Your Journaling Companion</div>
+          <div class="subtitle">Your Journaling Companion</div>
         </div>
       </div>
       <div class="content">
