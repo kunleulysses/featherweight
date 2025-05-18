@@ -2,6 +2,20 @@ import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzl
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Conversations table
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  userMessage: text("user_message").notNull(),
+  flappyResponse: text("flappy_response").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  conversationType: text("conversation_type").default("general").notNull(), // general, journal, etc.
+  savedAsJournal: boolean("saved_as_journal").default(false).notNull(),
+  journalEntryId: integer("journal_entry_id"), // If saved as a journal entry
+  messageTags: json("message_tags").$type<string[]>(),
+  mood: text("mood"), // happy, calm, neutral, sad, frustrated
+});
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
