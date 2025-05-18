@@ -20,8 +20,9 @@ if (!process.env.SENDGRID_API_KEY) {
   console.log('SendGrid initialized successfully');
 }
 
-// Email from address - using the verified SendGrid domain
-const FROM_EMAIL = "flappy@em8032.featherweight.world";
+// Email configuration - using verified domain for authentication but friendly address for replies
+const FROM_EMAIL = "flappy@em8032.featherweight.world"; // Verified domain for authentication
+const REPLY_TO_EMAIL = "flappy@featherweight.world"; // Friendly address for replies
 const FROM_NAME = "Flappy from Featherweight";
 
 // Log the FROM_EMAIL to ensure it's correctly set
@@ -60,7 +61,7 @@ export const emailService = {
           email: FROM_EMAIL,
           name: FROM_NAME
         },
-        replyTo: FROM_EMAIL, // This is the correct way to set Reply-To header in SendGrid
+        replyTo: REPLY_TO_EMAIL, // Using friendly email address for replies
         subject,
         text: textContent,
         html: htmlContent,
