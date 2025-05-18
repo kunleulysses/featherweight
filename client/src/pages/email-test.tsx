@@ -260,7 +260,7 @@ export default function EmailTestPage() {
                   <div className="flex flex-col items-center space-y-2">
                     <div className="p-2 bg-primary/10 rounded w-full text-center">User receives email from Flappy</div>
                     <div className="h-6 w-0.5 bg-border"></div>
-                    <div className="p-2 bg-primary/10 rounded w-full text-center">User replies to flappy@featherweight.world</div>
+                    <div className="p-2 bg-primary/10 rounded w-full text-center">User replies to flappy@em8032.featherweight.world</div>
                     <div className="h-6 w-0.5 bg-border"></div>
                     <div className="p-2 bg-primary/10 rounded w-full text-center">SendGrid routes reply to our webhook</div>
                     <div className="h-6 w-0.5 bg-border"></div>
