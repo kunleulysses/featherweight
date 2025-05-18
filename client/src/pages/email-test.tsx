@@ -11,10 +11,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { Helmet } from "react-helmet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Send, Inbox, RefreshCw } from "lucide-react";
+import { AlertCircle, Send, Inbox, RefreshCw, Eye } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import flappyAvatarPath from "@assets/August9teen_a_funny_pelican_mascot_logo_for_an_ai_agent_super_683392fe-ba8f-4dd9-a789-d9c339b36d02_3.png";
 
 export default function EmailTestPage() {
   const { user } = useAuth();
@@ -23,8 +24,9 @@ export default function EmailTestPage() {
   const [isSending, setIsSending] = useState(false);
   const [responseInfo, setResponseInfo] = useState<string | null>(null);
   const [responseDetails, setResponseDetails] = useState<Record<string, any> | null>(null);
-  const [testType, setTestType] = useState<"simulate" | "request">("simulate");
+  const [testType, setTestType] = useState<"simulate" | "request" | "preview">("simulate");
   const [isRequestingInspiration, setIsRequestingInspiration] = useState(false);
+  const [previewContent, setPreviewContent] = useState("Hello from Flappy! This is an example of how my emails look with the new design. You can see that I'm using a larger font size (18px) for better readability and have a nicer overall design with soft shadows and rounded corners.\n\nI'm here to help you journal and reflect on your thoughts. Just reply to any of my emails, and I'll respond with thoughtful insights!");
 
   const handleSimulateEmail = async (e: React.FormEvent) => {
     e.preventDefault();

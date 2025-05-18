@@ -671,17 +671,22 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       .title {
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 700;
-        color: #64B5F6;
+        color: #5D7CFA;
         margin: 0;
-        font-size: 24px;
+        font-size: 28px;
+        letter-spacing: -0.5px;
       }
       .subtitle {
-        color: #5D7CFA;
-        font-size: 16px;
-        margin-top: 5px;
+        color: #64B5F6;
+        font-size: 17px;
+        margin-top: 6px;
+        font-weight: 500;
       }
       .content {
-        padding: 0 10px;
+        padding: 15px 20px;
+        background-color: #FAFCFF;
+        border-radius: 10px;
+        margin-bottom: 20px;
       }
       .footer {
         margin-top: 35px;
@@ -694,45 +699,57 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       }
       .reply-button {
         display: inline-block;
-        background-color: #64B5F6;
+        background-color: #5D7CFA;
         color: white;
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 600;
         text-decoration: none;
-        padding: 12px 24px;
+        padding: 14px 28px;
         border-radius: 12px;
-        margin-top: 20px;
+        margin-top: 25px;
+        box-shadow: 0 4px 6px rgba(93, 124, 250, 0.25);
+        transition: all 0.3s ease;
+      }
+      .reply-button:hover {
+        background-color: #4C6CE7;
+        box-shadow: 0 6px 8px rgba(93, 124, 250, 0.35);
       }
       .journal-tip {
-        margin: 28px 0;
-        padding: 18px;
+        margin: 30px 0;
+        padding: 22px;
         background-color: #e3f2fd;
-        border-left: 4px solid #64B5F6;
-        border-radius: 8px;
-        font-size: 16px;
+        border-left: 5px solid #64B5F6;
+        border-radius: 10px;
+        font-size: 17px;
+        box-shadow: 0 3px 8px rgba(93, 124, 250, 0.08);
       }
       .journal-tip h3 {
         margin-top: 0;
         color: #1565C0;
-        font-size: 20px;
+        font-size: 22px;
+        font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
+        font-weight: 600;
       }
       .highlight {
         font-weight: bold;
-        color: #1565C0;
+        color: #5D7CFA;
         background-color: #f0f7ff;
-        padding: 3px 6px;
-        border-radius: 4px;
-        font-size: 16px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 17px;
       }
       .premium-badge {
         display: inline-block;
         background-color: #8b5cf6;
         color: white;
         font-size: 12px;
-        padding: 3px 10px;
+        font-weight: 600;
+        padding: 4px 12px;
         border-radius: 12px;
-        margin-left: 8px;
+        margin-left: 10px;
         vertical-align: middle;
+        box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+        letter-spacing: 0.5px;
       }
     </style>
   </head>
