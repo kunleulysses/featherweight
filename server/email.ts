@@ -21,7 +21,7 @@ if (!process.env.SENDGRID_API_KEY) {
 }
 
 // Email from address 
-const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@featherweight.world";
+const FROM_EMAIL = process.env.FROM_EMAIL || "flappy@em8032.featherweight.world";
 const FROM_NAME = "Flappy from Featherweight";
 
 // Log the FROM_EMAIL to ensure it's correctly set
