@@ -1,1 +1,1 @@
-https://webhook-4376.loca.lt/webhook
+https://flappy-6140.loca.lt/api/emails/webhook
