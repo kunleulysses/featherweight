@@ -24,7 +24,7 @@ export default function EmailTestPage() {
   const [isSending, setIsSending] = useState(false);
   const [responseInfo, setResponseInfo] = useState<string | null>(null);
   const [responseDetails, setResponseDetails] = useState<Record<string, any> | null>(null);
-  const [testType, setTestType] = useState<"simulate" | "request" | "preview">("simulate");
+  const [testType, setTestType] = useState<"simulate" | "request" | "preview" | "incoming">("simulate");
   const [isRequestingInspiration, setIsRequestingInspiration] = useState(false);
   const [previewContent, setPreviewContent] = useState("Hello from Flappy! This is an example of how my emails look with the new design. You can see that I'm using a larger font size (18px) for better readability and have a nicer overall design with soft shadows and rounded corners.\n\nI'm here to help you journal and reflect on your thoughts. Just reply to any of my emails, and I'll respond with thoughtful insights!");
 

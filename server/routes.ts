@@ -270,6 +270,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Test endpoint to manually verify incoming emails are properly processed
+  app.post("/api/emails/test-incoming", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { from, to, subject, content } = req.body;
+      
+      if (!from || !content) {
+        return res.status(400).json({ message: "From email and content are required" });
+      }
+      
+      console.log('=== TEST INCOMING EMAIL ===');
+      console.log(`From: ${from}`);
+      console.log(`To: ${to || 'flappy@featherweight.world'}`);
+      console.log(`Subject: ${subject || 'Test Email'}`);
+      console.log(`Content: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
+      
+      // Process the email as if it came through the webhook
+      await emailService.processIncomingEmail(
+        from,
+        subject || 'Test Email',
+        content
+      );
+      
+      return res.json({ 
+        success: true, 
+        message: "Test email processed. Check server logs for details." 
+      });
+    } catch (error) {
+      console.error('Error processing test email:', error);
+      return res.status(500).json({ 
+        message: "Failed to process test email", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
   // SendGrid Inbound Parse webhook for handling incoming emails
   app.post("/api/emails/webhook", async (req: Request, res: Response) => {
     console.log('=== SENDGRID WEBHOOK REQUEST RECEIVED ===');
