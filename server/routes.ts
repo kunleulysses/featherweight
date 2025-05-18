@@ -4,7 +4,10 @@ import path from "path";
 import { storage } from "./storage";
 import { setupAuth, hashPassword } from "./auth";
 import { z } from "zod";
-import { insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessageSchema, User } from "@shared/schema";
+import { 
+  insertJournalEntrySchema, updateUserPreferencesSchema, insertSmsMessageSchema, User,
+  type InsertEmailQueue, type EmailQueueItem
+} from "@shared/schema";
 import { emailService } from "./email";
 import { twilioService } from "./twilio";
 import { journalImageUpload, getFileUrl } from "./file-upload";
@@ -327,9 +330,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Body is an object with keys: ${bodyKeys.join(', ')}`);
           
           // Instead of processing immediately, enqueue the webhook payload
-          const queueItem = {
+          const queueItem: InsertEmailQueue = {
             payload: req.body, // Store the complete webhook payload
-            status: "pending"
+            status: "pending",
+            processAttempts: 0
           };
           
           // Add to processing queue
@@ -342,9 +346,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Body is a Buffer of length:', req.body.length);
           
           // Create a queue item with the buffer data
-          const queueItem = {
+          const queueItem: InsertEmailQueue = {
             payload: { buffer: req.body.toString('base64') },
-            status: "pending"
+            status: "pending",
+            processAttempts: 0
           };
           
           await storage.enqueueEmail(queueItem);
@@ -355,9 +360,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Body is a string of length: ${req.body.length}`);
           
           // Create a queue item with the string data
-          const queueItem = {
+          const queueItem: InsertEmailQueue = {
             payload: { text: req.body },
-            status: "pending"
+            status: "pending",
+            processAttempts: 0
           };
           
           await storage.enqueueEmail(queueItem);
@@ -368,9 +374,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Body is of unexpected type: ${typeof req.body}`);
           
           // Still queue whatever we received
-          const queueItem = {
+          const queueItem: InsertEmailQueue = {
             payload: { data: JSON.stringify(req.body) },
-            status: "pending"
+            status: "pending",
+            processAttempts: 0
           };
           
           await storage.enqueueEmail(queueItem);
@@ -379,31 +386,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(200).send('OK: Data queued for processing');
         }
       } else {
-              const { simpleParser } = require('mailparser');
-              console.log('Parsing raw email with mailparser...');
-              
-              const parsed = await simpleParser(req.body.email);
-              console.log('✅ Raw email parsed successfully');
-              
-              console.log("=== PARSED EMAIL DETAILS ===");
-              console.log(`From: ${parsed.from?.text}`);
-              console.log(`To: ${parsed.to?.text}`);
-              console.log(`Subject: ${parsed.subject}`);
-              console.log(`Date: ${parsed.date}`);
-              console.log(`Text Body Length: ${parsed.text?.length || 0}`);
-              console.log(`HTML Body Length: ${parsed.html?.length || 0}`);
-              console.log(`In-Reply-To: ${parsed.inReplyTo || 'none'}`);
-              
-              // Extract sender's email from parsed result
-              let senderEmail = '';
-              if (parsed.from && parsed.from.value && parsed.from.value.length > 0) {
-                senderEmail = parsed.from.value[0].address;
-                console.log(`Extracted sender from mailparser: ${senderEmail}`);
-              } else if (parsed.from?.text) {
-                const match = parsed.from.text.match(/<([^>]+)>/) || [null, parsed.from.text];
-                senderEmail = match[1] || parsed.from.text;
-                console.log(`Extracted sender from text: ${senderEmail}`);
-              }
+        console.log("Request body is empty or undefined");
+        return res.status(200).send('Error: Missing body data');
+      }
+    } catch (error) {
+      console.error('⚠️ Error queueing webhook payload:', error);
+      
+      // Even on error, return 200 to prevent SendGrid from retrying
+      // We'll log the error but acknowledge receipt
+      res.status(200).send('Webhook received with error');
+    }
+  });
               
               if (senderEmail && parsed.subject) {
                 // Process the email with our service

@@ -9,7 +9,7 @@ import {
 } from "@shared/schema";
 import crypto from "crypto";
 import { db } from "./db";
-import { eq, and, gte, or, inArray } from "drizzle-orm";
+import { eq, and, gte, or, inArray, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { pool } from "./db";
