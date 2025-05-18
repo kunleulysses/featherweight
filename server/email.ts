@@ -20,9 +20,9 @@ if (!process.env.SENDGRID_API_KEY) {
   console.log('SendGrid initialized successfully');
 }
 
-// Email configuration - using verified domain for authentication but friendly address for replies
+// Email configuration - using verified domain for both sending and receiving
 const FROM_EMAIL = "flappy@em8032.featherweight.world"; // Verified domain for authentication
-const REPLY_TO_EMAIL = "flappy@featherweight.world"; // Friendly address for replies
+const REPLY_TO_EMAIL = "flappy@em8032.featherweight.world"; // Must match inbound parse domain
 const FROM_NAME = "Flappy from Featherweight";
 
 // Log the FROM_EMAIL to ensure it's correctly set

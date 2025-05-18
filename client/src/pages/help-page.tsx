@@ -268,7 +268,7 @@ export default function HelpPage() {
                       </CardHeader>
                       <CardContent className="pt-4">
                         <p className="mb-4">
-                          Reply to Flappy's daily emails or send a new email to <strong>flappy@featherweight.world</strong> to create a journal entry.
+                          Reply to Flappy's daily emails or send a new email to <strong>flappy@em8032.featherweight.world</strong> to create a journal entry.
                         </p>
                         <p className="text-muted-foreground text-sm">
                           Your emails are automatically processed and saved as journal entries, and Flappy will respond with insights or encouragement.
