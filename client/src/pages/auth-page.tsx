@@ -207,14 +207,18 @@ export default function AuthPage() {
         <title>
           {resetToken 
             ? "Reset Password - Featherweight" 
-            : "Sign In or Register - Featherweight"
+            : showForgotPassword 
+              ? "Forgot Password - Featherweight"
+              : "Sign In or Register - Featherweight"
           }
         </title>
         <meta 
           name="description" 
           content={resetToken 
             ? "Reset your Featherweight password to regain access to your account" 
-            : "Sign in to your Featherweight account or create a new one to start journaling with Flappy, your email companion."
+            : showForgotPassword
+              ? "Request a password reset link for your Featherweight account"
+              : "Sign in to your Featherweight account or create a new one to start journaling with Flappy, your email companion."
           } 
         />
       </Helmet>
@@ -232,6 +236,13 @@ export default function AuthPage() {
                         <CardTitle className="font-quicksand text-2xl text-center">Reset Your Password</CardTitle>
                         <CardDescription className="text-center">
                           Enter your new password below to regain access to your account
+                        </CardDescription>
+                      </>
+                    ) : showForgotPassword ? (
+                      <>
+                        <CardTitle className="font-quicksand text-2xl text-center">Forgot Password</CardTitle>
+                        <CardDescription className="text-center">
+                          Enter your email address below to receive a password reset link
                         </CardDescription>
                       </>
                     ) : (
@@ -306,6 +317,78 @@ export default function AuthPage() {
                           </Form>
                         )}
                       </div>
+                    ) : showForgotPassword ? (
+                      // Forgot Password Form
+                      <div>
+                        {forgotPasswordStatus === "success" ? (
+                          <div className="space-y-4">
+                            <Alert className="bg-green-50 text-green-800 border-green-200 mb-4">
+                              <CheckCircle className="h-4 w-4" />
+                              <AlertTitle>Reset Link Sent</AlertTitle>
+                              <AlertDescription>{forgotPasswordMessage}</AlertDescription>
+                            </Alert>
+                            <Button 
+                              onClick={() => {
+                                setShowForgotPassword(false);
+                                setForgotPasswordStatus("idle");
+                              }}
+                              className="w-full"
+                            >
+                              <ArrowLeft className="mr-2 h-4 w-4" />
+                              Back to Login
+                            </Button>
+                          </div>
+                        ) : (
+                          <Form {...forgotPasswordForm}>
+                            <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+                              <FormField
+                                control={forgotPasswordForm.control}
+                                name="email"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="your.email@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              {forgotPasswordStatus === "error" && (
+                                <Alert variant="destructive">
+                                  <AlertCircle className="h-4 w-4" />
+                                  <AlertTitle>Error</AlertTitle>
+                                  <AlertDescription>{forgotPasswordMessage}</AlertDescription>
+                                </Alert>
+                              )}
+                              
+                              <div className="flex flex-col space-y-2">
+                                <Button type="submit" className="w-full" disabled={forgotPasswordStatus === "loading"}>
+                                  {forgotPasswordStatus === "loading" ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Sending...
+                                    </>
+                                  ) : (
+                                    "Send Reset Link"
+                                  )}
+                                </Button>
+                                
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  onClick={() => setShowForgotPassword(false)}
+                                  className="w-full"
+                                >
+                                  <ArrowLeft className="mr-2 h-4 w-4" />
+                                  Back to Login
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        )}
+                      </div>
                     ) : (
                       // Regular login/register tabs
                       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")}>
@@ -313,78 +396,105 @@ export default function AuthPage() {
                           <TabsTrigger value="login" className="font-quicksand">Login</TabsTrigger>
                           <TabsTrigger value="register" className="font-quicksand">Register</TabsTrigger>
                         </TabsList>
-                      
-                      {/* Login Tab */}
-                      <TabsContent value="login">
-                        <Form {...loginForm}>
-                          <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                            <FormField
-                              control={loginForm.control}
-                              name="email"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Email</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="your.email@example.com" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={loginForm.control}
-                              name="password"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button 
-                              type="submit" 
-                              className="w-full font-quicksand" 
-                              disabled={loginMutation.isPending}
-                            >
-                              {loginMutation.isPending ? "Signing in..." : "Sign in"}
-                            </Button>
-                            
-                            <div className="flex justify-between items-center w-full mt-4">
-                              <button
-                                type="button"
-                                className="text-xs text-muted-foreground hover:text-primary"
-                                onClick={() => setShowForgotPassword(true)}
-                              >
-                                Forgot password?
-                              </button>
-                              <button
-                                type="button"
-                                className="text-xs text-muted-foreground hover:text-primary"
-                                onClick={() => setActiveTab("register")}
-                              >
-                                Don't have an account? Register
-                              </button>
-                            </div>
-                          </form>
-                        </Form>
-                      </TabsContent>
-                      
-                      {/* Register Tab */}
-                      <TabsContent value="register">
-                        <Form {...registerForm}>
-                          <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        {/* Login Tab */}
+                        <TabsContent value="login">
+                          <Form {...loginForm}>
+                            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                               <FormField
-                                control={registerForm.control}
-                                name="firstName"
+                                control={loginForm.control}
+                                name="email"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>First Name</FormLabel>
+                                    <FormLabel>Email</FormLabel>
                                     <FormControl>
-                                      <Input placeholder="John" {...field} />
+                                      <Input placeholder="your.email@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={loginForm.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button 
+                                type="submit" 
+                                className="w-full font-quicksand" 
+                                disabled={loginMutation.isPending}
+                              >
+                                {loginMutation.isPending ? "Signing in..." : "Sign in"}
+                              </Button>
+                              
+                              <div className="flex justify-between items-center w-full mt-4">
+                                <button
+                                  type="button"
+                                  className="text-xs text-muted-foreground hover:text-primary"
+                                  onClick={() => setShowForgotPassword(true)}
+                                >
+                                  Forgot password?
+                                </button>
+                                <button
+                                  type="button"
+                                  className="text-xs text-muted-foreground hover:text-primary"
+                                  onClick={() => setActiveTab("register")}
+                                >
+                                  Don't have an account? Register
+                                </button>
+                              </div>
+                            </form>
+                          </Form>
+                        </TabsContent>
+                        
+                        {/* Register Tab */}
+                        <TabsContent value="register">
+                          <Form {...registerForm}>
+                            <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                  control={registerForm.control}
+                                  name="firstName"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>First Name</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Jane" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={registerForm.control}
+                                  name="lastName"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Last Name</FormLabel>
+                                      <FormControl>
+                                        <Input placeholder="Doe" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              <FormField
+                                control={registerForm.control}
+                                name="username"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="flappyfan" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -392,81 +502,55 @@ export default function AuthPage() {
                               />
                               <FormField
                                 control={registerForm.control}
-                                name="lastName"
+                                name="email"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Last Name</FormLabel>
+                                    <FormLabel>Email</FormLabel>
                                     <FormControl>
-                                      <Input placeholder="Doe" {...field} />
+                                      <Input placeholder="your.email@example.com" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
-                            </div>
-                            <FormField
-                              control={registerForm.control}
-                              name="username"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Username</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="flappyfan" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="email"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Email</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="your.email@example.com" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="password"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={registerForm.control}
-                              name="confirmPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Confirm Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" placeholder="••••••••" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button 
-                              type="submit" 
-                              className="w-full font-quicksand" 
-                              disabled={registerMutation.isPending}
-                            >
-                              {registerMutation.isPending ? "Creating account..." : "Create account"}
-                            </Button>
-                          </form>
-                        </Form>
-                      </TabsContent>
-                    </Tabs>
+                              <FormField
+                                control={registerForm.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={registerForm.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Confirm Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button 
+                                type="submit" 
+                                className="w-full font-quicksand" 
+                                disabled={registerMutation.isPending}
+                              >
+                                {registerMutation.isPending ? "Creating account..." : "Create account"}
+                              </Button>
+                            </form>
+                          </Form>
+                        </TabsContent>
+                      </Tabs>
+                    )}
                   </CardContent>
                   <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
                     <p>By continuing, you agree to Featherweight's Terms of Service and Privacy Policy.</p>
@@ -478,11 +562,13 @@ export default function AuthPage() {
               <div className="hidden lg:block">
                 <div className="text-center lg:text-left">
                   <h1 className="font-quicksand font-bold text-3xl md:text-4xl text-foreground mb-6">
-                    Begin Your Journaling Journey with <span className="text-primary">Flappy</span>
+                    Journal with Flappy, your cosmic pelican companion
                   </h1>
-                  <p className="text-lg text-foreground/70 mb-6">
-                    Join Featherweight and discover the joy of journaling through email. Get daily inspiration from Flappy, your cosmic pelican companion with ancient wisdom and playful energy.
+                  <p className="text-muted-foreground mb-8 text-lg">
+                    Featherweight makes journaling effortless through email conversations with Flappy, 
+                    your wise and witty pelican guide who helps you reflect, grow, and find moments of joy.
                   </p>
+                  
                   <div className="space-y-6">
                     <div className="flex items-start space-x-3">
                       <div className="bg-primary/10 p-2 rounded-full mt-1">
