@@ -1,10 +1,10 @@
 import { 
-  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, conversationMemories,
+  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, conversationMemories, emailQueue,
   type User, type InsertUser, type JournalEntry, type InsertJournalEntry, 
   type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
   type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
   type BillingTransaction, type InsertBillingTransaction,
-  type ConversationMemory, type InsertConversationMemory
+  type ConversationMemory, type InsertConversationMemory, type EmailQueueItem, type InsertEmailQueue
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
@@ -67,6 +67,14 @@ export interface IStorage {
   updateConversationMemory(id: number, updates: Partial<InsertConversationMemory>): Promise<ConversationMemory | undefined>;
   incrementConversationMemoryFrequency(id: number): Promise<ConversationMemory | undefined>;
   markConversationMemoryResolved(id: number, isResolved: boolean): Promise<ConversationMemory | undefined>;
+  
+  // Email queue operations
+  enqueueEmail(payload: InsertEmailQueue): Promise<EmailQueueItem>;
+  getNextPendingEmail(): Promise<EmailQueueItem | undefined>;
+  markEmailProcessing(id: number): Promise<EmailQueueItem | undefined>;
+  markEmailCompleted(id: number): Promise<EmailQueueItem | undefined>;
+  markEmailFailed(id: number, errorMessage: string): Promise<EmailQueueItem | undefined>;
+  incrementEmailAttempts(id: number): Promise<EmailQueueItem | undefined>;
   
   // Session store
   sessionStore: any; // Using any type to avoid SessionStore type issues

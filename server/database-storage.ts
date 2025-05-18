@@ -1,11 +1,11 @@
 import { 
-  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, conversationMemories,
+  users, journalEntries, emails, smsMessages, paymentMethods, billingTransactions, conversationMemories, emailQueue,
   type User, type InsertUser, type JournalEntry, type InsertJournalEntry, 
   type Email, type InsertEmail, type UpdateUserPreferences, type SmsMessage, 
   type InsertSmsMessage, type PaymentMethod, type InsertPaymentMethod,
   type BillingTransaction, type InsertBillingTransaction,
   type ConversationMemory, type InsertConversationMemory, type PaymentDetails,
-  type UserPreferences
+  type UserPreferences, type EmailQueueItem, type InsertEmailQueue
 } from "@shared/schema";
 import crypto from "crypto";
 import { db } from "./db";

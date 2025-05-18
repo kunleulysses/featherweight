@@ -248,6 +248,7 @@ export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type BillingTransaction = typeof billingTransactions.$inferSelect;
 export type ConversationMemory = typeof conversationMemories.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
+export type EmailQueueItem = typeof emailQueue.$inferSelect;
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
 export type InsertSmsMessage = z.infer<typeof insertSmsMessageSchema>;
@@ -266,4 +267,13 @@ export const insertConversationSchema = createInsertSchema(conversations)
     savedAsJournal: z.boolean().default(false),
   });
 
+export const insertEmailQueueSchema = createInsertSchema(emailQueue)
+  .omit({ id: true, createdAt: true, updatedAt: true, processedAt: true, processAttempts: true })
+  .extend({
+    payload: z.record(z.any()),
+    status: z.enum(["pending", "processing", "completed", "failed"]).default("pending"),
+    errorMessage: z.string().optional(),
+  });
+
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type InsertEmailQueue = z.infer<typeof insertEmailQueueSchema>;
