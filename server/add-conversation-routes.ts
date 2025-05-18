@@ -9,7 +9,8 @@ import { generateFlappyContent } from "./openai";
 export function addConversationRoutes(app) {
   // Create a new conversation
   app.post("/api/direct-conversation", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    // Check if user is authenticated (user exists in the request)
+    if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
@@ -78,7 +79,7 @@ export function addConversationRoutes(app) {
   
   // Get all conversations for the current user
   app.get("/api/direct-conversation", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
@@ -97,7 +98,7 @@ export function addConversationRoutes(app) {
   
   // Save conversation as journal entry
   app.post("/api/direct-conversation/:id/save-journal", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     
