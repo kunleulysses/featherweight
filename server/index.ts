@@ -70,8 +70,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Listen on port 5000 for deployment compatibility
-  const port = 5000;
+  // Listen on port 3000 for Cloud Run compatibility
+  const port = 3000;
   server.listen({
     port,
     host: "0.0.0.0",
