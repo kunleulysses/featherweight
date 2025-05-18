@@ -204,8 +204,19 @@ export default function AuthPage() {
   return (
     <>
       <Helmet>
-        <title>Sign In or Register - Featherweight</title>
-        <meta name="description" content="Sign in to your Featherweight account or create a new one to start journaling with Flappy, your email companion." />
+        <title>
+          {resetToken 
+            ? "Reset Password - Featherweight" 
+            : "Sign In or Register - Featherweight"
+          }
+        </title>
+        <meta 
+          name="description" 
+          content={resetToken 
+            ? "Reset your Featherweight password to regain access to your account" 
+            : "Sign in to your Featherweight account or create a new one to start journaling with Flappy, your email companion."
+          } 
+        />
       </Helmet>
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -216,17 +227,92 @@ export default function AuthPage() {
               <div>
                 <Card className="w-full">
                   <CardHeader>
-                    <CardTitle className="font-quicksand text-2xl text-center">Welcome to Featherweight</CardTitle>
-                    <CardDescription className="text-center">
-                      Sign in to your account or create a new one to start your journey with Flappy
-                    </CardDescription>
+                    {resetToken ? (
+                      <>
+                        <CardTitle className="font-quicksand text-2xl text-center">Reset Your Password</CardTitle>
+                        <CardDescription className="text-center">
+                          Enter your new password below to regain access to your account
+                        </CardDescription>
+                      </>
+                    ) : (
+                      <>
+                        <CardTitle className="font-quicksand text-2xl text-center">Welcome to Featherweight</CardTitle>
+                        <CardDescription className="text-center">
+                          Sign in to your account or create a new one to start your journey with Flappy
+                        </CardDescription>
+                      </>
+                    )}
                   </CardHeader>
                   <CardContent>
-                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")}>
-                      <TabsList className="grid w-full grid-cols-2 mb-6">
-                        <TabsTrigger value="login" className="font-quicksand">Login</TabsTrigger>
-                        <TabsTrigger value="register" className="font-quicksand">Register</TabsTrigger>
-                      </TabsList>
+                    {resetToken ? (
+                      // Reset Password Form
+                      <div>
+                        {resetStatus === "success" ? (
+                          <Alert className="bg-green-50 text-green-800 border-green-200 mb-4">
+                            <CheckCircle className="h-4 w-4" />
+                            <AlertTitle>Password Reset Successfully</AlertTitle>
+                            <AlertDescription>{resetMessage}</AlertDescription>
+                          </Alert>
+                        ) : (
+                          <Form {...resetPasswordForm}>
+                            <form onSubmit={resetPasswordForm.handleSubmit(onResetPasswordSubmit)} className="space-y-4">
+                              <FormField
+                                control={resetPasswordForm.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>New Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={resetPasswordForm.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Confirm Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              {resetStatus === "error" && (
+                                <Alert variant="destructive">
+                                  <AlertCircle className="h-4 w-4" />
+                                  <AlertTitle>Error</AlertTitle>
+                                  <AlertDescription>{resetMessage}</AlertDescription>
+                                </Alert>
+                              )}
+                              
+                              <Button type="submit" className="w-full" disabled={resetStatus === "loading"}>
+                                {resetStatus === "loading" ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Resetting...
+                                  </>
+                                ) : (
+                                  "Reset Password"
+                                )}
+                              </Button>
+                            </form>
+                          </Form>
+                        )}
+                      </div>
+                    ) : (
+                      // Regular login/register tabs
+                      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "register")}>
+                        <TabsList className="grid w-full grid-cols-2 mb-6">
+                          <TabsTrigger value="login" className="font-quicksand">Login</TabsTrigger>
+                          <TabsTrigger value="register" className="font-quicksand">Register</TabsTrigger>
+                        </TabsList>
                       
                       {/* Login Tab */}
                       <TabsContent value="login">
