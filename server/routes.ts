@@ -283,9 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Endpoint for testing email queue
   app.post("/api/emails/test-incoming", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "You must be logged in" });
-    }
+    // This is a public endpoint - no authentication required for testing
     
     const { from, subject, text } = req.body;
     
@@ -294,21 +292,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      console.log('🔍 TEST EMAIL RECEIVED:');
+      console.log(`From: ${from}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Content: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+      
       // Create a queue item with the test data
       const queueItem: InsertEmailQueue = {
         payload: { 
           from, 
           subject, 
-          text 
+          text,
+          html: `<p>${text}</p>`, // Simple HTML version
+          headers: {
+            'Message-ID': `test-${Date.now()}@test.featherweight.world`,
+            'In-Reply-To': ''
+          }
         },
         status: "pending"
       };
       
-      await storage.enqueueEmail(queueItem);
+      const savedItem = await storage.enqueueEmail(queueItem);
+      console.log(`✅ Test email queued for processing (Queue ID: ${savedItem.id})`);
       
-      res.status(200).json({ success: true, message: "Test email queued for processing" });
+      res.status(200).json({ 
+        success: true, 
+        message: "Test email queued for processing",
+        queueId: savedItem.id
+      });
     } catch (error) {
       console.error("Error queueing test email:", error);
+      res.status(500).json({ error: "Failed to queue test email" });
+    }
+  });
+  
+  // Public endpoint for testing email functionality
+  app.post("/api/public/test-email", async (req: Request, res: Response) => {
+    console.log('📧 PUBLIC EMAIL TEST ENDPOINT CALLED');
+    
+    const { from, subject, text } = req.body;
+    
+    if (!from || !subject || !text) {
+      return res.status(400).json({ error: "Email details are required (from, subject, text)" });
+    }
+    
+    try {
+      console.log('📝 Test email details:');
+      console.log(`From: ${from}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Content: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`);
+      
+      // Create a queue item with the test data
+      const queueItem: InsertEmailQueue = {
+        payload: { 
+          from, 
+          subject, 
+          text,
+          html: `<p>${text}</p>`, // Simple HTML version
+          headers: {
+            'Message-ID': `test-${Date.now()}@test.featherweight.world`,
+            'In-Reply-To': ''
+          }
+        },
+        status: "pending"
+      };
+      
+      const savedItem = await storage.enqueueEmail(queueItem);
+      console.log(`✅ Public test email queued for processing (Queue ID: ${savedItem.id})`);
+      
+      res.status(200).json({ 
+        success: true, 
+        message: "Test email queued for processing",
+        queueId: savedItem.id
+      });
+    } catch (error) {
+      console.error("Error queueing public test email:", error);
       res.status(500).json({ error: "Failed to queue test email" });
     }
   });

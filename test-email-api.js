@@ -20,8 +20,8 @@ async function testEmailWebhook() {
     
     console.log('Test data prepared:', JSON.stringify(testData, null, 2));
     
-    // Send the test webhook to our server
-    const response = await fetch('http://localhost:5000/api/emails/test-incoming', {
+    // Send the test webhook to our public endpoint
+    const response = await fetch('http://localhost:5000/api/public/test-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
