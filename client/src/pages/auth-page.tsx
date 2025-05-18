@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { insertUserSchema } from "@shared/schema";
 import { Header } from "@/components/layout/header";
@@ -14,6 +14,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Helmet } from 'react-helmet';
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { AlertCircle, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Extend schema for client-side validation
 const registerSchema = insertUserSchema.extend({
@@ -30,12 +34,45 @@ const loginSchema = insertUserSchema.pick({
   password: true,
 });
 
+// Add forgot password schema
+const forgotPasswordSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+});
+
+// Add reset password schema
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+  confirmPassword: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 type RegisterFormValues = z.infer<typeof registerSchema>;
 type LoginFormValues = z.infer<typeof loginSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordStatus, setForgotPasswordStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
+  
+  // For reset password flow
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetStatus, setResetStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [resetMessage, setResetMessage] = useState("");
+  
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const { toast } = useToast();
   const { user, loginMutation, registerMutation } = useAuth();
 
   // Redirect if already logged in
@@ -44,6 +81,15 @@ export default function AuthPage() {
       navigate("/journal");
     }
   }, [user, navigate]);
+  
+  // Check for reset token in URL
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const token = params.get('token');
+    if (token) {
+      setResetToken(token);
+    }
+  }, [search]);
 
   // Register form
   const registerForm = useForm<RegisterFormValues>({
