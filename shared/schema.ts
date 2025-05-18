@@ -235,6 +235,7 @@ export type SmsMessage = typeof smsMessages.$inferSelect;
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type BillingTransaction = typeof billingTransactions.$inferSelect;
 export type ConversationMemory = typeof conversationMemories.$inferSelect;
+export type Conversation = typeof conversations.$inferSelect;
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type InsertEmail = z.infer<typeof insertEmailSchema>;
 export type InsertSmsMessage = z.infer<typeof insertSmsMessageSchema>;
@@ -242,3 +243,15 @@ export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
 export type InsertBillingTransaction = z.infer<typeof insertBillingTransactionSchema>;
 export type InsertConversationMemory = z.infer<typeof insertConversationMemorySchema>;
 export type UpdateUserPreferences = z.infer<typeof updateUserPreferencesSchema>;
+
+// Conversation schema
+export const insertConversationSchema = createInsertSchema(conversations)
+  .omit({ id: true, createdAt: true, journalEntryId: true })
+  .extend({
+    userMessage: z.string().min(1, { message: "Message cannot be empty" }),
+    flappyResponse: z.string().min(1, { message: "Response cannot be empty" }),
+    conversationType: z.enum(["general", "journal"]).default("general"),
+    savedAsJournal: z.boolean().default(false),
+  });
+
+export type InsertConversation = z.infer<typeof insertConversationSchema>;

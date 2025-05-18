@@ -1377,20 +1377,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const { message, createJournalEntry = true, isFirstMessage = true } = req.body;
+      const { content, save_as_journal = false } = req.body;
       
-      if (!message) {
-        return res.status(400).json({ message: "Message is required" });
+      if (!content || typeof content !== 'string' || !content.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
       }
       
+      console.log(`Processing conversation for user ${req.user.id}...`);
+      console.log(`Message: ${content.substring(0, 50)}...`);
+      console.log(`Save as journal: ${save_as_journal}`);
+      
       // Get Flappy's response using the openAI service
-      const flappyResponse = await generateFlappyContent(
-        'journalResponse',
-        message,
+      const flappyContent = await generateFlappyContent(
+        'emailConversation',
+        req.user,
+        content,
         {
           username: req.user.username,
           email: req.user.email,
           userId: req.user.id,
+          isPremium: req.user.isPremium,
           firstName: req.user.firstName === null ? undefined : req.user.firstName,
           lastName: req.user.lastName === null ? undefined : req.user.lastName,
           isFirstMessage: isFirstMessage
