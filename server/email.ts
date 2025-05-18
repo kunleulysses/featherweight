@@ -618,9 +618,12 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     return `<p style="margin-bottom: 18px; line-height: 1.6; font-size: 16px;">${formattedP}</p>`;
   });
   
-  // Flappy avatar image URL - we'll upload this to the domain for emails
-  // This is the cute pelican mascot image that should be used in all emails
-  const flappyAvatarUrl = "https://featherweight.world/flappy-pelican.png";
+  // Use a feather icon SVG instead of the pelican image for consistency
+  // This will match the feather icon used in the app header
+  const featherIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>`;
+  
+  // Base64 encode the SVG for use in emails
+  const featherIconBase64 = `data:image/svg+xml;base64,${Buffer.from(featherIconSvg).toString('base64')}`;
   
   return `
   <!DOCTYPE html>
@@ -739,7 +742,7 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     <div class="container">
       <div class="header">
         <div class="logo">
-          <img src="${flappyAvatarUrl}" alt="Flappy the Pelican" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z%22></path><line x1=%2216%22 y1=%228%22 x2=%222%22 y2=%2222%22></line><line x1=%2217.5%22 y1=%2215%22 x2=%229%22 y2=%2215%22></line></svg>'; this.style.backgroundColor='#5D7CFA';">
+          <img src="${featherIconBase64}" alt="Featherweight" style="background-color: #5D7CFA;">
         </div>
         <div>
           <h1 class="title">Flappy ${isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}</h1>
