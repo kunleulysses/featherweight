@@ -292,10 +292,15 @@ export default function EmailTestPage() {
                         />
                       </div>
                       
-                      <div className="border rounded-lg overflow-hidden shadow-md">
-                        <div className="p-4 bg-[#ffffff]">
-                          <div className="flex items-center mb-6 pb-4 border-b border-[#E0E0E0]">
-                            <div className="w-[90px] h-[90px] mr-5 overflow-hidden">
+                      <div className="border rounded-lg overflow-hidden shadow-lg">
+                        <div className="p-6 bg-[#ffffff]" style={{ backgroundImage: 'linear-gradient(to bottom, rgba(93, 124, 250, 0.02) 0%, rgba(255, 255, 255, 1) 120px)' }}>
+                          <div className="flex items-center mb-8 pb-7 border-b border-[#E0E0E0] relative">
+                            <div className="w-[100px] h-[100px] mr-6 overflow-hidden rounded-2xl shadow-md" 
+                              style={{ 
+                                boxShadow: '0 4px 10px rgba(93, 124, 250, 0.2)', 
+                                border: '1px solid rgba(93, 124, 250, 0.1)',
+                                padding: '2px'
+                              }}>
                               <img 
                                 src={flappyAvatarPath} 
                                 alt="Flappy the Pelican" 
@@ -303,48 +308,75 @@ export default function EmailTestPage() {
                               />
                             </div>
                             <div>
-                              <h1 className="font-quicksand font-bold text-2xl text-[#5D7CFA] m-0">
+                              <h1 className="font-quicksand font-bold text-3xl text-[#5D7CFA] m-0" style={{ textShadow: '0 1px 1px rgba(93, 124, 250, 0.1)' }}>
                                 Flappy
                                 {user?.isPremium && (
-                                  <span className="ml-2 bg-[#8b5cf6] text-white text-xs px-3 py-1 rounded-full align-middle font-semibold shadow-sm">
-                                    PREMIUM
+                                  <span className="ml-3 bg-[#8b5cf6] text-white text-xs px-4 py-1 rounded-full align-middle font-semibold shadow-md uppercase" 
+                                    style={{ 
+                                      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', 
+                                      boxShadow: '0 3px 6px rgba(139, 92, 246, 0.35)',
+                                      letterSpacing: '0.5px'
+                                    }}>
+                                    Premium
                                   </span>
                                 )}
                               </h1>
-                              <div className="text-[#64B5F6] text-base mt-1 font-medium">Your Journaling Companion</div>
+                              <div className="text-[#64B5F6] text-lg mt-2 font-medium tracking-wide">Your Journaling Companion</div>
                             </div>
+                            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-[rgba(93,124,250,0.2)] via-[rgba(93,124,250,0.6)] to-[rgba(93,124,250,0.2)]"></div>
                           </div>
                           
-                          <div className="bg-[#FAFCFF] p-5 rounded-lg mb-5">
+                          <div className="bg-[#FAFCFF] p-6 rounded-xl mb-6 border border-[rgba(93,124,250,0.08)]" 
+                            style={{ 
+                              boxShadow: 'inset 0 0 20px rgba(93, 124, 250, 0.03)'
+                            }}>
                             {previewContent.split('\n\n').map((paragraph, idx) => (
                               <p 
                                 key={idx} 
-                                className="text-[#333] text-lg leading-relaxed mb-5 last:mb-0"
+                                className="text-[#333] text-lg leading-relaxed mb-6 last:mb-0"
                                 style={{ lineHeight: 1.8 }}
                               >
-                                {paragraph.split('\n').map((line, lineIdx) => (
-                                  <>
+                                {paragraph.split('\n').map((line, lineIdx, arr) => (
+                                  <React.Fragment key={lineIdx}>
                                     {lineIdx > 0 && <br />}
                                     {line}
-                                  </>
+                                    {lineIdx === arr.length - 1 && line.trim().endsWith('?') && 
+                                      <span className="text-[#5D7CFA] inline-block ml-1 animate-pulse">▌</span>}
+                                  </React.Fragment>
                                 ))}
                               </p>
                             ))}
                           </div>
                           
-                          <div className="bg-[#e3f2fd] p-5 rounded-lg my-6 border-l-4 border-[#64B5F6] shadow-sm">
-                            <h3 className="font-quicksand font-semibold text-xl text-[#1565C0] mt-0 mb-2">
-                              💡 Journaling Tip
+                          <div className="bg-[#e3f2fd] p-6 rounded-xl my-8 border-l-[5px] border-[#64B5F6] shadow-md relative"
+                            style={{ 
+                              backgroundImage: 'linear-gradient(to right, rgba(100, 181, 246, 0.08), rgba(255, 255, 255, 0) 80%)',
+                              boxShadow: '0 4px 12px rgba(93, 124, 250, 0.1)'
+                            }}>
+                            <div className="absolute right-5 top-3 text-2xl opacity-50">💡</div>
+                            <h3 className="font-quicksand font-semibold text-xl text-[#1565C0] mt-0 mb-3 tracking-wide">
+                              Journaling Tip
                             </h3>
                             <p className="m-0 text-base">
-                              To turn our conversation into a journal entry, simply include the word <span className="font-bold text-[#5D7CFA] bg-[#f0f7ff] px-2 py-1 rounded-md">SAVE</span> in your reply.
+                              To turn our conversation into a journal entry, simply include the word{' '}
+                              <span className="font-bold text-[#5D7CFA] bg-[#f0f7ff] px-3 py-1 rounded-lg inline-block shadow-sm"
+                                style={{
+                                  boxShadow: '0 2px 4px rgba(93, 124, 250, 0.15)',
+                                  border: '1px solid rgba(93, 124, 250, 0.1)'
+                                }}>
+                                SAVE
+                              </span>{' '}
+                              in your reply.
                             </p>
                           </div>
                           
-                          <div className="text-center mt-8">
+                          <div className="text-center mt-10">
                             <a 
                               href="#" 
-                              className="inline-block bg-[#5D7CFA] text-white font-quicksand font-semibold px-7 py-3 rounded-xl shadow-md"
+                              className="inline-block bg-[#5D7CFA] text-white font-quicksand font-semibold px-8 py-4 rounded-xl shadow-lg transition-all hover:bg-[#4C6CE7] hover:shadow-xl"
+                              style={{ 
+                                boxShadow: '0 4px 6px rgba(93, 124, 250, 0.25)'
+                              }}
                             >
                               Reply to Flappy
                             </a>

@@ -642,51 +642,70 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       .container {
         max-width: 650px;
         margin: 0 auto;
-        padding: 30px;
+        padding: 35px;
         background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(93, 124, 250, 0.1);
-        border-top: 5px solid #5D7CFA;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(93, 124, 250, 0.15);
+        border-top: 6px solid #5D7CFA;
+        background-image: linear-gradient(to bottom, rgba(93, 124, 250, 0.02) 0%, rgba(255, 255, 255, 1) 120px);
       }
       .header {
         display: flex;
         align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 25px;
+        margin-bottom: 35px;
+        padding-bottom: 28px;
         border-bottom: 1px solid #E0E0E0;
+        position: relative;
+      }
+      .header:after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(93, 124, 250, 0.2), rgba(93, 124, 250, 0.6) 50%, rgba(93, 124, 250, 0.2));
       }
       .logo {
-        width: 90px;
-        height: 90px;
-        margin-right: 20px;
+        width: 100px;
+        height: 100px;
+        margin-right: 22px;
         overflow: hidden;
         background-color: transparent;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(93, 124, 250, 0.2);
+        padding: 2px;
+        border: 1px solid rgba(93, 124, 250, 0.1);
       }
       .logo img {
         width: 100%;
         height: auto;
         display: block;
-        border-radius: 12px;
+        border-radius: 14px;
       }
       .title {
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 700;
         color: #5D7CFA;
         margin: 0;
-        font-size: 28px;
+        font-size: 32px;
         letter-spacing: -0.5px;
+        text-shadow: 0 1px 1px rgba(93, 124, 250, 0.1);
       }
       .subtitle {
         color: #64B5F6;
-        font-size: 17px;
-        margin-top: 6px;
+        font-size: 18px;
+        margin-top: 7px;
         font-weight: 500;
+        letter-spacing: 0.3px;
       }
       .content {
-        padding: 15px 20px;
+        padding: 22px 25px;
         background-color: #FAFCFF;
-        border-radius: 10px;
-        margin-bottom: 20px;
+        border-radius: 14px;
+        margin-bottom: 25px;
+        box-shadow: inset 0 0 20px rgba(93, 124, 250, 0.03);
+        border: 1px solid rgba(93, 124, 250, 0.08);
       }
       .footer {
         margin-top: 35px;
@@ -715,13 +734,23 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         box-shadow: 0 6px 8px rgba(93, 124, 250, 0.35);
       }
       .journal-tip {
-        margin: 30px 0;
-        padding: 22px;
+        margin: 35px 0;
+        padding: 25px;
         background-color: #e3f2fd;
         border-left: 5px solid #64B5F6;
-        border-radius: 10px;
+        border-radius: 14px;
         font-size: 17px;
-        box-shadow: 0 3px 8px rgba(93, 124, 250, 0.08);
+        box-shadow: 0 4px 12px rgba(93, 124, 250, 0.1);
+        background-image: linear-gradient(to right, rgba(100, 181, 246, 0.08), rgba(255, 255, 255, 0) 80%);
+        position: relative;
+      }
+      .journal-tip:before {
+        content: "💡";
+        position: absolute;
+        right: 20px;
+        top: 12px;
+        font-size: 24px;
+        opacity: 0.5;
       }
       .journal-tip h3 {
         margin-top: 0;
@@ -729,27 +758,32 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
         font-size: 22px;
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
         font-weight: 600;
+        letter-spacing: 0.2px;
       }
       .highlight {
         font-weight: bold;
         color: #5D7CFA;
         background-color: #f0f7ff;
-        padding: 4px 8px;
-        border-radius: 6px;
+        padding: 5px 10px;
+        border-radius: 8px;
         font-size: 17px;
+        display: inline-block;
+        box-shadow: 0 2px 4px rgba(93, 124, 250, 0.15);
+        border: 1px solid rgba(93, 124, 250, 0.1);
       }
       .premium-badge {
         display: inline-block;
-        background-color: #8b5cf6;
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
         color: white;
         font-size: 12px;
         font-weight: 600;
-        padding: 4px 12px;
+        padding: 5px 14px;
         border-radius: 12px;
-        margin-left: 10px;
+        margin-left: 12px;
         vertical-align: middle;
-        box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+        box-shadow: 0 3px 6px rgba(139, 92, 246, 0.35);
         letter-spacing: 0.5px;
+        text-transform: uppercase;
       }
     </style>
   </head>
