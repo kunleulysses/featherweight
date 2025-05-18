@@ -212,10 +212,11 @@ export default function EmailTestPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue={testType} onValueChange={(value) => setTestType(value as "simulate" | "request")}>
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                <Tabs defaultValue={testType} onValueChange={(value) => setTestType(value as "simulate" | "request" | "preview")}>
+                  <TabsList className="grid w-full grid-cols-3 mb-4">
                     <TabsTrigger value="simulate">Simulate Email Reply</TabsTrigger>
                     <TabsTrigger value="request">Request Inspiration</TabsTrigger>
+                    <TabsTrigger value="preview">Email Preview</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="simulate">
@@ -272,6 +273,84 @@ export default function EmailTestPage() {
                         <RefreshCw className="mr-2 h-4 w-4" />
                         {isRequestingInspiration ? "Requesting..." : "Request Inspiration Email"}
                       </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="preview">
+                    <div className="space-y-4">
+                      <p className="mb-4">
+                        Preview Flappy's redesigned email template with enhanced readability and the pelican avatar image.
+                      </p>
+                      
+                      <div className="mt-6 mb-4">
+                        <Label htmlFor="preview-content">Email Content Preview</Label>
+                        <Textarea
+                          id="preview-content"
+                          value={previewContent}
+                          onChange={(e) => setPreviewContent(e.target.value)}
+                          className="mt-2 min-h-[100px]"
+                        />
+                      </div>
+                      
+                      <div className="border rounded-lg overflow-hidden shadow-md">
+                        <div className="p-4 bg-[#ffffff]">
+                          <div className="flex items-center mb-6 pb-4 border-b border-[#E0E0E0]">
+                            <div className="w-[90px] h-[90px] mr-5 overflow-hidden">
+                              <img 
+                                src={flappyAvatarPath} 
+                                alt="Flappy the Pelican" 
+                                className="w-full h-auto rounded-xl"
+                              />
+                            </div>
+                            <div>
+                              <h1 className="font-quicksand font-bold text-2xl text-[#5D7CFA] m-0">
+                                Flappy
+                                {user?.isPremium && (
+                                  <span className="ml-2 bg-[#8b5cf6] text-white text-xs px-3 py-1 rounded-full align-middle font-semibold shadow-sm">
+                                    PREMIUM
+                                  </span>
+                                )}
+                              </h1>
+                              <div className="text-[#64B5F6] text-base mt-1 font-medium">Your Journaling Companion</div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-[#FAFCFF] p-5 rounded-lg mb-5">
+                            {previewContent.split('\n\n').map((paragraph, idx) => (
+                              <p 
+                                key={idx} 
+                                className="text-[#333] text-lg leading-relaxed mb-5 last:mb-0"
+                                style={{ lineHeight: 1.8 }}
+                              >
+                                {paragraph.split('\n').map((line, lineIdx) => (
+                                  <>
+                                    {lineIdx > 0 && <br />}
+                                    {line}
+                                  </>
+                                ))}
+                              </p>
+                            ))}
+                          </div>
+                          
+                          <div className="bg-[#e3f2fd] p-5 rounded-lg my-6 border-l-4 border-[#64B5F6] shadow-sm">
+                            <h3 className="font-quicksand font-semibold text-xl text-[#1565C0] mt-0 mb-2">
+                              💡 Journaling Tip
+                            </h3>
+                            <p className="m-0 text-base">
+                              To turn our conversation into a journal entry, simply include the word <span className="font-bold text-[#5D7CFA] bg-[#f0f7ff] px-2 py-1 rounded-md">SAVE</span> in your reply.
+                            </p>
+                          </div>
+                          
+                          <div className="text-center mt-8">
+                            <a 
+                              href="#" 
+                              className="inline-block bg-[#5D7CFA] text-white font-quicksand font-semibold px-7 py-3 rounded-xl shadow-md"
+                            >
+                              Reply to Flappy
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
