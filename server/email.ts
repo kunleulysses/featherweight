@@ -615,15 +615,12 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     formattedP = formattedP.replace(/\n/g, '<br>');
     
     // Increased font size for better readability
-    return `<p style="margin-bottom: 18px; line-height: 1.6; font-size: 16px;">${formattedP}</p>`;
+    return `<p style="margin-bottom: 22px; line-height: 1.8; font-size: 18px; color: #333;">${formattedP}</p>`;
   });
   
-  // Use a feather icon SVG instead of the pelican image for consistency
-  // This will match the feather icon used in the app header
-  const featherIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>`;
-  
-  // Base64 encode the SVG for use in emails
-  const featherIconBase64 = `data:image/svg+xml;base64,${Buffer.from(featherIconSvg).toString('base64')}`;
+  // Use the Flappy pelican avatar for the emails
+  // This provides a consistent character image across all communications
+  const flappyAvatarUrl = "https://featherweight.world/images/flappy-avatar.png";
   
   return `
   <!DOCTYPE html>
@@ -645,30 +642,31 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       .container {
         max-width: 650px;
         margin: 0 auto;
-        padding: 25px;
+        padding: 30px;
         background-color: #ffffff;
         border-radius: 12px;
-        border-left: 4px solid #64B5F6;
+        box-shadow: 0 4px 12px rgba(93, 124, 250, 0.1);
+        border-top: 5px solid #5D7CFA;
       }
       .header {
         display: flex;
         align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 22px;
+        margin-bottom: 30px;
+        padding-bottom: 25px;
         border-bottom: 1px solid #E0E0E0;
       }
       .logo {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        margin-right: 15px;
+        width: 90px;
+        height: 90px;
+        margin-right: 20px;
         overflow: hidden;
-        background-color: #5D7CFA;
+        background-color: transparent;
       }
       .logo img {
         width: 100%;
         height: auto;
         display: block;
+        border-radius: 12px;
       }
       .title {
         font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
@@ -742,7 +740,7 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     <div class="container">
       <div class="header">
         <div class="logo">
-          <img src="${featherIconBase64}" alt="Featherweight" style="background-color: #5D7CFA;">
+          <img src="${flappyAvatarUrl}" alt="Flappy the Pelican" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%235D7CFA%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><circle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%235D7CFA%22 /><text x=%228%22 y=%2218%22 font-family=%22Arial%22 font-size=%2216%22 fill=%22white%22>F</text></svg>';">
         </div>
         <div>
           <h1 class="title">Flappy ${isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}</h1>
