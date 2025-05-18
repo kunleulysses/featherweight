@@ -240,6 +240,36 @@ export default function EmailTestPage() {
               </p>
             </div>
             
+            <div className="mb-8 p-6 bg-muted/30 rounded-lg border border-muted">
+              <h2 className="text-xl font-semibold mb-4">Email Testing Guide</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">How Email Testing Works</h3>
+                  <ul className="space-y-2 list-disc pl-5">
+                    <li><strong>Simulate Reply:</strong> Test Flappy's response generation (no actual email sent)</li>
+                    <li><strong>Request Inspiration:</strong> Send yourself a real inspiration email</li>
+                    <li><strong>Email Preview:</strong> View how Flappy's emails appear in clients</li>
+                    <li><strong>Test Reply System:</strong> Simulate replying to Flappy (bypasses email servers)</li>
+                  </ul>
+                  <p className="mt-4 text-muted-foreground text-sm">
+                    <strong>Note:</strong> Direct email replies to Flappy require proper DNS configuration and webhook setup.
+                  </p>
+                </div>
+                <div className="bg-background p-4 rounded-lg border">
+                  <h3 className="text-lg font-medium mb-2">Email Flow</h3>
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="p-2 bg-primary/10 rounded w-full text-center">User receives email from Flappy</div>
+                    <div className="h-6 w-0.5 bg-border"></div>
+                    <div className="p-2 bg-primary/10 rounded w-full text-center">User replies to flappy@featherweight.world</div>
+                    <div className="h-6 w-0.5 bg-border"></div>
+                    <div className="p-2 bg-primary/10 rounded w-full text-center">SendGrid routes reply to our webhook</div>
+                    <div className="h-6 w-0.5 bg-border"></div>
+                    <div className="p-2 bg-primary/10 rounded w-full text-center">Flappy processes reply and responds</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <Alert className="mb-6 border-amber-500/50 bg-amber-500/10">
               <AlertCircle className="h-4 w-4 text-amber-500" />
               <AlertTitle>Important Note</AlertTitle>
