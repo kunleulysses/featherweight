@@ -6,19 +6,17 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  phoneNumber: text("phone_number").unique(),
   isPremium: boolean("is_premium").default(false).notNull(),
   premiumUntil: timestamp("premium_until"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   preferences: json("preferences").$type<UserPreferences>(),
   paymentDetails: json("payment_details").$type<PaymentDetails>(),
+  // Password reset fields
+  resetToken: text("reset_token"),
+  resetTokenExpires: timestamp("reset_token_expires"),
 });
 
 // Journal entries table

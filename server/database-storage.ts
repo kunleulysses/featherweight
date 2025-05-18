@@ -7,6 +7,7 @@ import {
   type ConversationMemory, type InsertConversationMemory, type PaymentDetails,
   type UserPreferences
 } from "@shared/schema";
+import crypto from "crypto";
 import { db } from "./db";
 import { eq, and, gte, or, inArray } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
