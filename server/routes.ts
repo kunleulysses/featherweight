@@ -379,17 +379,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Content-Length: ${req.headers['content-length']}`);
     
     try {
-      console.log("=== WEBHOOK HEADERS ===");
+      console.log("=== WEBHOOK HEADERS (DETAILED) ===");
       Object.entries(req.headers).forEach(([key, value]) => {
         console.log(`${key}: ${value}`);
       });
       
-      // More detailed logging of body structure
-      console.log("=== WEBHOOK BODY STRUCTURE ===");
+      // Extremely detailed logging of body structure
+      console.log("=== WEBHOOK BODY STRUCTURE (DETAILED) ===");
       if (req.body) {
         if (typeof req.body === 'object') {
           const bodyKeys = Object.keys(req.body);
           console.log(`Body is an object with keys: ${bodyKeys.join(', ')}`);
+          
+          // Log each key's value type and a preview of its content
+          bodyKeys.forEach(key => {
+            const value = req.body[key];
+            const type = typeof value;
+            console.log(`🔑 Key: ${key} | Type: ${type}`);
+            
+            if (type === 'string') {
+              console.log(`📄 Preview (first 200 chars): ${value.substring(0, 200)}${value.length > 200 ? '...' : ''}`);
+            } else if (type === 'object' && value !== null) {
+              if (Array.isArray(value)) {
+                console.log(`📊 Array with ${value.length} items`);
+                if (value.length > 0) {
+                  console.log(`📊 First item type: ${typeof value[0]}`);
+                  console.log(`📊 First item preview: ${JSON.stringify(value[0]).substring(0, 100)}...`);
+                }
+              } else {
+                console.log(`🔍 Object with keys: ${Object.keys(value).join(', ')}`);
+              }
+            } else {
+              console.log(`📄 Value: ${value}`);
+            }
+          });
+          
+          // Check specifically for email data fields
+          console.log("=== EMAIL DATA DETECTION ===");
+          if (req.body.from) console.log(`From: ${req.body.from}`);
+          if (req.body.to) console.log(`To: ${req.body.to}`);
+          if (req.body.sender) console.log(`Sender: ${req.body.sender}`);
+          if (req.body.subject) console.log(`Subject: ${req.body.subject}`);
+          if (req.body.text) console.log(`Text length: ${req.body.text.length}`);
+          if (req.body.html) console.log(`HTML length: ${req.body.html.length}`);
+          if (req.body.envelope) console.log(`Envelope: ${req.body.envelope}`);
+          
+          // Check if this is SendGrid's specific format
+          if (req.body.email) {
+            console.log(`SendGrid raw email field detected, length: ${req.body.email.length}`);
+          }
+          
+          // Check if SPF/DKIM passed
+          if (req.body.dkim) console.log(`DKIM: ${req.body.dkim}`);
+          if (req.body.spf) console.log(`SPF: ${req.body.spf}`);
           
           // Instead of processing immediately, enqueue the webhook payload
           const queueItem: InsertEmailQueue = {
@@ -398,13 +440,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           
           // Add to processing queue
-          await storage.enqueueEmail(queueItem);
-          console.log('✅ Email successfully queued for processing');
+          const saved = await storage.enqueueEmail(queueItem);
+          console.log(`✅ Email successfully queued for processing (Queue ID: ${saved.id})`);
           
           // Return 200 OK immediately to acknowledge receipt
           return res.status(200).send('OK: Email queued for processing');
         } else if (Buffer.isBuffer(req.body)) {
           console.log('Body is a Buffer of length:', req.body.length);
+          console.log('Buffer preview (as UTF-8):', req.body.toString('utf8').substring(0, 200));
           
           // Create a queue item with the buffer data
           const queueItem: InsertEmailQueue = {
@@ -412,12 +455,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "pending"
           };
           
-          await storage.enqueueEmail(queueItem);
-          console.log('✅ Buffer data queued for processing');
+          const saved = await storage.enqueueEmail(queueItem);
+          console.log(`✅ Buffer data queued for processing (Queue ID: ${saved.id})`);
           
           return res.status(200).send('OK: Email data queued for processing');
         } else if (typeof req.body === 'string') {
           console.log(`Body is a string of length: ${req.body.length}`);
+          console.log(`String preview: ${req.body.substring(0, 200)}${req.body.length > 200 ? '...' : ''}`);
+          
+          // Try to parse as JSON first
+          try {
+            const jsonData = JSON.parse(req.body);
+            console.log('Successfully parsed string as JSON');
+            
+            const queueItem: InsertEmailQueue = {
+              payload: jsonData,
+              status: "pending"
+            };
+            
+            const saved = await storage.enqueueEmail(queueItem);
+            console.log(`✅ Parsed JSON data queued for processing (Queue ID: ${saved.id})`);
+            
+            return res.status(200).send('OK: Email data queued for processing');
+          } catch (e) {
+            console.log('Failed to parse as JSON, treating as raw email');
+            
+            // Create a queue item with the raw text
+            const queueItem: InsertEmailQueue = {
+              payload: { text: req.body },
+              status: "pending"
+            };
+            
+            const saved = await storage.enqueueEmail(queueItem);
+            console.log(`✅ Raw text queued for processing (Queue ID: ${saved.id})`);
+            
+            return res.status(200).send('OK: Email data queued for processing');
+          }
           
           // Create a queue item with the string data
           const queueItem: InsertEmailQueue = {
