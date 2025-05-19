@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subject: 'Test Email',
           text: content
         },
-        status: "pending"
+        status: "pending" as const
       };
       
       const saved = await storage.enqueueEmail(queueItem);
@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create a queue item with the object data
             const queueItem: InsertEmailQueue = {
               payload: req.body,
-              status: "pending"
+              status: "pending" as const
             };
             
             const saved = await storage.enqueueEmail(queueItem);
@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 processedAt: new Date().toISOString(),
                 note: 'JSON stringified'
               },
-              status: "pending"
+              status: "pending" as const
             };
             
             const saved = await storage.enqueueEmail(queueItem);
@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create a queue item with the string data
           const queueItem: InsertEmailQueue = {
             payload: { text: req.body },
-            status: "pending"
+            status: "pending" as const
           };
           
           const saved = await storage.enqueueEmail(queueItem);
@@ -159,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               processedAt: new Date().toISOString(),
               note: 'Unrecognized format'
             },
-            status: "pending"
+            status: "pending" as const
           };
           
           const saved = await storage.enqueueEmail(queueItem);
