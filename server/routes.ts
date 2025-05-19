@@ -508,20 +508,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`✅ String data queued for processing (Queue ID: ${saved.id})`);
           
           return res.status(200).send('OK: Email data queued for processing');
-        } else {
-          console.log(`Body is of unexpected type: ${typeof req.body}`);
-          
-          // Still queue whatever we received
-          const queueItem: InsertEmailQueue = {
-            payload: { data: JSON.stringify(req.body) },
-            status: "pending"
-          };
-          
-          const saved = await storage.enqueueEmail(queueItem);
-          console.log(`✅ Fallback data format queued for processing (Queue ID: ${saved.id})`);
-          console.log('✅ Unknown data type queued for analysis');
-          
-          return res.status(200).send('OK: Data queued for processing');
+        }
+        
+        // For any other type of body
+        console.log(`Body is of unexpected type: ${typeof req.body}`);
+        
+        // Still queue whatever we received
+        const queueItem: InsertEmailQueue = {
+          payload: { data: JSON.stringify(req.body) },
+          status: "pending"
+        };
+        
+        const saved = await storage.enqueueEmail(queueItem);
+        console.log(`✅ Fallback data format queued for processing (Queue ID: ${saved.id})`);
+        console.log('✅ Unknown data type queued for analysis');
+        
+        return res.status(200).send('OK: Data queued for processing');
         }
       } else {
         console.log("Request body is empty or undefined");
