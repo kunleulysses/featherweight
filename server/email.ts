@@ -209,29 +209,74 @@ export const emailService = {
 
   // Process an incoming email as a journal entry or conversation
   async processIncomingEmail(from: string, subject: string, content: string, inReplyTo?: string): Promise<void> {
-    console.log('=== INCOMING EMAIL PROCESSING STARTED ===');
-    console.log(`From: ${from}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Content length: ${content.length} characters`);
-    console.log(`Reply-To Message ID: ${inReplyTo || 'Not a reply'}`);
+    console.log('🌟 === INCOMING EMAIL PROCESSING STARTED === 🌟');
+    console.log(`📧 SENDER: ${from}`);
+    console.log(`📝 SUBJECT: ${subject}`);
+    console.log(`📊 CONTENT LENGTH: ${content.length} characters`);
+    console.log(`🔄 REPLY-TO MESSAGE ID: ${inReplyTo || 'Not a reply'}`);
+    
+    // Log the first 200 characters of content for debugging
+    if (content) {
+      console.log(`📄 CONTENT PREVIEW: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`);
+    } else {
+      console.log(`⚠️ WARNING: Email content is empty or undefined`);
+    }
     
     try {
-      console.log('Step 1: Looking up user by email address');
+      console.log('👤 STEP 1: Looking up user by email address');
+      
+      // Validate email format
+      if (!from || !from.includes('@')) {
+        console.error(`❌ Invalid email format: "${from}"`);
+        console.log('⚠️ Cannot process email with invalid sender address');
+        return;
+      }
       
       // Find the user by email
+      console.log(`🔍 Searching for user with email: ${from}`);
       const user = await storage.getUserByEmail(from);
+      
+      // Handle unregistered users
       if (!user) {
-        console.error(`No user found for email: ${from}`);
-        console.log('Sending welcome email to unregistered user');
+        console.log(`❓ No user found for email: ${from}`);
+        console.log('📤 Sending welcome email to unregistered user');
+        
+        // Log SendGrid configuration for troubleshooting
+        console.log(`🔑 SendGrid API key configured: ${process.env.SENDGRID_API_KEY ? 'Yes' : 'No'}`);
+        console.log(`📧 FROM_EMAIL: ${FROM_EMAIL}`);
+        console.log(`👤 FROM_NAME: ${FROM_NAME}`);
+        
+        // Prepare welcome message text
+        const welcomeMessage = `Hello there,
+
+Thank you for reaching out to Flappy, the friendly pelican at Featherweight! It looks like you're not registered with us yet.
+
+Featherweight is a journaling app that helps you capture your thoughts and reflections with the guidance of Flappy, your cosmic pelican guide.
+
+To start your journaling journey, please visit our website to create an account. It only takes a minute!
+
+Warmly,
+Flappy the Pelican
+Featherweight - Your Journaling Companion`;
+
+        console.log('📩 Preparing to send welcome email');
         
         // Send a welcome/invitation email to unregistered users
-        await this.sendEmail(
-          from,
-          "Welcome to Featherweight - Your Personal Journaling Companion",
-          `Hello there,\n\nThank you for reaching out to Flappy, the friendly pelican at Featherweight! It looks like you're not registered with us yet.\n\nFeatherweight is a journaling app that helps you capture your thoughts and reflections with the guidance of Flappy, your cosmic pelican guide.\n\nTo start your journaling journey, please visit our website to create an account. It only takes a minute!\n\nWarmly,\nFlappy the Pelican\nFeatherweight - Your Journaling Companion`,
-          false
-        );
-        console.log('Welcome email sent, exiting process');
+        try {
+          const result = await this.sendEmail(
+            from,
+            "Welcome to Featherweight - Your Personal Journaling Companion",
+            welcomeMessage,
+            false
+          );
+          
+          console.log(`✅ Welcome email sent successfully, message ID: ${result.messageId}`);
+        } catch (error) {
+          console.error(`❌ Failed to send welcome email: ${error.message}`);
+          console.error(error.stack);
+        }
+        
+        console.log('🔚 Welcome email process complete, exiting email processing');
         return;
       }
       

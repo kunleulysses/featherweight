@@ -491,15 +491,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             return res.status(200).send('OK: Email data queued for processing');
           }
+        } else {
+          console.log(`Body type not recognized: ${typeof req.body}`);
           
-          // Create a queue item with the string data
+          // Create a generic queue item with whatever data we have
           const queueItem: InsertEmailQueue = {
-            payload: { text: req.body },
+            payload: { 
+              rawData: req.body,
+              processedAt: new Date().toISOString(),
+              note: 'Unrecognized format'
+            },
             status: "pending"
           };
           
-          await storage.enqueueEmail(queueItem);
-          console.log('✅ String data queued for processing');
+          const saved = await storage.enqueueEmail(queueItem);
+          console.log(`✅ String data queued for processing (Queue ID: ${saved.id})`);
           
           return res.status(200).send('OK: Email data queued for processing');
         } else {
@@ -511,7 +517,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "pending"
           };
           
-          await storage.enqueueEmail(queueItem);
+          const saved = await storage.enqueueEmail(queueItem);
+          console.log(`✅ Fallback data format queued for processing (Queue ID: ${saved.id})`);
           console.log('✅ Unknown data type queued for analysis');
           
           return res.status(200).send('OK: Data queued for processing');
