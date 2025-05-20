@@ -12,6 +12,8 @@ app.use(express.urlencoded({ extended: false }));
 // Serve uploaded files and public directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
+// Serve the public directory for favicon and other static assets
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.use((req, res, next) => {
   const start = Date.now();
