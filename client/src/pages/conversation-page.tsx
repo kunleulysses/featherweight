@@ -86,9 +86,15 @@ export default function ConversationPage() {
   
   // Scroll to the bottom of the chat when new messages arrive
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    // Use setTimeout to ensure the DOM has updated with the new messages
+    setTimeout(() => {
+      if (scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.parentElement?.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }
+    }, 50);
   }, [messages]);
   
   // Reset message constraints when user upgrades to premium
