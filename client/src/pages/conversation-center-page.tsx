@@ -246,7 +246,7 @@ export default function ConversationCenterPage() {
       });
       
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        throw new Error("Failed to send message. Please try again.");
       }
       
       const responseData = await response.json();

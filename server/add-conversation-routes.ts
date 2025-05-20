@@ -9,9 +9,13 @@ import { generateFlappyContent } from "./openai";
 export function addConversationRoutes(app) {
   // Chat with Flappy endpoint
   app.post("/api/conversation", async (req, res) => {
-    // Check if user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
+    // Check if user is authenticated - make sure we send a proper JSON response
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ 
+        message: "Unauthorized", 
+        success: false,
+        error: "Please log in to chat with Flappy"
+      });
     }
     
     try {
