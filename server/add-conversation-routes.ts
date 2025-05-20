@@ -25,11 +25,33 @@ export function addConversationRoutes(app) {
         return res.status(400).json({ message: "Message content is required" });
       }
       
-      // Force chat mode instead of email mode for the conversation center
+      // Get recent conversation history for this user to provide context
+      const userConversations = await db.select()
+        .from(conversations)
+        .where(eq(conversations.userId, req.user.id))
+        .orderBy(conversations.createdAt, 'desc')
+        .limit(5);
+      
+      // Build conversation history context
+      const conversationHistory = userConversations.map(conv => ({
+        userMessage: conv.userMessage,
+        flappyResponse: conv.flappyResponse,
+        timestamp: conv.createdAt
+      }));
+      
+      // Get recent memories to enhance the context
+      const userMemories = await memoryService.getRelevantMemories(req.user.id, message, 3);
+      
+      // Force chat mode with enhanced context for better follow-up questions
       const flappyResponse = await generateFlappyContent(
-        'chatConversation', // <-- This is a new content type we'll implement
+        'chatConversation',
         message,
-        req.user
+        req.user,
+        {
+          conversationHistory,
+          userMemories,
+          shouldGenerateReflectionPrompt: true
+        }
       );
       
       // Return just the response text since the client isn't expecting a full conversation object

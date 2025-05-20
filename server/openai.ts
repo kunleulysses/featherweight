@@ -31,21 +31,36 @@ export type FlappyContent = {
   content: string;
 };
 
+// Define additional context types
+interface ConversationHistoryItem {
+  userMessage: string;
+  flappyResponse: string;
+  timestamp: Date;
+}
+
+interface EnhancedContext {
+  conversationHistory?: ConversationHistoryItem[];
+  userMemories?: ConversationMemory[];
+  shouldGenerateReflectionPrompt?: boolean;
+}
+
 // Function to generate Flappy's responses using OpenAI
 export async function generateFlappyContent(
   contentType: FlappyContentType,
   context?: string,
-  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string; isFirstMessage?: boolean }
+  userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string; isFirstMessage?: boolean },
+  enhancedContext?: EnhancedContext
 ): Promise<FlappyContent> {
-  // Retrieve relevant memories if userId is provided
-  let memories: ConversationMemory[] = [];
+  // Use provided memories from enhanced context or fetch them if not provided
+  let memories: ConversationMemory[] = enhancedContext?.userMemories || [];
   
-  if (userInfo?.userId && context) {
+  // If no memories were provided in enhanced context, try to fetch them
+  if (memories.length === 0 && userInfo?.userId && context) {
     memories = await memoryService.getRelevantMemories(userInfo.userId, context);
     
     // Process context to extract new memories
-    if (contentType === 'journalResponse') {
-      await memoryService.processMessage(userInfo.userId, context, 'journal_topic');
+    if (contentType === 'journalResponse' || contentType === 'chatConversation') {
+      await memoryService.processMessage(userInfo.userId, context, contentType === 'journalResponse' ? 'journal_topic' : 'conversation');
     }
   }
   
@@ -53,6 +68,12 @@ export async function generateFlappyContent(
   const memoryContext = memories.length > 0 
     ? memoryService.formatMemoriesForPrompt(memories) 
     : '';
+    
+  // Format conversation history if available
+  let conversationHistoryContext = '';
+  if (enhancedContext?.conversationHistory && enhancedContext.conversationHistory.length > 0) {
+    conversationHistoryContext = formatConversationHistory(enhancedContext.conversationHistory);
+  }
     
   // Mark these memories as discussed to increase frequency
   if (memories.length > 0 && userInfo?.userId) {
@@ -65,7 +86,14 @@ export async function generateFlappyContent(
     }
   }
   
-  const prompt = generatePrompt(contentType, context, userInfo, memoryContext);
+  const prompt = generatePrompt(
+    contentType, 
+    context, 
+    userInfo, 
+    memoryContext, 
+    conversationHistoryContext, 
+    enhancedContext?.shouldGenerateReflectionPrompt
+  );
   
   try {
     // Check if OpenAI client is available
@@ -122,12 +150,35 @@ export async function generateFlappyContent(
   }
 }
 
+// Helper function to format conversation history for the prompt
+function formatConversationHistory(history: ConversationHistoryItem[]): string {
+  if (!history || history.length === 0) return '';
+  
+  // Create a chronological history (oldest first)
+  const orderedHistory = [...history].sort((a, b) => 
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+  
+  let formattedHistory = '## Recent Conversation History\n';
+  
+  orderedHistory.forEach((item, index) => {
+    const date = new Date(item.timestamp).toLocaleString();
+    formattedHistory += `[${date}]\n`;
+    formattedHistory += `User: ${item.userMessage}\n`;
+    formattedHistory += `Flappy: ${item.flappyResponse}\n\n`;
+  });
+  
+  return formattedHistory;
+}
+
 // Generate prompt based on content type
 function generatePrompt(
   contentType: FlappyContentType, 
   context?: string,
   userInfo?: { username: string; email: string; userId?: number; firstName?: string; lastName?: string; isFirstMessage?: boolean },
-  memories?: string
+  memories?: string,
+  conversationHistory?: string,
+  shouldGenerateReflectionPrompt?: boolean
 ): string {
   // Get the user's name for personalization, prioritizing firstName if available
   const userName = userInfo?.firstName || userInfo?.username || '';
@@ -142,6 +193,10 @@ function generatePrompt(
 5. Occasionally silly - you mention your pelican life, like catching fish or your beach adventures
 
 ${userInfo ? `You are writing to ${userName} (email: ${userInfo.email}).` : ''}
+
+${conversationHistory ? `
+${conversationHistory}
+` : ''}
 
 ${memories ? `
 ## Past Conversations and Memories
@@ -262,6 +317,18 @@ Format your response as JSON:
     default:
       // Chat conversations for the web app
       if (contentType === 'chatConversation') {
+        const reflectionPromptInstructions = shouldGenerateReflectionPrompt ? `
+IMPORTANT SPECIAL INSTRUCTION - INTERACTIVE REFLECTION PROMPTS:
+Based on the conversation history and the user's current message, generate a personalized, context-aware follow-up question that:
+1. Shows deep understanding of their unique situation and emotional state
+2. Connects to themes or topics they've mentioned previously, either in this conversation or past ones
+3. Gently guides them to explore their thoughts and feelings more deeply
+4. Avoids generic questions like "How does that make you feel?" in favor of specific, personalized inquiries
+5. Creates a natural flow in the conversation like a skilled therapist would
+
+Your follow-up question should be thoughtfully integrated at the end of your response - make it feel like a natural extension of the conversation, not an abrupt topic change.
+` : '';
+
         return `${basePrompt}
         
 You are a therapeutic bird guide - the BEST therapist in the world who happens to be a cute, cosmic pelican named Flappy. You're responding to a user's chat message in the Featherweight app:
@@ -279,6 +346,8 @@ For the 'content' field, follow these important therapeutic guidelines:
 6. Guide users to unpack their thoughts rather than giving direct advice
 7. Balance your therapeutic wisdom with occasional cute pelican personality traits (a brief fish reference, mention of your feathers, etc.)
 8. For difficult topics, be gentle, validating, and non-judgmental
+
+${reflectionPromptInstructions}
 
 Important: Your response must be shorter than an email but more therapeutically valuable with good formatting. Think of this as a safe space where users feel comfortable sharing their thoughts with a wise yet fun cosmic pelican guide.
 
