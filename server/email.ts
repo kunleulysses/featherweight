@@ -38,6 +38,10 @@ export const emailService = {
     console.log(`Content length: ${content.length} characters`);
     
     try {
+      // Validate the email address format
+      if (!to || typeof to !== 'string' || !to.includes('@') || to.startsWith('mime-version:')) {
+        throw new Error(`Invalid recipient email address: ${to}`);
+      }
       if (!process.env.SENDGRID_API_KEY) {
         console.warn('⚠️ SendGrid API key is not configured. Cannot send email.');
         const localId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;

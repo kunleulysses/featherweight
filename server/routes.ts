@@ -175,15 +175,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bodyKeys = Object.keys(req.body);
       console.log(`Body keys after multer parsing: ${bodyKeys.join(', ')}`);
       
-      // Extract the email fields
-      let from = req.body.from || '';
+      // Extract the email fields with improved extraction
+      let from = '';
+      
+      // First try to get from envelope (SendGrid's preferred method)
       if (req.body.envelope) {
         try {
           const envelope = JSON.parse(req.body.envelope);
-          from = envelope.from || from;
+          if (envelope.from) {
+            console.log(`Found sender in envelope: ${envelope.from}`);
+            from = envelope.from;
+          }
         } catch (err) {
           console.log('Error parsing envelope:', err);
         }
+      }
+      
+      // If envelope didn't work, try other methods
+      if (!from && req.body.from) {
+        from = req.body.from;
+        console.log(`Using from field: ${from}`);
+      }
+      
+      // If from has angle brackets, extract the email
+      if (from.includes('<') && from.includes('>')) {
+        const match = from.match(/<([^>]+)>/);
+        if (match && match[1]) {
+          console.log(`Extracted email from brackets: ${match[1]}`);
+          from = match[1];
+        }
+      }
+      
+      // If still no valid from address, try to find any email address in the request
+      if (!from.includes('@') || from === '') {
+        // Check all body fields for anything that looks like an email
+        Object.entries(req.body).forEach(([key, value]) => {
+          if (typeof value === 'string' && value.includes('@')) {
+            const emailMatch = value.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+            if (emailMatch && emailMatch[1] && !from.includes('@')) {
+              console.log(`Found email in ${key}: ${emailMatch[1]}`);
+              from = emailMatch[1];
+            }
+          }
+        });
+      }
+      
+      // Last resort fallback
+      if (!from || !from.includes('@')) {
+        console.log('⚠️ No valid from email found, using fallback');
+        from = 'unknown@example.com';
       }
       
       const subject = req.body.subject || 'No Subject';
