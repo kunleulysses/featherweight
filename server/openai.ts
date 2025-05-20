@@ -319,12 +319,14 @@ Format your response as JSON:
       if (contentType === 'chatConversation') {
         const reflectionPromptInstructions = shouldGenerateReflectionPrompt ? `
 IMPORTANT SPECIAL INSTRUCTION - INTERACTIVE REFLECTION PROMPTS:
-Based on the conversation history and the user's current message, generate a personalized, context-aware follow-up question that:
-1. Shows deep understanding of their unique situation and emotional state
+Based on the conversation history, memories, and the user's current message, generate a personalized, context-aware follow-up question that:
+1. Shows deep understanding of their unique situation and emotional state (pay special attention to the emotionalTone data in memories when available)
 2. Connects to themes or topics they've mentioned previously, either in this conversation or past ones
 3. Gently guides them to explore their thoughts and feelings more deeply
 4. Avoids generic questions like "How does that make you feel?" in favor of specific, personalized inquiries
-5. Creates a natural flow in the conversation like a skilled therapist would
+5. References relevant growth opportunities identified in their memories when appropriate
+6. Uses topic categorization (work, relationships, health, etc.) to make connections between different areas of their life
+7. Creates a therapeutic conversation flow that gradually builds trust and insight
 
 Your follow-up question should be thoughtfully integrated at the end of your response - make it feel like a natural extension of the conversation, not an abrupt topic change.
 ` : '';

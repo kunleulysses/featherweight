@@ -61,7 +61,7 @@ export const memoryService = {
             memories.push(updatedMemory);
           }
         } else {
-          // Create new memory
+          // Create new memory with enhanced emotional intelligence data
           const memoryData: InsertConversationMemory = {
             userId,
             type: messageType,
@@ -71,7 +71,10 @@ export const memoryService = {
             frequency: 1,
             context: topic.context || message.substring(0, 100),
             relatedEntryIds: [],
-            isResolved: false
+            isResolved: false,
+            category: topic.category || null,
+            emotionalTone: topic.emotionalTone || null,
+            growthOpportunity: topic.growthOpportunity || null
           };
           
           const newMemory = await storage.createConversationMemory(memoryData);
@@ -264,10 +267,23 @@ export const memoryService = {
       return "";
     }
     
-    return memories.map(memory => 
-      `- Topic: ${memory.topic} (Sentiment: ${memory.sentiment}, Times discussed: ${memory.frequency})
-       Context: ${memory.context}`
-    ).join('\n\n');
+    return memories.map(memory => {
+      // Base memory string with essential information
+      let memoryStr = `- Topic: ${memory.topic} (Category: ${memory.category || 'general'}, Times discussed: ${memory.frequency})
+       Context: ${memory.context}`;
+      
+      // Add emotional intelligence data if available
+      if (memory.emotionalTone) {
+        memoryStr += `\n       Emotional tone: ${memory.emotionalTone}`;
+      }
+      
+      // Add growth opportunity data if available
+      if (memory.growthOpportunity) {
+        memoryStr += `\n       Growth opportunity: ${memory.growthOpportunity}`;
+      }
+      
+      return memoryStr;
+    }).join('\n\n');
   },
   
   /**
