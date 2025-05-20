@@ -86,15 +86,19 @@ export default function ConversationCenterPage() {
   
   // Scroll to the bottom of the chat when new messages arrive
   useEffect(() => {
-    // Use setTimeout to ensure the DOM has updated with the new messages
-    setTimeout(() => {
-      if (scrollAreaRef.current) {
-        const scrollContainer = scrollAreaRef.current.parentElement?.querySelector('[data-radix-scroll-area-viewport]');
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
+    // Force scroll to bottom after a slight delay to ensure all content is rendered
+    const scrollToBottom = () => {
+      const scrollElements = document.querySelectorAll('[data-radix-scroll-area-viewport]');
+      const chatScrollElement = Array.from(scrollElements).find(el => 
+        el.closest('.max-w-3xl') !== null
+      );
+      
+      if (chatScrollElement) {
+        chatScrollElement.scrollTop = chatScrollElement.scrollHeight;
       }
-    }, 50);
+    };
+    
+    setTimeout(scrollToBottom, 100);
   }, [messages]);
   
   // Reset message constraints when user upgrades to premium
