@@ -231,6 +231,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Journal entries API endpoints
+  // Get all journal entries for the current user
+  app.get('/api/journal', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    try {
+      // Extract filter parameters if any
+      const { dateRange, mood, tags } = req.query;
+      
+      const filter: any = {};
+      
+      // Apply filters if provided
+      if (tags && typeof tags === 'string') {
+        filter.tags = tags.split(',');
+      }
+      
+      if (mood && typeof mood === 'string') {
+        filter.mood = mood;
+      }
+      
+      if (dateRange && typeof dateRange === 'string') {
+        // Handle date range filter
+        const today = new Date();
+        
+        switch (dateRange) {
+          case 'today':
+            const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+            filter.createdAfter = startOfToday;
+            break;
+          case 'week':
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - 7);
+            filter.createdAfter = startOfWeek;
+            break;
+          case 'month':
+            const startOfMonth = new Date(today);
+            startOfMonth.setMonth(today.getMonth() - 1);
+            filter.createdAfter = startOfMonth;
+            break;
+          case 'year':
+            const startOfYear = new Date(today);
+            startOfYear.setFullYear(today.getFullYear() - 1);
+            filter.createdAfter = startOfYear;
+            break;
+        }
+      }
+      
+      const entries = await storage.getJournalEntries(req.user.id, filter);
+      res.json(entries);
+    } catch (error) {
+      console.error('Error fetching journal entries:', error);
+      res.status(500).json({ error: 'Failed to fetch journal entries' });
+    }
+  });
+  
+  // Get a single journal entry
+  app.get('/api/journal/:id', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const entryId = parseInt(req.params.id);
+    if (isNaN(entryId)) {
+      return res.status(400).json({ error: 'Invalid journal entry ID' });
+    }
+    
+    try {
+      const entry = await storage.getJournalEntry(entryId);
+      
+      if (!entry) {
+        return res.status(404).json({ error: 'Journal entry not found' });
+      }
+      
+      // Make sure the entry belongs to the current user
+      if (entry.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      res.json(entry);
+    } catch (error) {
+      console.error('Error fetching journal entry:', error);
+      res.status(500).json({ error: 'Failed to fetch journal entry' });
+    }
+  });
+  
+  // Create a new journal entry
+  app.post('/api/journal', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    try {
+      const { title, content, tags, mood, imageUrl } = req.body;
+      
+      // Validate required fields
+      if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+      }
+      
+      const journalEntry = await storage.createJournalEntry({
+        userId: req.user.id,
+        title,
+        content,
+        tags: tags || [],
+        mood: mood || 'neutral',
+        imageUrl: imageUrl || null
+      });
+      
+      res.status(201).json(journalEntry);
+    } catch (error) {
+      console.error('Error creating journal entry:', error);
+      res.status(500).json({ error: 'Failed to create journal entry' });
+    }
+  });
+  
+  // Update a journal entry
+  app.put('/api/journal/:id', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const entryId = parseInt(req.params.id);
+    if (isNaN(entryId)) {
+      return res.status(400).json({ error: 'Invalid journal entry ID' });
+    }
+    
+    try {
+      // First check if the entry exists and belongs to the user
+      const existingEntry = await storage.getJournalEntry(entryId);
+      
+      if (!existingEntry) {
+        return res.status(404).json({ error: 'Journal entry not found' });
+      }
+      
+      if (existingEntry.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Update the entry
+      const { title, content, tags, mood, imageUrl } = req.body;
+      
+      const updatedEntry = await storage.updateJournalEntry(entryId, {
+        title,
+        content,
+        tags,
+        mood,
+        imageUrl
+      });
+      
+      res.json(updatedEntry);
+    } catch (error) {
+      console.error('Error updating journal entry:', error);
+      res.status(500).json({ error: 'Failed to update journal entry' });
+    }
+  });
+  
+  // Delete a journal entry
+  app.delete('/api/journal/:id', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const entryId = parseInt(req.params.id);
+    if (isNaN(entryId)) {
+      return res.status(400).json({ error: 'Invalid journal entry ID' });
+    }
+    
+    try {
+      // First check if the entry exists and belongs to the user
+      const existingEntry = await storage.getJournalEntry(entryId);
+      
+      if (!existingEntry) {
+        return res.status(404).json({ error: 'Journal entry not found' });
+      }
+      
+      if (existingEntry.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+      
+      // Delete the entry
+      const success = await storage.deleteJournalEntry(entryId);
+      
+      if (success) {
+        res.status(204).end();
+      } else {
+        res.status(500).json({ error: 'Failed to delete journal entry' });
+      }
+    } catch (error) {
+      console.error('Error deleting journal entry:', error);
+      res.status(500).json({ error: 'Failed to delete journal entry' });
+    }
+  });
+  
   // Journal image upload endpoint
   app.post('/api/journal/upload', journalImageUpload.single('image'), (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
