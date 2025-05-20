@@ -181,105 +181,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Request received at: ${new Date().toISOString()}`);
     console.log(`Content-Type: ${req.headers['content-type']}`);
     console.log(`Content-Length: ${req.headers['content-length']}`);
-    console.log(`Remote IP: ${req.ip}`);
-    console.log(`Request URL: ${req.originalUrl}`);
-    console.log(`User-Agent: ${req.headers['user-agent']}`);
     
-    // Dump all headers for debugging
-    console.log('WEBHOOK HEADERS:');
-    Object.entries(req.headers).forEach(([key, value]) => {
-      console.log(`  ${key}: ${value}`);
-    });
-    
-    // Dump body structure
-    console.log('WEBHOOK BODY STRUCTURE:');
-    if (req.body) {
-      if (typeof req.body === 'object') {
-        console.log(`Body keys: ${Object.keys(req.body).join(', ')}`);
-        
-        // Log a few important fields if they exist
-        if (req.body.from) console.log(`From field: ${req.body.from}`);
-        if (req.body.sender) console.log(`Sender field: ${req.body.sender}`);
-        if (req.body.envelope) console.log(`Envelope field: ${req.body.envelope}`);
-        if (req.body.subject) console.log(`Subject: ${req.body.subject}`);
-      } else {
-        console.log(`Body type: ${typeof req.body}`);
-        console.log(`Body length: ${req.body.length || 0}`);
-      }
-    } else {
-      console.log('Body is empty or undefined');
-    }
-    
+    // Try to process anything we get - don't be too strict about format
     try {
-      // Log the headers for debugging
-      console.log("=== WEBHOOK HEADERS ===");
-      Object.entries(req.headers).forEach(([key, value]) => {
-        console.log(`${key}: ${value}`);
-      });
+      console.log("Processing webhook data...");
       
-      // Check if we have a body after multer parsed it
-      if (!req.body || Object.keys(req.body).length === 0) {
-        console.log("⚠️ Request body is empty after parsing");
-        return res.status(200).send('Error: Missing body data');
+      // For debugging: log some data about what we received
+      const reqBodyKeys = req.body ? Object.keys(req.body) : [];
+      console.log(`Body has ${reqBodyKeys.length} keys: ${reqBodyKeys.join(', ')}`);
+      
+      // Just process the email directly here for debugging
+      if (req.body && req.body.text) {
+        const from = req.body.from || req.body.sender || 'unknown@example.com';
+        const subject = req.body.subject || 'No Subject';
+        const text = req.body.text;
+        
+        console.log(`⭐ DIRECT PROCESSING: from=${from}, subject=${subject}`);
+        await emailService.processIncomingEmail(from, subject, text);
+        console.log("✅ Email processed directly!");
       }
       
-      // Log the keys available in the parsed body
-      const bodyKeys = Object.keys(req.body);
-      console.log(`Body keys after multer parsing: ${bodyKeys.join(', ')}`);
+      // Always try to queue the raw data as received - to debug issues
+      console.log("Queueing raw webhook data...");
       
-      // Extract the email fields with improved extraction
-      let from = '';
-      
-      // First try to get from envelope (SendGrid's preferred method)
-      if (req.body.envelope) {
-        try {
-          const envelope = JSON.parse(req.body.envelope);
-          if (envelope.from) {
-            console.log(`Found sender in envelope: ${envelope.from}`);
-            from = envelope.from;
-          }
-        } catch (err) {
-          console.log('Error parsing envelope:', err);
-        }
-      }
-      
-      // If envelope didn't work, try other methods
-      if (!from && req.body.from) {
-        from = req.body.from;
-        console.log(`Using from field: ${from}`);
-      }
-      
-      // If from has angle brackets, extract the email
-      if (from.includes('<') && from.includes('>')) {
-        const match = from.match(/<([^>]+)>/);
-        if (match && match[1]) {
-          console.log(`Extracted email from brackets: ${match[1]}`);
-          from = match[1];
-        }
-      }
-      
-      // If still no valid from address, try to find any email address in the request
-      if (!from.includes('@') || from === '') {
-        // Check all body fields for anything that looks like an email
-        Object.entries(req.body).forEach(([key, value]) => {
-          if (typeof value === 'string' && value.includes('@')) {
-            const emailMatch = value.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-            if (emailMatch && emailMatch[1] && !from.includes('@')) {
-              console.log(`Found email in ${key}: ${emailMatch[1]}`);
-              from = emailMatch[1];
-            }
-          }
-        });
-      }
-      
-      // Last resort fallback
-      if (!from || !from.includes('@')) {
-        console.log('⚠️ No valid from email found, using fallback');
-        from = 'unknown@example.com';
-      }
-      
+      // Use any fields we can find
+      const from = req.body.from || req.body.sender || (req.body.envelope ? JSON.parse(req.body.envelope).from : null) || 'unknown@example.com';
       const subject = req.body.subject || 'No Subject';
-      const text = req.body.text || req.body.email || req.body.html || 'No content';
+      const text = req.body.text || req.body.html || req.body.email || req.body.raw || 'No content';
       
       console.log(`From: ${from}`);
       console.log(`Subject: ${subject}`);
@@ -287,13 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a queue item with the structured data for processing
       const queueItem: InsertEmailQueue = {
-        payload: {
-          from,
-          subject,
-          text,
-          headers: req.body.headers || {},
-          receivedAt: new Date().toISOString()
-        },
+        payload: req.body, // Store the entire body for debugging
         status: "pending" as const
       };
         
