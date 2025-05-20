@@ -45,6 +45,9 @@ export const emailService = {
         return { messageId: localId };
       }
       
+      // Generate a unique message ID for threading
+      const messageId = `flappy-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@featherweight.world`;
+      
       console.log('Formatting HTML content');
       const htmlContent = formatEmailHTML(content, isPremium);
       
@@ -80,9 +83,11 @@ export const emailService = {
             html: '<p style="color: #9E9E9E; font-size: 12px;">Featherweight - Your Journaling Companion<br>Reply to this email to continue your conversation with Flappy</p>'
           }
         },
-        // Adding custom headers for threading, but NOT using reserved headers
+        // Adding custom headers for threading
         headers: {
-          "X-Entity-Ref-ID": `flappy-${Date.now()}`
+          "X-Entity-Ref-ID": messageId,
+          "Message-ID": `<${messageId}>`,
+          "X-SG-EID": messageId
         }
       };
       
@@ -92,535 +97,406 @@ export const emailService = {
         const [response] = await sgMail.send(msg);
         console.log('=== EMAIL SENT SUCCESSFULLY ===');
         console.log(`Status code: ${response?.statusCode}`);
-        console.log(`Message ID: ${response?.messageId || 'unknown'}`);
+        console.log(`Message ID: ${response?.headers?.['x-message-id'] || messageId}`);
         console.log(`Headers: ${JSON.stringify(response?.headers || {})}`);
         
-        // Use SendGrid message ID if available, otherwise generate one
-        const messageId = response?.messageId || `sg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-        return { messageId };
-      } catch (sendGridError) {
-        console.error('=== SENDGRID SENDING ERROR ===');
-        console.error(`Error code: ${sendGridError.code || 'N/A'}`);
-        console.error(`Error message: ${sendGridError.message || 'No message'}`);
+        // Use SendGrid message ID if available, otherwise use our generated one
+        const finalMessageId = response?.headers?.['x-message-id'] || messageId;
+        return { messageId: finalMessageId };
+      } catch (sendGridError: any) {
+        console.error('⚠️ SendGrid API error:');
+        console.error(`Status Code: ${sendGridError?.code || 'unknown'}`);
+        console.error(`Response: ${sendGridError?.response?.body ? JSON.stringify(sendGridError.response.body) : 'No response body'}`);
+        console.error(`Message: ${sendGridError?.message || 'No error message'}`);
         
-        if (sendGridError.response) {
-          console.error('SendGrid response error details:');
-          console.error(`Status code: ${sendGridError.response.statusCode || 'N/A'}`);
-          console.error(`Body: ${JSON.stringify(sendGridError.response.body || {})}`);
-          console.error(`Headers: ${JSON.stringify(sendGridError.response.headers || {})}`);
+        // If we have response details, log more information
+        if (sendGridError?.response) {
+          console.error(`Response status: ${sendGridError.response.statusCode}`);
+          console.error(`Response headers: ${JSON.stringify(sendGridError.response.headers || {})}`);
         }
         
-        throw sendGridError;
+        throw new Error(`SendGrid API error: ${sendGridError?.message || 'Unknown error'}`);
       }
-    } catch (error) {
-      console.error("=== GENERAL EMAIL SENDING ERROR ===");
-      console.error("Error type:", error.constructor.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-      if (error.response?.body?.errors) {
-        console.error("SendGrid error details:", JSON.stringify(error.response?.body?.errors));
-      }
-      throw new Error(`Failed to send email: ${error.message}`);
+    } catch (error: any) {
+      console.error('⚠️ General email sending error:');
+      console.error(`Type: ${error?.constructor?.name || 'Unknown error type'}`);
+      console.error(`Message: ${error?.message || 'No error message'}`);
+      console.error(`Stack: ${error?.stack || 'No stack trace'}`);
+      console.error(`Details: ${JSON.stringify(error || {})}`);
+      
+      throw new Error(`Failed to send email: ${error?.message || 'Unknown error'}`);
     }
   },
-
-  // Send a Flappy email and store it in the database
+  
+  // Send Flappy-generated content to a user
   async sendFlappyEmail(user: User, contentType: FlappyContentType, context?: string): Promise<Email> {
+    // Generate a subject line based on content type
+    let subject = 'A Message from Flappy';
+    
+    switch (contentType) {
+      case 'daily_inspiration':
+        subject = "Today's Inspiration from Flappy";
+        break;
+      case 'journal_acknowledgment':
+        subject = "Your Journal Entry Has Been Received";
+        break;
+      case 'weekly_insight':
+        subject = "Your Weekly Reflection Insights";
+        break;
+      case 'email_conversation':
+        subject = "Flappy's Response";
+        break;
+      case 'journal_response':
+        subject = "Flappy's Thoughts on Your Journal";
+        break;
+      case 'conversation_reply':
+        subject = "Flappy's Reply";
+        break;
+    }
+    
+    // Create personalized greeting
+    const userName = user.username || 'Friend';
+    const greeting = `Hello ${userName}!`;
+    
+    // Generate content from Flappy
+    const flappyContent = await generateFlappyContent(contentType, greeting, context);
+    
+    // Add a friendly signature
+    const signature = "\n\nFeathery thoughts,\nFlappy 🦢";
+    const fullContent = `${flappyContent}\n${signature}`;
+    
+    // Create an email record first in pending state
+    const emailData: InsertEmail = {
+      userId: user.id,
+      to: user.email,
+      from: FROM_EMAIL,
+      subject,
+      content: fullContent,
+      sentAt: new Date(),
+      isRead: false,
+      direction: 'outbound',
+      messageId: '', // Will be filled in after sending
+      mood: detectMood(flappyContent),
+      tags: extractTags(flappyContent),
+      isJournalEntry: false
+    };
+    
     try {
-      // Generate content using OpenAI (or use fallback content if there's an error)
-      let subject, content, messageId;
-      
-      try {
-        // Try to generate content using OpenAI
-        const flappyContent = await generateFlappyContent(contentType, context, {
-          username: user.username,
-          email: user.email,
-          userId: user.id,
-          firstName: user.firstName || undefined, 
-          lastName: user.lastName || undefined
-        });
-        
-        subject = flappyContent.subject;
-        content = flappyContent.content;
-        
-        // Try to send the email
-        try {
-          const result = await this.sendEmail(user.email, subject, content, user.isPremium);
-          messageId = result.messageId;
-        } catch (emailError) {
-          console.warn("Could not send email, continuing with database storage only:", emailError);
-          messageId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-        }
-      } catch (aiError) {
-        console.warn("Failed to generate content with OpenAI, using fallback content:", aiError);
-        
-        // Fallback content based on content type
-        if (contentType === "dailyInspiration") {
-          subject = "Your Daily Inspiration from Flappy";
-          content = `Hello ${user.firstName || user.username}! 
-          
-          Today is a good day to write in your journal. How are you feeling today?
-          
-          Flappy is always here for you, even when AI services are taking a break!
-          
-          Warmly,
-          Flappy 🐦`;
-        } else if (contentType === "journalResponse") {
-          subject = "Flappy received your journal entry";
-          content = `Thank you for your journal entry, ${user.firstName || user.username}!
-          
-          I've recorded your thoughts and will be here whenever you want to reflect on them.
-          
-          Keep up the great journaling!
-          
-          Warmly,
-          Flappy 🐦`;
-        } else {
-          subject = "Weekly Insights from Flappy";
-          content = `Hello ${user.firstName || user.username}!
-          
-          It's time for your weekly reflection. How has your week been? What are you grateful for?
-          
-          I'm here to help you reflect on your journey.
-          
-          Warmly,
-          Flappy 🐦`;
-        }
-        
-        // Create a local message ID since we're not actually sending an email
-        messageId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-      }
-      
-      // Store the email in the database (always do this even if sending fails)
-      const emailData: InsertEmail = {
-        userId: user.id,
+      // Send the email
+      const { messageId } = await this.sendEmail(
+        user.email,
         subject,
-        content,
-        type: contentType,
-        messageId,
-      };
+        fullContent,
+        user.isPremium // Premium users don't get ads
+      );
       
-      return await storage.createEmail(emailData);
+      // Update the message ID
+      emailData.messageId = messageId;
+      
+      // Save to database
+      const email = await storage.createEmail(emailData);
+      console.log(`Email ${email.id} saved to database`);
+      
+      return email;
     } catch (error) {
-      console.error("Critical error in sendFlappyEmail:", error);
-      throw new Error("Failed to send Flappy email");
+      console.error('Failed to send Flappy email:', error);
+      throw error;
     }
   },
-
-  // Process an incoming email as a journal entry or conversation
+  
+  // Process an incoming email (reply or new)
   async processIncomingEmail(from: string, subject: string, content: string, inReplyTo?: string): Promise<void> {
     console.log('🌟 === INCOMING EMAIL PROCESSING STARTED === 🌟');
     console.log(`📧 SENDER: ${from}`);
     console.log(`📝 SUBJECT: ${subject}`);
     console.log(`📊 CONTENT LENGTH: ${content.length} characters`);
     console.log(`🔄 REPLY-TO MESSAGE ID: ${inReplyTo || 'Not a reply'}`);
+    console.log(`📄 CONTENT PREVIEW: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
     
-    // Log the first 200 characters of content for debugging
-    if (content) {
-      console.log(`📄 CONTENT PREVIEW: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`);
-    } else {
-      console.log(`⚠️ WARNING: Email content is empty or undefined`);
-    }
+    // Clean up content (remove signatures, quoting, etc.)
+    const cleanContent = cleanEmailContent(content);
+    
+    // Check if this is a reply to a previous email
+    const isReply = !!inReplyTo || subject.toLowerCase().startsWith('re:');
     
     try {
+      // Step 1: Find the user by email address
       console.log('👤 STEP 1: Looking up user by email address');
-      
-      // Validate email format
-      if (!from || !from.includes('@')) {
-        console.error(`❌ Invalid email format: "${from}"`);
-        console.log('⚠️ Cannot process email with invalid sender address');
-        return;
-      }
-      
-      // Find the user by email
       console.log(`🔍 Searching for user with email: ${from}`);
       const user = await storage.getUserByEmail(from);
       
-      // Handle unregistered users
       if (!user) {
         console.log(`❓ No user found for email: ${from}`);
+        
+        // Send a welcome message to this email address
         console.log('📤 Sending welcome email to unregistered user');
         
-        // Log SendGrid configuration for troubleshooting
-        console.log(`🔑 SendGrid API key configured: ${process.env.SENDGRID_API_KEY ? 'Yes' : 'No'}`);
-        console.log(`📧 FROM_EMAIL: ${FROM_EMAIL}`);
-        console.log(`👤 FROM_NAME: ${FROM_NAME}`);
-        
-        // Prepare welcome message text
-        const welcomeMessage = `Hello there,
-
-Thank you for reaching out to Flappy, the friendly pelican at Featherweight! It looks like you're not registered with us yet.
-
-Featherweight is a journaling app that helps you capture your thoughts and reflections with the guidance of Flappy, your cosmic pelican guide.
-
-To start your journaling journey, please visit our website to create an account. It only takes a minute!
-
-Warmly,
-Flappy the Pelican
-Featherweight - Your Journaling Companion`;
-
-        console.log('📩 Preparing to send welcome email');
-        
-        // Send a welcome/invitation email to unregistered users
         try {
-          const result = await this.sendEmail(
+          const welcomeMessage = `
+Hello from Featherweight!
+
+It looks like you've discovered Flappy, your personal journaling companion. 
+I'm a friendly pelican AI who can help you maintain a journal through email.
+
+To get started, simply reply to this email with your thoughts, feelings, or experiences,
+and I'll help you save them as journal entries. You can also ask me questions or just chat!
+
+Looking forward to our conversations,
+
+Flappy 🦢
+`;
+          
+          await this.sendEmail(
             from,
-            "Welcome to Featherweight - Your Personal Journaling Companion",
+            'Welcome to Featherweight - Your Personal Journaling Companion',
             welcomeMessage,
             false
           );
           
-          console.log(`✅ Welcome email sent successfully, message ID: ${result.messageId}`);
-        } catch (error) {
-          console.error(`❌ Failed to send welcome email: ${error.message}`);
-          console.error(error.stack);
+          console.log(`✅ Welcome email sent successfully to ${from}`);
+        } catch (emailError) {
+          console.error(`Failed to send welcome email to ${from}:`, emailError);
         }
         
-        console.log('🔚 Welcome email process complete, exiting email processing');
         return;
       }
       
-      console.log(`Step 2: Found user - ID: ${user.id}, Email: ${user.email}, Username: ${user.username}`);
-      console.log(`User premium status: ${user.isPremium ? 'Premium' : 'Free'}`);
+      console.log(`Found user: ID=${user.id}, Username=${user.username}, Premium=${user.isPremium}`);
       
-      console.log('Step 3: Cleaning email content (removing signatures, quoted replies, etc.)');
-      // Clean the content (remove email signatures, quoted replies, etc.)
-      const cleanedContent = cleanEmailContent(content);
-      console.log(`Original content length: ${content.length}, Cleaned content length: ${cleanedContent.length}`);
+      // Check if it looks like a journal entry (when not a reply, and a certain length)
+      const shouldBeJournal = !isReply && await this.shouldSaveAsJournal(cleanContent);
       
-      // Check if this is a reply to a previous email from Flappy
-      let isReply = !!inReplyTo || (subject && subject.toLowerCase().startsWith('re:'));
-      
-      console.log(`Step 4: Determining email type - ${isReply ? 'Reply to previous email' : 'New conversation'}`);
-      
-      console.log('Step 5: Analyzing content to determine if it should be a journal entry');
-      // Determine if the user wants to save this as a journal entry
-      const shouldSaveAsJournal = await this.shouldSaveAsJournal(cleanedContent);
-      
-      console.log(`Content analysis result: ${shouldSaveAsJournal ? 'Save as journal entry' : 'Process as conversation'}`);
-      
-      if (shouldSaveAsJournal) {
-        // This should be saved as a journal entry
-        // Extract title from the first line or use a default
-        const lines = cleanedContent.trim().split('\n');
-        const title = lines[0].length > 5 ? lines[0].substring(0, 50) : "Journal Entry";
-        const journalContent = lines.length > 1 ? cleanedContent : cleanedContent;
+      if (shouldBeJournal) {
+        console.log('📓 Treating email as a journal entry');
         
-        // Try to find the original email if this is a reply
-        let emailId: string | undefined;
-        if (inReplyTo) {
-          const emails = await storage.getEmails(user.id);
-          const originalEmail = emails.find(email => email.messageId === inReplyTo);
-          if (originalEmail) {
-            emailId = originalEmail.messageId;
-          }
-        }
+        // Extract mood and tags from content
+        const mood = detectMood(cleanContent);
+        const tags = extractTags(cleanContent);
         
-        console.log(`Creating journal entry for user ${user.id}`);
+        console.log(`🔍 Detected mood: ${mood}`);
+        console.log(`🔍 Extracted tags: ${tags.join(', ')}`);
         
-        // Create the journal entry
-        const journalEntry = await storage.createJournalEntry({
+        // Create journal entry
+        const entry = await storage.createJournalEntry({
           userId: user.id,
-          title,
-          content: journalContent,
-          mood: detectMood(cleanedContent),
-          tags: extractTags(cleanedContent),
-          emailId,
-          source: 'email'
+          title: subject || "Journal Entry",
+          content: cleanContent,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          mood,
+          tags,
+          imageUrl: null,
+          isPrivate: false
         });
         
-        // Process journal content for memories
-        await memoryService.processMessage(user.id, journalContent, 'journal_topic');
+        console.log(`✅ Journal entry created with ID: ${entry.id}`);
         
-        console.log(`Sending journal confirmation to ${user.email}`);
+        // Process the content for memories
+        await memoryService.processMessage(user.id, cleanContent, 'journal_topic');
         
-        // Send a journal confirmation email directly rather than using sendFlappyEmail
-        // This ensures an immediate response rather than going through the full process
-        const confirmationSubject = `📝 Journal Entry Saved - ${new Date().toLocaleDateString()}`;
-        const confirmationContent = `Hi ${user.firstName || user.username},
-
-Thank you for your journal entry! I've saved it to your Featherweight journal.
-
-**Entry Summary:**
-- Date: ${new Date().toLocaleDateString()}
-- Mood: ${detectMood(cleanedContent)}
-- Tags: ${extractTags(cleanedContent).join(', ') || 'None detected'}
-
-You can view this and all your journal entries anytime on your Featherweight dashboard.
-
-Is there anything specific you'd like to reflect on next? Feel free to reply to this email to continue our conversation.
-
-Warmly,
-Flappy 🐦`;
-
-        // Send the confirmation directly
-        const messageId = await this.sendEmail(
-          user.email,
-          confirmationSubject,
-          confirmationContent,
-          user.isPremium
-        );
+        // Send acknowledgment email
+        await this.sendFlappyEmail(user, 'journal_acknowledgment' as any, cleanContent);
+        console.log('✅ Journal acknowledgment email sent');
         
-        // Store the response in the database
+        // Create a record of the incoming email
         await storage.createEmail({
           userId: user.id,
-          subject: confirmationSubject,
-          content: confirmationContent,
-          type: 'journalResponse',
-          messageId: messageId.messageId,
-          isRead: false
+          to: REPLY_TO_EMAIL,
+          from: user.email,
+          subject,
+          content: cleanContent,
+          sentAt: new Date(),
+          isRead: true,
+          direction: 'inbound',
+          isJournalEntry: true,
+          journalEntryId: entry.id,
+          messageId: inReplyTo || `incoming-${Date.now()}`,
+          mood,
+          tags,
         });
         
-        console.log(`Created journal entry ${journalEntry.id} from email for user ${user.id}`);
+        console.log('✅ Email record saved in database');
       } else {
-        // This is a regular conversation with Flappy
-        try {
-          console.log(`Generating conversation response for ${user.email}`);
-          
-          // Generate Flappy's response using OpenAI
-          const flappyResponse = await generateFlappyContent("emailConversation", cleanedContent, {
-            username: user.username,
-            email: user.email,
-            userId: user.id,
-            firstName: user.firstName || undefined,
-            lastName: user.lastName || undefined
+        console.log('💬 Treating email as a conversation message');
+        
+        // Generate a conversation ID for threading if this is a new conversation
+        let conversationId = '';
+        if (isReply && inReplyTo) {
+          // Try to find previous email by message ID to maintain conversation thread
+          const previousThreadEmails = await storage.getEmails(user.id, {
+            messageId: inReplyTo
           });
           
-          // Keep track of message count for free users
-          let messageCount = 1;
-          if (!user.isPremium) {
-            // Look through previous emails to count this conversation
-            const emails = await storage.getEmails(user.id, {
-              dateRange: "7days"
-            });
-            
-            // Count messages in this conversation (those with the same subject or thread)
-            const conversationEmails = emails.filter(email => 
-              email.subject.toLowerCase().includes(subject.toLowerCase()) ||
-              (inReplyTo && email.messageId === inReplyTo)
-            );
-            
-            messageCount = conversationEmails.length + 1;
-            console.log(`Free user message count: ${messageCount} of 3 allowed`);
+          if (previousThreadEmails && previousThreadEmails.length > 0) {
+            // Use the conversation ID from the previous email
+            conversationId = previousThreadEmails[0].conversationId || '';
           }
-          
-          // Check if the free user has reached their message limit
-          const reachedFreeLimit = !user.isPremium && messageCount > 3;
-          
-          // Customize the response if they've reached the limit
-          let responseContent = flappyResponse.content;
-          let responseSubject = `Re: ${subject}`;
-          
-          if (reachedFreeLimit) {
-            console.log(`User ${user.id} has reached free message limit`);
-            responseContent += `\n\n---\n\nYou've reached the free message limit (3) for this conversation. To continue chatting with me and get unlimited responses, please upgrade to Premium.\n\nWith Premium, you'll also get SMS journaling, ad-free emails, and more personalized insights.`;
-          }
-          
-          console.log(`Sending email response to ${user.email}`);
-          
-          // Send Flappy's response
-          const messageId = await this.sendEmail(user.email, responseSubject, responseContent, user.isPremium);
-          
-          // Store the email in the database
-          await storage.createEmail({
-            userId: user.id,
-            subject: responseSubject,
-            content: responseContent,
-            type: 'emailConversation',
-            messageId: messageId.messageId,
-            isRead: false
-          });
-          
-          console.log(`Successfully sent conversation response to ${user.email} (Premium: ${user.isPremium})`);
-        } catch (error) {
-          console.error("Error generating conversation response:", error);
-          
-          // Send a fallback response if something went wrong
-          const fallbackSubject = `Re: ${subject}`;
-          const fallbackContent = `Hi ${user.firstName || user.username},
-
-Thank you for your message! I'm having a moment of reflection and will get back to you soon.
-
-In the meantime, feel free to continue journaling or send me another message.
-
-Warmly,
-Flappy`;
-
-          console.log(`Sending fallback response to ${user.email} due to error`);
-          
-          const messageId = await this.sendEmail(
-            user.email, 
-            fallbackSubject, 
-            fallbackContent, 
-            user.isPremium
-          );
-          
-          // Store the fallback response
-          await storage.createEmail({
-            userId: user.id,
-            subject: fallbackSubject,
-            content: fallbackContent,
-            type: 'emailConversation',
-            messageId: messageId.messageId,
-            isRead: false
-          });
         }
+        
+        // If no conversation ID from previous email, generate a new one
+        if (!conversationId) {
+          conversationId = memoryService.generateConversationId();
+        }
+        
+        console.log(`🔄 Using conversation ID: ${conversationId}`);
+        
+        // Save the incoming email first
+        const incomingEmail = await storage.createEmail({
+          userId: user.id,
+          to: REPLY_TO_EMAIL,
+          from: user.email,
+          subject,
+          content: cleanContent,
+          sentAt: new Date(),
+          isRead: true,
+          direction: 'inbound',
+          isJournalEntry: false,
+          messageId: inReplyTo || `incoming-${Date.now()}`,
+          conversationId,
+          mood: detectMood(cleanContent),
+          tags: extractTags(cleanContent)
+        });
+        
+        console.log(`✅ Incoming email saved with ID: ${incomingEmail.id}`);
+        
+        // Process the content for memories
+        await memoryService.processMessage(user.id, cleanContent, 'email');
+        
+        // Get relevant memories to include in the response
+        const relevantMemories = await memoryService.getRelevantMemories(user.id, cleanContent);
+        const memoryContext = memoryService.formatMemoriesForPrompt(relevantMemories);
+        
+        console.log(`🧠 Found ${relevantMemories.length} relevant memories to include in response`);
+        
+        // Send response email
+        await this.sendFlappyEmail(user, 'email_conversation' as any, `${cleanContent}\n\n${memoryContext}`);
+        console.log('✅ Response email sent');
       }
     } catch (error) {
-      console.error("Error processing incoming email:", error);
+      console.error('❌ Error processing incoming email:', error);
+      console.error('❌ Error details:', error instanceof Error ? error.stack : 'No stack trace');
     }
   },
   
-  // Determine if an email should be saved as a journal entry
+  // Determine if content should be saved as a journal entry
   async shouldSaveAsJournal(content: string): Promise<boolean> {
+    // If very short, probably not a journal entry
+    if (content.length < 50) {
+      return false;
+    }
+    
+    // Try to detect if this is journaling content
     try {
-      // Try using OpenAI to detect intent
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-        messages: [
-          {
-            role: "system",
-            content: "You are an analyzer for Featherweight, a journaling app. Determine if this email indicates the user wants to save content as a journal entry. Look for phrases like 'save this', 'add to my journal', 'put this in my journal', etc. Respond with only 'true' or 'false'."
-          },
-          {
-            role: "user",
-            content
-          }
-        ],
-      });
+      const journalIndicators = [
+        "today i", "dear diary", "journal entry", "reflecting on",
+        "my day", "my thoughts", "i'm feeling", "i am feeling",
+        "i feel", "happened today", "grateful for", "i learned",
+        "my experience", "i realized", "i've been", "i have been",
+        "looking back"
+      ];
       
-      const result = response.choices[0].message.content.toLowerCase().trim();
-      return result === 'true';
+      // Check if content contains any journal indicators
+      const contentLower = content.toLowerCase();
+      const hasJournalIndicator = journalIndicators.some(indicator => 
+        contentLower.includes(indicator)
+      );
+      
+      if (hasJournalIndicator) {
+        return true;
+      }
+      
+      // If length is substantial and has multiple paragraphs, likely a journal
+      if (content.length > 300 && content.split(/\r?\n\r?\n/).length > 1) {
+        return true;
+      }
+      
+      // Default to not treating as journal if uncertain
+      return false;
     } catch (error) {
-      console.error("Error analyzing journal intent:", error);
-      
-      // Fallback analysis if OpenAI fails
-      const lowerContent = content.toLowerCase();
-      return lowerContent.includes('save this') || 
-             lowerContent.includes('journal entry') ||
-             lowerContent.includes('add to my journal') ||
-             lowerContent.includes('put this in my journal') ||
-             lowerContent.includes('save as journal') ||
-             lowerContent.includes('record this');
+      console.error('Error determining if content is a journal entry:', error);
+      // In case of error, default to treating as conversation
+      return false;
     }
   },
   
-  // Send daily inspirational emails to all users
+  // Send daily inspiration emails to all eligible users
   async sendDailyInspiration(): Promise<{ success: boolean; count: number }> {
     try {
-      console.log("=== STARTING DAILY INSPIRATION EMAIL DELIVERY ===");
-      console.log(`Current server time: ${new Date().toISOString()}`);
+      const users = await this.getAllActiveUsers();
+      console.log(`Found ${users.length} active users eligible for daily inspiration`);
       
-      // Get current hour in 24hr format (e.g., "11:00")
-      const now = new Date();
-      const currentHour = `${now.getHours().toString().padStart(2, '0')}:00`;
-      console.log(`Current hour for scheduling: ${currentHour}`);
+      let successCount = 0;
       
-      // Get all active users from the database
-      const allUsers = await this.getAllActiveUsers();
-      
-      if (!allUsers.length) {
-        console.log("No active users found for daily inspiration");
-        return { success: true, count: 0 };
-      }
-      
-      console.log(`Found ${allUsers.length} total active users`);
-      let sentCount = 0;
-      let skippedCount = 0;
-      
-      for (const user of allUsers) {
+      for (const user of users) {
         try {
-          // Check if user has disabled daily emails
-          if (user.preferences?.disableDailyEmails) {
-            console.log(`Skipping user ${user.id}: daily emails disabled in preferences`);
-            skippedCount++;
-            continue;
-          }
-          
-          // Check email frequency preference
-          const frequency = user.preferences?.emailFrequency || "daily";
-          const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-          
-          // Skip based on frequency preferences
-          if ((frequency === "weekdays" && isWeekend) || 
-              (frequency === "weekends" && !isWeekend) ||
-              (frequency === "weekly" && dayOfWeek !== 1)) { // Send weekly emails on Mondays
-            console.log(`Skipping user ${user.id}: frequency ${frequency} doesn't match current day`);
-            skippedCount++;
-            continue;
-          }
-          
-          // Check delivery time preference (default to 11:00 AM if not set)
-          const preferredTime = user.preferences?.emailDeliveryTime || "11:00";
-          
-          // Only send if current hour matches preferred hour
-          if (preferredTime.substring(0, 2) + ":00" !== currentHour) {
-            console.log(`Skipping user ${user.id}: preferred time ${preferredTime} doesn't match current hour ${currentHour}`);
-            skippedCount++;
-            continue;
-          }
-          
-          console.log(`Sending daily inspiration to user ${user.id} (${user.email})`);
-          // Send daily inspiration email
-          await this.sendFlappyEmail(user, "dailyInspiration");
-          sentCount++;
-          console.log(`Successfully sent daily inspiration to user ${user.id}`);
+          await this.sendFlappyEmail(user, 'daily_inspiration' as any);
+          successCount++;
+          console.log(`Daily inspiration sent to ${user.email}`);
         } catch (error) {
-          console.error(`Failed to send daily inspiration to user ${user.id}:`, error);
+          console.error(`Failed to send daily inspiration to ${user.email}:`, error);
         }
       }
       
-      console.log(`=== DAILY INSPIRATION SUMMARY ===`);
-      console.log(`Total users: ${allUsers.length}`);
-      console.log(`Successfully sent: ${sentCount}`);
-      console.log(`Skipped: ${skippedCount}`);
-      console.log(`Failed: ${allUsers.length - sentCount - skippedCount}`);
-      
-      return { success: true, count: sentCount };
+      return { 
+        success: true, 
+        count: successCount 
+      };
     } catch (error) {
-      console.error("Error sending daily inspiration:", error);
-      return { success: false, count: 0 };
+      console.error('Failed to send daily inspiration emails:', error);
+      return { 
+        success: false, 
+        count: 0 
+      };
     }
   },
   
-  // Send weekly insights based on user's journal entries
+  // Send weekly insights based on journal entries
   async sendWeeklyInsights(): Promise<{ success: boolean; count: number }> {
     try {
-      // Get all active users from the database
-      const allUsers = await this.getAllActiveUsers();
-      let sentCount = 0;
+      const users = await this.getAllActiveUsers();
+      console.log(`Found ${users.length} active users eligible for weekly insights`);
       
-      for (const user of allUsers) {
-        // Skip users who don't want insights
-        if (user.preferences?.receiveInsights === false) {
-          continue;
+      let successCount = 0;
+      
+      for (const user of users) {
+        try {
+          // Get journal entries from the past week
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          
+          const recentEntries = await storage.getJournalEntries(user.id, {
+            createdAfter: oneWeekAgo
+          });
+          
+          if (recentEntries.length === 0) {
+            console.log(`User ${user.email} has no journal entries in the past week, skipping`);
+            continue;
+          }
+          
+          // Build context for the weekly insights
+          const entriesContext = recentEntries.map(entry => {
+            return `Date: ${entry.createdAt.toLocaleDateString()}\nMood: ${entry.mood || 'unspecified'}\nContent: ${entry.content.substring(0, 200)}${entry.content.length > 200 ? '...' : ''}`;
+          }).join('\n\n');
+          
+          // Send weekly insights email with the journal entries as context
+          await this.sendFlappyEmail(user, 'weekly_insight' as any, entriesContext);
+          successCount++;
+          console.log(`Weekly insights sent to ${user.email} based on ${recentEntries.length} entries`);
+        } catch (error) {
+          console.error(`Failed to send weekly insights to ${user.email}:`, error);
         }
-        
-        // Get the user's journal entries from the past week
-        const recentEntries = await storage.getJournalEntries(user.id, {
-          dateRange: "7days"
-        });
-        
-        // Skip if there aren't enough entries to analyze
-        if (recentEntries.length < 2) {
-          continue;
-        }
-        
-        // Prepare context for OpenAI
-        const context = recentEntries
-          .map(entry => `Entry (${new Date(entry.createdAt).toLocaleDateString()}): ${entry.content.substring(0, 200)}${entry.content.length > 200 ? '...' : ''}`)
-          .join('\n\n');
-        
-        await this.sendFlappyEmail(user, "weeklyInsight", context);
-        sentCount++;
       }
       
-      console.log(`Sent weekly insights to ${sentCount} users`);
-      return { success: true, count: sentCount };
+      return { 
+        success: true, 
+        count: successCount 
+      };
     } catch (error) {
-      console.error("Error sending weekly insights:", error);
-      return { success: false, count: 0 };
+      console.error('Failed to send weekly insights emails:', error);
+      return { 
+        success: false, 
+        count: 0 
+      };
     }
   },
   
@@ -629,471 +505,234 @@ Flappy`;
    * Gets users from the database and filters them based on activity status
    */
   async getAllActiveUsers(): Promise<User[]> {
-    try {
-      // Get all users from the database
-      const allUsers = await storage.getAllUsers();
-      
-      // Filter out inactive users
-      return allUsers.filter(user => {
-        // We don't have a deactivated flag in our schema yet, so we consider all users active
-        // In the future, we could add more sophisticated filtering here
-        return true;
-      });
-    } catch (error) {
-      console.error("Error getting active users:", error);
-      return [];
-    }
+    const allUsers = await storage.getAllUsers();
+    
+    // Filter to users who have opted in to emails (or have no preference set)
+    const activeUsers = allUsers.filter(user => {
+      const preferences = user.preferences || {};
+      // Include if no email preference is set or if emailFrequency is not 'none'
+      return !preferences.emailFrequency || preferences.emailFrequency !== 'none';
+    });
+    
+    console.log(`Found ${activeUsers.length} active users out of ${allUsers.length} total users`);
+    return activeUsers;
   }
 };
 
-// Helper function to format email as HTML
+/**
+ * Format email content as HTML with branding
+ */
 function formatEmailHTML(content: string, isPremium: boolean = false): string {
-  const paragraphs = content.split('\n\n').filter(p => p.trim() !== '');
+  // Replace newlines with <br> tags
+  const htmlContent = content.replace(/\n/g, '<br>');
   
-  const htmlParagraphs = paragraphs.map(p => {
-    // Bold text between ** **
-    let formattedP = p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Italic text between * *
-    formattedP = formattedP.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Convert line breaks within paragraphs
-    formattedP = formattedP.replace(/\n/g, '<br>');
-    
-    // Increased font size for better readability
-    return `<p style="margin-bottom: 22px; line-height: 1.8; font-size: 18px; color: #333;">${formattedP}</p>`;
-  });
-  
-  // Use the Flappy pelican avatar for the emails
-  // This provides a consistent character image across all communications
-  const flappyAvatarUrl = "https://featherweight.world/images/flappy-avatar.png";
-  
+  // Apply light styling with calm colors
   return `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message from Flappy</title>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap');
-      
-      body {
-        font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
-        color: #37474F;
-        line-height: 1.6;
-        background-color: #F5F7FA;
-        margin: 0;
-        padding: 0;
-        font-size: 16px;
-      }
-      .container {
-        max-width: 650px;
-        margin: 0 auto;
-        padding: 38px;
-        background-color: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 8px 24px rgba(93, 124, 250, 0.18);
-        border-top: 8px solid #5D7CFA;
-        background-image: linear-gradient(to bottom, rgba(93, 124, 250, 0.03) 0%, rgba(255, 255, 255, 1) 140px);
-        position: relative;
-        overflow: hidden;
-      }
-      .container::before {
-        content: '';
-        position: absolute;
-        top: -10px;
-        right: -10px;
-        width: 200px;
-        height: 200px;
-        background: radial-gradient(circle, rgba(93, 124, 250, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
-        border-radius: 50%;
-        z-index: 0;
-      }
-      .header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 38px;
-        padding-bottom: 30px;
-        border-bottom: 1px solid #E0E0E0;
-        position: relative;
-        z-index: 1;
-      }
-      .header:after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, rgba(93, 124, 250, 0.2), rgba(93, 124, 250, 0.6) 50%, rgba(93, 124, 250, 0.2));
-      }
-      .header::before {
-        content: '';
-        position: absolute;
-        bottom: -30px;
-        left: -20px;
-        width: 80px;
-        height: 80px;
-        background: radial-gradient(circle, rgba(100, 181, 246, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
-        border-radius: 50%;
-        z-index: -1;
-      }
-      .logo {
-        width: 110px;
-        height: 110px;
-        margin-right: 24px;
-        overflow: hidden;
-        background-color: transparent;
-        border-radius: 18px;
-        box-shadow: 0 6px 12px rgba(93, 124, 250, 0.25);
-        padding: 3px;
-        border: 1px solid rgba(93, 124, 250, 0.15);
-        position: relative;
-      }
-      .logo::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
-        pointer-events: none;
-        border-radius: 16px;
-      }
-      .logo img {
-        width: 100%;
-        height: auto;
-        display: block;
-        border-radius: 16px;
-        transition: transform 0.3s ease;
-      }
-      .title {
-        font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
-        font-weight: 700;
-        color: #5D7CFA;
-        margin: 0;
-        font-size: 34px;
-        letter-spacing: -0.5px;
-        text-shadow: 0 1px 1px rgba(93, 124, 250, 0.15);
-        position: relative;
-        z-index: 1;
-      }
-      .title::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: -2px;
-        width: 40px;
-        height: 8px;
-        background: linear-gradient(90deg, rgba(93, 124, 250, 0.15), rgba(93, 124, 250, 0));
-        z-index: -1;
-        border-radius: 4px;
-      }
-      .subtitle {
-        color: #64B5F6;
-        font-size: 19px;
-        margin-top: 8px;
-        font-weight: 500;
-        letter-spacing: 0.4px;
-        position: relative;
-        display: inline-block;
-      }
-      .subtitle::after {
-        content: '';
-        position: absolute;
-        bottom: -4px;
-        left: 0;
-        width: 100%;
-        height: 1px;
-        background: linear-gradient(90deg, rgba(100, 181, 246, 0.3), rgba(100, 181, 246, 0));
-      }
-      .content {
-        padding: 28px 30px;
-        background-color: #FAFCFF;
-        border-radius: 16px;
-        margin-bottom: 30px;
-        box-shadow: inset 0 0 25px rgba(93, 124, 250, 0.04);
-        border: 1px solid rgba(93, 124, 250, 0.1);
-        position: relative;
-        overflow: hidden;
-        z-index: 1;
-      }
-      .content::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 160px;
-        height: 160px;
-        background: radial-gradient(circle, rgba(93, 124, 250, 0.02) 0%, rgba(255, 255, 255, 0) 70%);
-        border-radius: 50%;
-        z-index: -1;
-      }
-      .content::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 120px;
-        height: 120px;
-        background: radial-gradient(circle, rgba(100, 181, 246, 0.02) 0%, rgba(255, 255, 255, 0) 70%);
-        border-radius: 50%;
-        z-index: -1;
-      }
-      .footer {
-        margin-top: 40px;
-        padding-top: 30px;
-        border-top: 1px solid #E0E0E0;
-        font-size: 14px;
-        color: #757575;
-        text-align: center;
-        line-height: 1.6;
-        position: relative;
-      }
-      .footer::after {
-        content: '';
-        position: absolute;
-        top: -1px;
-        left: 30%;
-        right: 30%;
-        height: 1px;
-        background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(93, 124, 250, 0.2), rgba(255, 255, 255, 0));
-      }
-      .reply-button {
-        display: inline-block;
-        background-color: #FFFFFF;
-        color: #5D7CFA;
-        font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
-        font-weight: 600;
-        font-size: 16px;
-        letter-spacing: 0.5px;
-        text-decoration: none;
-        padding: 12px 26px;
-        border-radius: 8px;
-        margin-top: 16px;
-        box-shadow: 0 3px 8px rgba(93, 124, 250, 0.15);
-        transition: all 0.3s ease;
-        border: 1.5px solid #5D7CFA;
-        position: relative;
-      }
-      .reply-button:hover {
-        background-color: #F5F8FF;
-        box-shadow: 0 4px 10px rgba(93, 124, 250, 0.2);
-      }
-      .journal-tip {
-        margin: 25px 0;
-        padding: 16px 20px;
-        background-color: #f5f9ff;
-        border-left: 3px solid #64B5F6;
-        border-radius: 8px;
-        font-size: 15px;
-        box-shadow: 0 2px 8px rgba(93, 124, 250, 0.07);
-        background-image: linear-gradient(to right, rgba(100, 181, 246, 0.05), rgba(255, 255, 255, 0) 80%);
-        position: relative;
-        border: 1px solid rgba(100, 181, 246, 0.1);
-      }
-      .journal-tip:before {
-        content: "💡";
-        position: absolute;
-        right: 15px;
-        top: 10px;
-        font-size: 18px;
-        opacity: 0.4;
-      }
-      .journal-tip h3 {
-        margin-top: 0;
-        margin-bottom: 5px;
-        color: #1565C0;
-        font-size: 17px;
-        font-family: 'Quicksand', 'Helvetica Neue', sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.2px;
-      }
-      .highlight {
-        font-weight: 600;
-        color: #5D7CFA;
-        background-color: #f0f7ff;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 15px;
-        display: inline-block;
-        box-shadow: 0 1px 3px rgba(93, 124, 250, 0.1);
-        border: 1px solid rgba(93, 124, 250, 0.1);
-      }
-      .premium-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 5px 14px;
-        border-radius: 12px;
-        margin-left: 12px;
-        vertical-align: middle;
-        box-shadow: 0 3px 6px rgba(139, 92, 246, 0.35);
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <div class="logo">
-          <img src="${flappyAvatarUrl}" alt="Flappy the Pelican" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%235D7CFA%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><circle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%235D7CFA%22 /><text x=%228%22 y=%2218%22 font-family=%22Arial%22 font-size=%2216%22 fill=%22white%22>F</text></svg>';">
-        </div>
-        <div>
-          <h1 class="title">Flappy ${isPremium ? '<span class="premium-badge">PREMIUM</span>' : ''}</h1>
-          <div class="subtitle">Your Journaling Companion</div>
-        </div>
-      </div>
-      <div class="content">
-        ${htmlParagraphs.join('')}
-        
-        <div class="journal-tip">
-          <h3>💬 Continue Our Conversation</h3>
-          <p>Simply <span class="highlight">reply to this email</span> to continue our conversation. I'm here to chat about anything that's on your mind, offer perspective, or just listen. Our conversations can be as deep or light as you'd like.</p>
-        </div>
-        
-        <div class="journal-tip" style="background-color: #e8f5e9; border-left-color: #66bb6a;">
-          <h3>📝 How to Save as a Journal Entry</h3>
-          <p>Want to save this conversation as a journal entry? Simply reply with the word <span class="highlight">"SAVE"</span> or phrases like <span class="highlight">"save this as a journal entry"</span> or <span class="highlight">"add this to my journal"</span>.</p>
-          <p>Your journal entries will be automatically organized with tags and mood detection to help you track your reflections over time.</p>
-        </div>
-        
-        ${!isPremium ? `
-        <div style="margin: 30px 0; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0; text-align: center;">
-          <p style="margin-bottom: 10px; font-size: 14px; color: #757575;">Advertisement</p>
-          <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px;">
-            <p style="font-weight: bold; margin-bottom: 10px; color: #3b82f6;">Upgrade to Premium</p>
-            <p style="margin-bottom: 15px; font-size: 14px;">Remove ads, unlock SMS journaling, and enjoy unlimited conversations with Flappy.</p>
-            <a href="https://featherweight.world/subscription" style="display: inline-block; background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">Upgrade Now</a>
-          </div>
-        </div>
-        ` : ''}
-        
-        <div style="text-align: center">
-          <a href="mailto:${FROM_EMAIL}" class="reply-button">Reply to Flappy</a>
-        </div>
-      </div>
-      <div class="footer">
-        <p>Simply reply to this email to continue your conversation with Flappy.</p>
-        <p>© ${new Date().getFullYear()} Featherweight. All rights reserved.</p>
-      </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Message from Flappy</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f7f9fc;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .logo {
+      max-width: 120px;
+      margin-bottom: 15px;
+    }
+    .content {
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eaeaea;
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+    }
+    .ad-banner {
+      background-color: #f0f7ff;
+      border: 1px solid #d0e3ff;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 25px;
+      text-align: center;
+      font-size: 14px;
+      color: #4a6a96;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Featherweight</h1>
     </div>
-  </body>
-  </html>
+    <div class="content">
+      ${htmlContent}
+    </div>
+    ${!isPremium ? `
+    <div class="ad-banner">
+      Upgrade to premium for an ad-free experience and additional features including SMS journaling.<br>
+      <a href="https://featherweight.world/premium">Learn More</a>
+    </div>
+    ` : ''}
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Featherweight - Your Journaling Companion<br>
+      Simply reply to this email to continue your conversation with Flappy
+    </div>
+  </div>
+</body>
+</html>
   `;
 }
 
-// Helper function to clean incoming email content
+/**
+ * Clean up email content by removing common patterns like:
+ * - Email signatures
+ * - Quoted text in replies
+ * - Legal footers
+ * - Automatically inserted text
+ */
 function cleanEmailContent(content: string): string {
-  // Remove email signature (anything after -- or ____)
-  let cleaned = content.split(/--|\_{2,}/)[0];
+  let cleanContent = content.trim();
   
-  // Remove quoted replies (lines starting with >)
-  cleaned = cleaned
-    .split('\n')
-    .filter(line => !line.trim().startsWith('>'))
-    .join('\n');
+  // Remove quoted text (lines starting with >)
+  cleanContent = cleanContent.replace(/^>.*$/mg, '');
   
-  // Remove common email footers
-  const footerPhrases = [
-    "Sent from my iPhone",
-    "Sent from my Android",
-    "Get Outlook for",
-    "This email has been scanned"
+  // Remove "On ... wrote:" pattern commonly found in replies
+  cleanContent = cleanContent.replace(/On.*wrote:.*$/s, '');
+  
+  // Remove common signature markers
+  const signatureMarkers = [
+    '-- \n', '--\n', '__________', '----------', 'Sent from ', 
+    'Get Outlook', 'Best regards', 'Kind regards', 'Regards,',
+    'Sincerely,', 'Cheers,', 'Thanks,', 'Thank you,'
   ];
   
-  for (const phrase of footerPhrases) {
-    if (cleaned.includes(phrase)) {
-      cleaned = cleaned.substring(0, cleaned.indexOf(phrase));
+  for (const marker of signatureMarkers) {
+    const index = cleanContent.indexOf(marker);
+    if (index !== -1) {
+      cleanContent = cleanContent.substring(0, index).trim();
     }
   }
   
-  // Trim excess whitespace
-  return cleaned.trim();
+  // Remove legal footers & confidentiality notices
+  const legalMarkers = [
+    'CONFIDENTIALITY NOTICE', 'DISCLAIMER', 'LEGAL NOTICE',
+    'This email and any files', 'This message is confidential',
+    'This communication is intended', 'The information contained in'
+  ];
+  
+  for (const marker of legalMarkers) {
+    const index = cleanContent.indexOf(marker);
+    if (index !== -1) {
+      cleanContent = cleanContent.substring(0, index).trim();
+    }
+  }
+  
+  // Clean up extra spacing and whitespace
+  cleanContent = cleanContent
+    .replace(/\n{3,}/g, '\n\n') // Replace excessive newlines
+    .trim();
+  
+  return cleanContent;
 }
 
-// Simple mood detection from content
+/**
+ * Detect mood from content using simple keyword matching
+ * This is a fallback for when AI analysis isn't available
+ */
 function detectMood(content: string): string {
-  const text = content.toLowerCase();
+  const contentLower = content.toLowerCase();
   
-  // Simple keyword analysis
-  const moodKeywords = {
-    happy: ["happy", "joy", "excited", "wonderful", "great", "fantastic", "smile", "glad", "😊", "🙂", "😄"],
-    calm: ["calm", "peaceful", "relaxed", "serene", "gentle", "quiet", "tranquil", "😌", "🧘"],
-    sad: ["sad", "unhappy", "disappointed", "upset", "down", "blue", "depressed", "😔", "😢", "😭"],
-    frustrated: ["frustrated", "angry", "annoyed", "irritated", "bothered", "mad", "😤", "😠", "😡"],
+  const moodPatterns = {
+    happy: ['happy', 'joy', 'excited', 'amazing', 'wonderful', 'great', 'good', 'love', 'delighted'],
+    calm: ['calm', 'peaceful', 'relaxed', 'tranquil', 'serene', 'content', 'comfortable', 'soothing'],
+    sad: ['sad', 'unhappy', 'miserable', 'depressed', 'upset', 'blue', 'down', 'disappointed', 'sorrow'],
+    frustrated: ['frustrated', 'angry', 'annoyed', 'irritated', 'mad', 'furious', 'rage', 'upset', 'stress', 'worried', 'anxiety']
   };
   
-  let moodScores = {
+  // Count matches for each mood
+  let counts = {
     happy: 0,
     calm: 0,
     sad: 0,
-    frustrated: 0,
-    neutral: 1, // Default score for neutral
+    frustrated: 0
   };
   
-  // Count occurrences of mood keywords
-  for (const [mood, keywords] of Object.entries(moodKeywords)) {
-    for (const keyword of keywords) {
-      const regex = new RegExp(`\\b${keyword}\\b|${keyword}`, 'g');
-      const matches = text.match(regex);
-      if (matches) {
-        moodScores[mood as keyof typeof moodScores] += matches.length;
-      }
+  // Count occurrences of each mood pattern
+  for (const [mood, patterns] of Object.entries(moodPatterns)) {
+    for (const pattern of patterns) {
+      const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
+      const matches = contentLower.match(regex) || [];
+      counts[mood] += matches.length;
     }
   }
   
-  // Find the mood with the highest score
-  let dominantMood = "neutral";
-  let highestScore = moodScores.neutral;
+  // Find the mood with the highest count
+  let dominantMood = 'neutral';
+  let maxCount = 0;
   
-  for (const [mood, score] of Object.entries(moodScores)) {
-    if (score > highestScore) {
+  for (const [mood, count] of Object.entries(counts)) {
+    if (count > maxCount) {
+      maxCount = count;
       dominantMood = mood;
-      highestScore = score;
     }
   }
   
-  return dominantMood;
+  // If no mood patterns found, return neutral
+  return maxCount > 0 ? dominantMood : 'neutral';
 }
 
-// Extract hashtags from content
+/**
+ * Extract potential tags from content
+ */
 function extractTags(content: string): string[] {
-  const tags: string[] = [];
-  const regex = /#(\w+)/g;
-  let match;
+  // This is a simple approach for extracting tags
+  // Later we can replace this with AI-based extraction
   
-  while ((match = regex.exec(content)) !== null) {
-    tags.push(`#${match[1].toLowerCase()}`);
-  }
+  // Split content into words
+  const words = content.toLowerCase().split(/\s+/);
   
-  // If no tags were found, try to infer some
-  if (tags.length === 0) {
-    const text = content.toLowerCase();
-    
-    const commonThemes = {
-      gratitude: ["grateful", "thankful", "appreciate", "blessing"],
-      reflection: ["reflect", "thinking", "consider", "ponder", "wonder"],
-      goals: ["goal", "aim", "objective", "plan", "future", "aspire"],
-      nature: ["nature", "outdoor", "hike", "walk", "forest", "ocean", "mountain"],
-      mindfulness: ["mindful", "present", "aware", "moment", "breath", "meditation"],
-    };
-    
-    for (const [theme, keywords] of Object.entries(commonThemes)) {
-      for (const keyword of keywords) {
-        if (text.includes(keyword)) {
-          tags.push(`#${theme}`);
-          break;
-        }
-      }
+  // Find potential tags
+  const commonTags = new Set([
+    'work', 'family', 'health', 'fitness', 'travel', 'food', 'learning',
+    'hobby', 'meditation', 'gratitude', 'challenge', 'reflection', 'goal',
+    'achievement', 'relationship', 'nature', 'reading', 'writing', 'art',
+    'music', 'technology', 'personal', 'growth', 'adventure', 'creativity',
+    'inspiration', 'leadership', 'mindfulness', 'productivity', 'rest'
+  ]);
+  
+  // Extract tags with deduplication
+  const tags = new Set<string>();
+  
+  for (const word of words) {
+    const cleanWord = word.replace(/[^a-z0-9]/g, '');
+    if (cleanWord.length > 3 && commonTags.has(cleanWord)) {
+      tags.add(cleanWord);
     }
   }
   
-  // Return unique tags only
-  return [...new Set(tags)];
+  // Convert to array and limit to top tags (maximum 5)
+  return Array.from(tags).slice(0, 5);
 }
