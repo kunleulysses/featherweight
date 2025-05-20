@@ -200,7 +200,7 @@ export const insertSmsMessageSchema = createInsertSchema(smsMessages)
 export const insertConversationMemorySchema = createInsertSchema(conversationMemories)
   .omit({ id: true, lastDiscussed: true, firstMentionedAt: true })
   .extend({
-    type: z.enum(["email", "sms", "journal_topic"]),
+    type: z.enum(["email", "sms", "journal_topic", "conversation"]),
     topic: z.string().min(1, { message: "Topic cannot be empty" }),
     sentiment: z.string().optional(),
     importance: z.number().int().min(1).max(5).default(1),

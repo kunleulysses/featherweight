@@ -34,7 +34,7 @@ export const memoryService = {
   /**
    * Process a new message and extract memory-worthy topics
    */
-  async processMessage(userId: number, message: string, messageType: 'email' | 'sms' | 'journal_topic'): Promise<ConversationMemory[]> {
+  async processMessage(userId: number, message: string, messageType: 'email' | 'sms' | 'journal_topic' | 'conversation'): Promise<ConversationMemory[]> {
     try {
       // Analyze message content for topics and sentiment
       const analysis = await this.analyzeContent(message);
