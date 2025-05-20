@@ -45,7 +45,7 @@ export function Header() {
                     Journal
                 </Link>
                 <Link href="/conversation-center" className={`font-quicksand font-medium ${isActive("/conversation-center") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
-                    Conversation Center
+                    Chat with Flappy
                 </Link>
                 <Link href="/mood-tracker" className={`font-quicksand font-medium ${isActive("/mood-tracker") ? "text-primary font-bold" : "text-gray-700 hover:text-primary"} transition-colors`}>
                     Mood Feathers
