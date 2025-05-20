@@ -532,18 +532,21 @@ Flappy 🦢
 function formatEmailHTML(content: string, isPremium: boolean = false): string {
   // Replace newlines with <br> tags
   const htmlContent = content.replace(/\n/g, '<br>');
+  const currentYear = new Date().getFullYear();
   
-  // Apply light styling with calm colors
+  // Apply light styling with calm colors and improved deliverability
   return `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Message from Flappy</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Quicksand', Arial, sans-serif;
       margin: 0;
       padding: 20px;
       background-color: #f7f9fc;
@@ -563,6 +566,7 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     }
     .logo {
       max-width: 120px;
+      height: auto;
       margin-bottom: 15px;
     }
     .content {
@@ -575,7 +579,7 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       border-top: 1px solid #eaeaea;
       text-align: center;
       font-size: 12px;
-      color: #999;
+      color: #666;
     }
     .ad-banner {
       background-color: #f0f7ff;
@@ -587,12 +591,53 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
       font-size: 14px;
       color: #4a6a96;
     }
+    .unsubscribe {
+      margin-top: 15px;
+      font-size: 11px;
+      color: #999;
+    }
+    .button {
+      display: inline-block;
+      background-color: #4F46E5;
+      color: white !important;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    a {
+      color: #4F46E5;
+      text-decoration: underline;
+    }
+    .premium-badge {
+      display: inline-block;
+      background-color: #FFD700;
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    /* Dark mode overrides */
+    @media (prefers-color-scheme: dark) {
+      /* Only included for clients that support it */
+      body {
+        background-color: #ffffff !important;
+        color: #333333 !important;
+      }
+      .container {
+        background-color: #ffffff !important;
+        border-color: #eaeaea !important;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Featherweight</h1>
+      <img src="https://featherweight.world/logo.png" alt="Featherweight" class="logo" width="120" height="40">
+      ${isPremium ? '<span class="premium-badge">Premium</span>' : ''}
+      <h1>A message from Flappy</h1>
     </div>
     <div class="content">
       ${htmlContent}
@@ -604,8 +649,18 @@ function formatEmailHTML(content: string, isPremium: boolean = false): string {
     </div>
     ` : ''}
     <div class="footer">
-      &copy; ${new Date().getFullYear()} Featherweight - Your Journaling Companion<br>
+      &copy; ${currentYear} Featherweight - Your Journaling Companion<br>
       Simply reply to this email to continue your conversation with Flappy
+      
+      <div class="unsubscribe">
+        <p>You're receiving this email because you signed up for Featherweight.</p>
+        <p>
+          <a href="https://featherweight.world/preferences">Email preferences</a> &bull; 
+          <a href="https://featherweight.world/unsubscribe">Unsubscribe</a> &bull;
+          <a href="https://featherweight.world/privacy">Privacy policy</a>
+        </p>
+        <p>Featherweight, Inc., 123 Main St., San Francisco, CA 94110</p>
+      </div>
     </div>
   </div>
 </body>
