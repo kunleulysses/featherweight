@@ -29,6 +29,7 @@ export type FlappyContentType = 'dailyInspiration' | 'journalResponse' | 'weekly
 export type FlappyContent = {
   subject: string;
   content: string;
+  reflectionPrompt?: string; // Optional reflection prompt for interactive conversations
 };
 
 // Define additional context types
@@ -131,6 +132,15 @@ export async function generateFlappyContent(
       if (!parsedContent.subject || !parsedContent.content) {
         console.warn("Invalid response structure from OpenAI, using fallback content");
         return getFallbackContent(contentType, context, userInfo);
+      }
+      
+      // For chat conversations, extract reflection prompt if it exists
+      if (contentType === 'chatConversation' && parsedContent.reflectionPrompt) {
+        return {
+          subject: parsedContent.subject,
+          content: parsedContent.content,
+          reflectionPrompt: parsedContent.reflectionPrompt
+        };
       }
       
       return {
@@ -356,7 +366,8 @@ Important: Your response must be shorter than an email but more therapeutically 
 Format your response as JSON:
 {
   "subject": "Chat",
-  "content": "[Your brief, therapeutic response with a thoughtful question - no greeting or sign-off]"
+  "content": "[Your brief, therapeutic response with a thoughtful question - no greeting or sign-off]",
+  "reflectionPrompt": "[Optional - If applicable, include a single, especially thoughtful follow-up question that could be used separately in the conversation flow. This should be different from any questions in your main response. Make it contextually relevant and emotionally intelligent.]"
 }`;
       }
       
