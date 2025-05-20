@@ -7,13 +7,19 @@ import { EmailQueueItem } from "@shared/schema";
 const PROCESS_INTERVAL = 10000;
 
 // Maximum number of attempts to process an email before giving up
-const MAX_ATTEMPTS = 3;
+const MAX_ATTEMPTS = 5;
+
+// Exponential backoff base (in milliseconds)
+const BACKOFF_BASE = 60000; // 1 minute
 
 // Flag to prevent multiple email processing at the same time
 let isProcessing = false;
 
+// Track processed email IDs to avoid duplicates (in-memory cache)
+const processedEmailIds = new Set<string>();
+
 /**
- * Process a single email from the queue
+ * Process a single email from the queue with enhanced error handling
  */
 async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
   console.log(`🔄 Processing queued email ID: ${queueItem.id}`);
@@ -24,6 +30,14 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
   console.log(`Attempts: ${queueItem.processAttempts}`);
   
   try {
+    // Check for duplicates
+    const emailKey = generateEmailKey(queueItem);
+    if (processedEmailIds.has(emailKey)) {
+      console.log(`⚠️ Duplicate email detected with key: ${emailKey}. Marking as completed.`);
+      await storage.markEmailCompleted(queueItem.id);
+      return true;
+    }
+    
     // Mark as processing
     await storage.markEmailProcessing(queueItem.id);
     console.log(`📝 Email ID ${queueItem.id} marked as processing`);
@@ -64,42 +78,30 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
       // If we have a SendGrid parsed object format
       console.log(`🔍 Detected SendGrid object payload format`);
       
-      let from = (payload.from as string) || (payload.sender as string) || '';
-      const to = (payload.to as string) || '';
-      const subject = (payload.subject as string) || 'No Subject';
-      const text = (payload.text as string) || '';
-      const html = (payload.html as string) || '';
+      let from = extractField(payload, ['from', 'sender', 'From', 'Sender']);
+      const to = extractField(payload, ['to', 'To', 'recipient', 'Recipient']);
+      const subject = extractField(payload, ['subject', 'Subject']) || 'No Subject';
+      const text = extractField(payload, ['text', 'Text', 'body', 'Body']);
+      const html = extractField(payload, ['html', 'Html', 'htmlBody', 'HtmlBody']);
       
       console.log(`🔍 From (raw): ${from}`);
       console.log(`🔍 To: ${to}`);
       console.log(`🔍 Subject: ${subject}`);
-      console.log(`🔍 Text length: ${text.length} characters`);
-      console.log(`🔍 HTML length: ${html.length} characters`);
+      console.log(`🔍 Text length: ${text?.length || 0} characters`);
+      console.log(`🔍 HTML length: ${html?.length || 0} characters`);
       
       // Log all headers for debugging
-      console.log(`🔍 Headers available: ${payload.headers ? 'Yes' : 'No'}`);
-      if (payload.headers) {
-        console.log(`🔍 Header keys: ${Object.keys(payload.headers).join(', ')}`);
+      const headers = extractHeaders(payload);
+      console.log(`🔍 Headers available: ${headers ? 'Yes' : 'No'}`);
+      if (headers) {
+        console.log(`🔍 Header keys: ${Object.keys(headers).join(', ')}`);
       }
       
-      const inReplyTo = (payload.headers && (payload.headers['In-Reply-To'] as string)) || 
-                        (payload.headers && (payload.headers['in-reply-to'] as string)) ||
-                        (payload['In-Reply-To'] as string) || 
-                        (payload['in-reply-to'] as string) || '';
-                        
+      const inReplyTo = extractInReplyTo(payload, headers);
       console.log(`🔍 In-Reply-To: ${inReplyTo || 'Not available'}`);
       
       // Extract the sender's email address
-      let senderEmail = from;
-      
-      if (typeof from === 'string') {
-        // Format can be "John Doe <john@example.com>" or just "john@example.com"
-        const emailMatch = from.match(/<(.+@.+)>/) || from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-        senderEmail = emailMatch ? emailMatch[1] : from;
-        console.log(`🔍 Extracted sender email: ${senderEmail}`);
-      } else {
-        console.log(`⚠️ From field is not a string: ${typeof from}`);
-      }
+      let senderEmail = extractSenderEmail(from);
       
       // Check for envelope structure which sometimes contains the actual email
       if (payload.envelope) {
@@ -114,7 +116,7 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
           
           // Use envelope sender if available and main from is missing
           if (!senderEmail && envelope.from) {
-            senderEmail = envelope.from;
+            senderEmail = extractSenderEmail(envelope.from);
             console.log(`🔍 Using envelope sender: ${senderEmail}`);
           }
         } catch (error) {
@@ -122,16 +124,26 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
         }
       }
       
+      if (!senderEmail) {
+        console.warn('⚠️ Could not extract sender email. Using fallback address.');
+        senderEmail = 'unknown@example.com';
+      }
+      
+      const content = text || html || '';
+      if (!content) {
+        console.warn('⚠️ No content found in email. Using placeholder text.');
+      }
+      
       console.log(`📧 Calling processIncomingEmail with:`);
       console.log(`📧 Sender: ${senderEmail}`);
       console.log(`📧 Subject: ${subject}`);
-      console.log(`📧 Content: ${(text || html).substring(0, 100)}${(text || html).length > 100 ? '...' : ''}`);
+      console.log(`📧 Content: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`);
       console.log(`📧 InReplyTo: ${inReplyTo}`);
       
       await emailService.processIncomingEmail(
         senderEmail,
         subject,
-        text || html,
+        content,
         inReplyTo
       );
     } else {
@@ -142,15 +154,33 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
     // Mark as completed
     await storage.markEmailCompleted(queueItem.id);
     console.log(`✅ Successfully processed email ID: ${queueItem.id}`);
+    
+    // Add to processed set to avoid duplicates
+    processedEmailIds.add(emailKey);
+    
+    // Limit the size of the processed set to avoid memory leaks
+    if (processedEmailIds.size > 1000) {
+      const keysArray = Array.from(processedEmailIds);
+      processedEmailIds.clear();
+      keysArray.slice(-500).forEach(key => processedEmailIds.add(key));
+    }
+    
     return true;
     
   } catch (error) {
     console.error(`❌ Error processing email ID: ${queueItem.id}:`, error);
     console.error(`❌ Error stack: ${error instanceof Error ? error.stack : 'No stack trace available'}`);
     
+    // Calculate retry delay with exponential backoff
+    const retryDelay = Math.min(
+      BACKOFF_BASE * Math.pow(2, queueItem.processAttempts),
+      24 * 60 * 60 * 1000 // Max 24 hours
+    );
+    
     // Increment attempts
     await storage.incrementEmailAttempts(queueItem.id);
     console.log(`⚠️ Incremented attempt count for email ID: ${queueItem.id}`);
+    console.log(`⚠️ Next retry in approximately ${Math.floor(retryDelay / 60000)} minutes`);
     
     // If we've exceeded max attempts, mark as failed
     if (queueItem.processAttempts >= MAX_ATTEMPTS - 1) {
@@ -169,8 +199,16 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
  */
 async function processRawEmail(buffer: Buffer): Promise<void> {
   console.log('Processing raw email buffer...');
-  const parsed = await simpleParser(buffer);
-  await processEmailFromParsed(parsed);
+  try {
+    const parsed = await simpleParser(buffer);
+    await processEmailFromParsed(parsed);
+  } catch (error) {
+    console.error('Error parsing raw email:', error);
+    // Fallback to treating as plain text if parsing fails
+    const text = buffer.toString('utf-8');
+    console.log('Falling back to plain text parsing');
+    await processEmailFromText(text);
+  }
 }
 
 /**
@@ -178,15 +216,32 @@ async function processRawEmail(buffer: Buffer): Promise<void> {
  */
 async function processEmailFromText(text: string): Promise<void> {
   console.log('Processing email from text content...');
-  // This is a simplistic approach - in a real implementation,
-  // we'd need proper parsing of email format
   
-  // For now, just treat it as the body of an email from an unknown sender
+  // Try to extract email parts from text (basic parsing)
+  const fromMatch = text.match(/From:\s*([^\r\n]+)/i);
+  const subjectMatch = text.match(/Subject:\s*([^\r\n]+)/i);
+  const inReplyToMatch = text.match(/In-Reply-To:\s*([^\r\n]+)/i);
+  
+  // Extract body - everything after a double newline, or the whole text if no headers found
+  const bodyMatch = text.match(/\r?\n\r?\n([\s\S]+)$/);
+  const body = bodyMatch ? bodyMatch[1].trim() : text;
+  
+  let from = fromMatch ? fromMatch[1].trim() : 'unknown@example.com';
+  from = extractSenderEmail(from) || 'unknown@example.com';
+  
+  const subject = subjectMatch ? subjectMatch[1].trim() : 'Email from text content';
+  const inReplyTo = inReplyToMatch ? inReplyToMatch[1].trim() : '';
+  
+  console.log(`Extracted from: ${from}`);
+  console.log(`Extracted subject: ${subject}`);
+  console.log(`Extracted inReplyTo: ${inReplyTo}`);
+  console.log(`Body length: ${body.length} characters`);
+  
   await emailService.processIncomingEmail(
-    'unknown@example.com',
-    'Email from text content',
-    text,
-    ''
+    from,
+    subject,
+    body,
+    inReplyTo
   );
 }
 
@@ -205,16 +260,26 @@ async function processEmailFromParsed(parsed: any): Promise<void> {
     senderEmail = match[1] || parsed.from.text;
   }
   
-  if (senderEmail) {
-    await emailService.processIncomingEmail(
-      senderEmail,
-      parsed.subject || 'No Subject',
-      parsed.text || parsed.html || '',
-      parsed.inReplyTo || ''
-    );
-  } else {
-    throw new Error('Could not extract sender email from parsed message');
+  if (!senderEmail) {
+    senderEmail = 'unknown@example.com';
+    console.warn('Could not extract sender email from parsed message, using fallback');
   }
+  
+  const subject = parsed.subject || 'No Subject';
+  const text = parsed.text || parsed.html || '';
+  const inReplyTo = parsed.inReplyTo || '';
+  
+  console.log(`Parsed sender: ${senderEmail}`);
+  console.log(`Parsed subject: ${subject}`);
+  console.log(`Parsed inReplyTo: ${inReplyTo}`);
+  console.log(`Content length: ${text.length} characters`);
+  
+  await emailService.processIncomingEmail(
+    senderEmail,
+    subject,
+    text,
+    inReplyTo
+  );
 }
 
 /**
@@ -254,4 +319,109 @@ export function startEmailProcessor(): void {
   
   // Then set up interval processing
   setInterval(processNextEmail, PROCESS_INTERVAL);
+}
+
+/**
+ * Helper function to extract a field from payload with multiple possible keys
+ */
+function extractField(payload: any, keys: string[]): string {
+  for (const key of keys) {
+    if (payload[key] !== undefined && payload[key] !== null) {
+      return String(payload[key]);
+    }
+  }
+  return '';
+}
+
+/**
+ * Helper function to extract headers from various payload formats
+ */
+function extractHeaders(payload: any): Record<string, string> | null {
+  if (payload.headers) {
+    return typeof payload.headers === 'object' ? payload.headers : null;
+  }
+  
+  if (payload.Headers) {
+    return typeof payload.Headers === 'object' ? payload.Headers : null;
+  }
+  
+  // Look for a string field named headers and try to parse it
+  if (typeof payload.headers === 'string') {
+    try {
+      return JSON.parse(payload.headers);
+    } catch {
+      return null;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Helper function to extract In-Reply-To from payload or headers
+ */
+function extractInReplyTo(payload: any, headers: Record<string, string> | null): string {
+  // Check direct fields
+  if (payload['In-Reply-To'] || payload['in-reply-to'] || payload.inReplyTo) {
+    return String(payload['In-Reply-To'] || payload['in-reply-to'] || payload.inReplyTo);
+  }
+  
+  // Check headers
+  if (headers) {
+    const headerKey = Object.keys(headers).find(k => 
+      k.toLowerCase() === 'in-reply-to' || 
+      k.toLowerCase() === 'reference' ||
+      k.toLowerCase() === 'references'
+    );
+    
+    if (headerKey && headers[headerKey]) {
+      return String(headers[headerKey]);
+    }
+  }
+  
+  return '';
+}
+
+/**
+ * Helper function to extract a sender's email address from various formats
+ */
+function extractSenderEmail(from: string): string {
+  if (!from) return '';
+  
+  // Format can be "John Doe <john@example.com>" or just "john@example.com"
+  const emailMatch = from.match(/<([^>]+)>/) || from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+  return emailMatch ? emailMatch[1] : from;
+}
+
+/**
+ * Generate a unique key for an email to detect duplicates
+ */
+function generateEmailKey(queueItem: EmailQueueItem): string {
+  const payload = queueItem.payload as any;
+  
+  // Try to use message ID if available
+  if (payload.messageId || payload.MessageId || payload['message-id'] || payload['Message-ID']) {
+    return String(payload.messageId || payload.MessageId || payload['message-id'] || payload['Message-ID']);
+  }
+  
+  // Try to extract message ID from headers
+  const headers = extractHeaders(payload);
+  if (headers) {
+    const messageIdKey = Object.keys(headers).find(k => 
+      k.toLowerCase() === 'message-id' || 
+      k.toLowerCase() === 'messageid'
+    );
+    
+    if (messageIdKey && headers[messageIdKey]) {
+      return String(headers[messageIdKey]);
+    }
+  }
+  
+  // Fallback to a composite key
+  const from = extractField(payload, ['from', 'sender', 'From', 'Sender']);
+  const subject = extractField(payload, ['subject', 'Subject']) || '';
+  const timestamp = queueItem.createdAt ? queueItem.createdAt.toISOString() : new Date().toISOString();
+  
+  // Create a composite key
+  return `${from}:${subject}:${timestamp}`;
 }
