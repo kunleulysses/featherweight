@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -14,23 +14,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Setup multer for parsing multipart/form-data (for SendGrid webhooks)
   const upload = multer();
-  
-  // Setup raw parser middleware for raw MIME option
-  const rawBodyParser = (req: Request, res: Response, next: Function) => {
-    if (req.headers['content-type']?.includes('message/rfc822')) {
-      let data = '';
-      req.setEncoding('utf8');
-      req.on('data', chunk => {
-        data += chunk;
-      });
-      req.on('end', () => {
-        req.rawBody = data;
-        next();
-      });
-    } else {
-      next();
-    }
-  };
 
   // Health check endpoint
   app.get("/api/health", (_req: Request, res: Response) => {
@@ -114,7 +97,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Request received at: ${new Date().toISOString()}`);
     console.log(`Content-Type: ${req.headers['content-type']}`);
     console.log(`Content-Length: ${req.headers['content-length']}`);
-    console.log(`Body keys after multer: ${Object.keys(req.body).join(', ')}`);
+    
+    // Log multer-parsed body keys (this is crucial for debugging SendGrid's multipart format)
+    const bodyKeys = Object.keys(req.body || {});
+    console.log(`Body keys after multer parsing: ${bodyKeys.join(', ')}`);
     
     try {
       console.log("=== WEBHOOK HEADERS ===");
@@ -122,43 +108,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`${key}: ${value}`);
       });
       
-      // More detailed logging of body structure
+      // Process the request based on the content-type header
+      if (!req.body || Object.keys(req.body).length === 0) {
+        console.log("⚠️ Request body is empty after parsing, responding with error");
+        return res.status(200).send('Error: Missing body data');
+      }
+      
       console.log("=== WEBHOOK BODY STRUCTURE ===");
-      if (req.body) {
-        if (typeof req.body === 'object') {
-          const bodyKeys = Object.keys(req.body);
-          console.log(`Body is an object with keys: ${bodyKeys.join(', ')}`);
-          
-          // Try to parse as JSON if it's a SendGrid webhook
-          try {
-            // Create a queue item with the object data
-            const queueItem: InsertEmailQueue = {
-              payload: req.body,
-              status: "pending" as const
-            };
-            
-            const saved = await storage.enqueueEmail(queueItem);
-            console.log(`✅ Parsed JSON data queued for processing (Queue ID: ${saved.id})`);
-            
-            return res.status(200).send('OK: Email data queued for processing');
-          } catch (e) {
-            console.log('Failed to process as JSON object, treating as raw data');
-            
-            // Create a queue item with the raw text
-            const queueItem: InsertEmailQueue = {
-              payload: { 
-                text: JSON.stringify(req.body),
-                processedAt: new Date().toISOString(),
-                note: 'JSON stringified'
-              },
-              status: "pending" as const
-            };
-            
-            const saved = await storage.enqueueEmail(queueItem);
-            console.log(`✅ Raw text queued for processing (Queue ID: ${saved.id})`);
-            
-            return res.status(200).send('OK: Email data queued for processing');
-          }
+      // With multer, req.body should always be an object with SendGrid fields
+      const bodyKeys = Object.keys(req.body);
+      console.log(`Body is an object with keys: ${bodyKeys.join(', ')}`);
+
+      // Try to extract essential email fields from the parsed body
+      const from = req.body.from || req.body.envelope && JSON.parse(req.body.envelope).from;
+      const subject = req.body.subject || 'No Subject';
+      const text = req.body.text || req.body.email || req.body.html || 'No content';
+      
+      console.log(`From: ${from}`);
+      console.log(`Subject: ${subject}`);
+      console.log(`Text preview: ${text.substring(0, 100)}...`);
+      
+      // Create a queue item with the structured data for the email processor
+      const queueItem: InsertEmailQueue = {
+        payload: {
+          from,
+          subject,
+          text,
+          headers: req.body.headers || {},
+          receivedAt: new Date().toISOString(),
+          // Store the full body as a backup, but use the extracted fields for processing
+          rawPayload: JSON.stringify(req.body)
+        },
+        status: "pending" as const
+      };
+        
+      const saved = await storage.enqueueEmail(queueItem);
+      console.log(`✅ Email from SendGrid webhook queued for processing (Queue ID: ${saved.id})`);
+      
+      return res.status(200).send('OK: Email data queued for processing');
         } else if (typeof req.body === 'string') {
           console.log(`Body is a string of length: ${req.body.length}`);
           
