@@ -7,6 +7,41 @@ import { generateFlappyContent } from "./openai";
  * Add conversation routes to Express app
  */
 export function addConversationRoutes(app) {
+  // Chat with Flappy endpoint
+  app.post("/api/conversation", async (req, res) => {
+    // Check if user is authenticated
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { message, createJournalEntry = false } = req.body;
+      
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+      
+      // Generate Flappy's response
+      const flappyResponse = await generateFlappyContent(
+        createJournalEntry ? 'journalResponse' : 'emailConversation',
+        req.user,
+        message
+      );
+      
+      // Return just the response text since the client isn't expecting a full conversation object
+      return res.status(200).json({ 
+        response: flappyResponse.content,
+        success: true
+      });
+    } catch (error) {
+      console.error("Error in conversation handler:", error);
+      return res.status(500).json({ 
+        message: "Failed to process conversation",
+        success: false
+      });
+    }
+  });
+
   // Create a new conversation
   app.post("/api/direct-conversation", async (req, res) => {
     // Check if user is authenticated (user exists in the request)
