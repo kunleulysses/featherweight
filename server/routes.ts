@@ -20,6 +20,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
   
+  // Simple webhook test endpoint - publicly accessible for external testing
+  app.post("/api/webhook-test", (req: Request, res: Response) => {
+    console.log('🔔 WEBHOOK TEST ENDPOINT ACCESSED');
+    console.log(`Time: ${new Date().toISOString()}`);
+    console.log(`Headers: ${JSON.stringify(req.headers)}`);
+    console.log(`Body type: ${typeof req.body}`);
+    
+    if (req.body) {
+      if (typeof req.body === 'object') {
+        console.log(`Body keys: ${Object.keys(req.body).join(', ')}`);
+        console.log(`Body sample: ${JSON.stringify(req.body).substring(0, 200)}...`);
+      } else {
+        console.log(`Body: ${String(req.body).substring(0, 200)}...`);
+      }
+    }
+    
+    // Always return 200 OK
+    res.status(200).json({
+      received: true,
+      timestamp: new Date().toISOString(),
+      message: "Test webhook received successfully"
+    });
+  });
+  
   // Test endpoint for public email webhook testing
   app.post("/api/public/test-email", async (req: Request, res: Response) => {
     try {
@@ -157,6 +181,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Request received at: ${new Date().toISOString()}`);
     console.log(`Content-Type: ${req.headers['content-type']}`);
     console.log(`Content-Length: ${req.headers['content-length']}`);
+    console.log(`Remote IP: ${req.ip}`);
+    console.log(`Request URL: ${req.originalUrl}`);
+    console.log(`User-Agent: ${req.headers['user-agent']}`);
+    
+    // Dump all headers for debugging
+    console.log('WEBHOOK HEADERS:');
+    Object.entries(req.headers).forEach(([key, value]) => {
+      console.log(`  ${key}: ${value}`);
+    });
+    
+    // Dump body structure
+    console.log('WEBHOOK BODY STRUCTURE:');
+    if (req.body) {
+      if (typeof req.body === 'object') {
+        console.log(`Body keys: ${Object.keys(req.body).join(', ')}`);
+        
+        // Log a few important fields if they exist
+        if (req.body.from) console.log(`From field: ${req.body.from}`);
+        if (req.body.sender) console.log(`Sender field: ${req.body.sender}`);
+        if (req.body.envelope) console.log(`Envelope field: ${req.body.envelope}`);
+        if (req.body.subject) console.log(`Subject: ${req.body.subject}`);
+      } else {
+        console.log(`Body type: ${typeof req.body}`);
+        console.log(`Body length: ${req.body.length || 0}`);
+      }
+    } else {
+      console.log('Body is empty or undefined');
+    }
     
     try {
       // Log the headers for debugging
