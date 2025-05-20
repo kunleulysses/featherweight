@@ -25,7 +25,7 @@ try {
 }
 
 // Type definitions
-export type FlappyContentType = 'dailyInspiration' | 'journalResponse' | 'weeklyInsight' | 'emailConversation';
+export type FlappyContentType = 'dailyInspiration' | 'journalResponse' | 'weeklyInsight' | 'emailConversation' | 'chatConversation';
 export type FlappyContent = {
   subject: string;
   content: string;
@@ -260,7 +260,33 @@ Format your response as JSON:
 }`;
 
     default:
-      // Add support for email conversations
+      // Chat conversations for the web app
+      if (contentType === 'chatConversation') {
+        return `${basePrompt}
+        
+You are responding to a chat message in the Featherweight app, not an email:
+
+"${context}"
+
+For the 'subject' field, just use "Chat" (this won't be displayed to the user).
+
+For the 'content' field, follow these important guidelines:
+1. Be BRIEF and conversational - keep responses to 1-3 short paragraphs, like texting with a friend
+2. DO NOT include any formal email-like greeting or sign-off - no "Dear User" or "With a splash of ocean breeze, Flappy"
+3. Respond directly to the user's message in a casual, fun way - like you're chatting in real-time
+4. Use very occasional emojis to express emotion, but don't overdo it
+5. Be fun, witty and personable - show Flappy's unique personality with occasional pelican references
+
+Important: Your response must be much shorter and more conversational than email responses. Think of this as a chat app, not email.
+
+Format your response as JSON:
+{
+  "subject": "Chat",
+  "content": "[Your brief, conversational response - no formal greeting or sign-off]"
+}`;
+      }
+      
+      // Email conversations
       if (contentType === 'emailConversation') {
         return `${basePrompt}
         

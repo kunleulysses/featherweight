@@ -25,11 +25,11 @@ export function addConversationRoutes(app) {
         return res.status(400).json({ message: "Message content is required" });
       }
       
-      // Generate Flappy's response
+      // Force chat mode instead of email mode for the conversation center
       const flappyResponse = await generateFlappyContent(
-        createJournalEntry ? 'journalResponse' : 'emailConversation',
-        req.user,
-        message
+        'chatConversation', // <-- This is a new content type we'll implement
+        message,
+        req.user
       );
       
       // Return just the response text since the client isn't expecting a full conversation object
