@@ -79,15 +79,22 @@ export const emailService = {
         mailSettings: {
           footer: {
             enable: true,
-            text: 'Featherweight - Your Journaling Companion\nReply to this email to continue your conversation with Flappy',
-            html: '<p style="color: #9E9E9E; font-size: 12px;">Featherweight - Your Journaling Companion<br>Reply to this email to continue your conversation with Flappy</p>'
+            text: 'Featherweight - Your Journaling Companion\nReply to this email to continue your conversation with Flappy\n\nTo unsubscribe from these emails, visit: https://featherweight.world/unsubscribe',
+            html: `<p style="color: #9E9E9E; font-size: 12px;">
+              Featherweight - Your Journaling Companion<br>
+              Reply to this email to continue your conversation with Flappy<br><br>
+              <a href="https://featherweight.world/unsubscribe?id=${messageId}" style="color: #9E9E9E;">Unsubscribe</a> or manage your 
+              <a href="https://featherweight.world/preferences" style="color: #9E9E9E;">email preferences</a>
+            </p>`
           }
         },
-        // Adding custom headers for threading
+        // Adding custom headers for threading and deliverability
         headers: {
           "X-Entity-Ref-ID": messageId,
           "Message-ID": `<${messageId}>`,
-          "X-SG-EID": messageId
+          "List-Unsubscribe": `<https://featherweight.world/unsubscribe?id=${messageId}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          "Feedback-ID": `${isPremium ? 'premium' : 'free'}:featherweight:${messageId}`
         }
       };
       
