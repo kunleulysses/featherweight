@@ -359,8 +359,8 @@ export default function ConversationCenterPage() {
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
                   <CardTitle className="flex items-center">
-                    <Avatar className="h-8 w-8 mr-2">
-                      <AvatarImage src="/assets/flappy.svg" alt="Flappy" />
+                    <Avatar className="h-10 w-10 mr-2">
+                      <AvatarImage src="/assets/flappy-avatar.png" alt="Flappy" />
                       <AvatarFallback>F</AvatarFallback>
                     </Avatar>
                     <span>Flappy</span>
@@ -417,7 +417,7 @@ export default function ConversationCenterPage() {
                         {message.type === "flappy" && (
                           <div className="flex-shrink-0 mr-2">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src="/assets/flappy.svg" alt="Flappy" />
+                              <AvatarImage src="/assets/flappy-avatar.png" alt="Flappy" />
                               <AvatarFallback>F</AvatarFallback>
                             </Avatar>
                           </div>
