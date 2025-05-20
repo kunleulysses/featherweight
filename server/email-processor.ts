@@ -388,9 +388,32 @@ function extractInReplyTo(payload: any, headers: Record<string, string> | null):
 function extractSenderEmail(from: string): string {
   if (!from) return '';
   
+  // First, check if we have JSON data that was stringified
+  if (from.startsWith('{') && from.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(from);
+      if (parsed.email) return parsed.email;
+    } catch (e) {
+      // Not valid JSON, continue with other methods
+    }
+  }
+  
   // Format can be "John Doe <john@example.com>" or just "john@example.com"
   const emailMatch = from.match(/<([^>]+)>/) || from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-  return emailMatch ? emailMatch[1] : from;
+  if (emailMatch) return emailMatch[1];
+  
+  // If we have a SendGrid envelope format
+  if (typeof from === 'string' && from.includes('envelope')) {
+    try {
+      const envelopeMatch = from.match(/from":"([^"]+)"/);
+      if (envelopeMatch) return envelopeMatch[1];
+    } catch (e) {
+      // Not valid envelope format, continue
+    }
+  }
+  
+  // Last resort, just return what we have
+  return from;
 }
 
 /**
