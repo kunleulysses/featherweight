@@ -55,9 +55,25 @@ export function addConversationRoutes(app) {
         }
       );
       
-      // Return just the response text since the client isn't expecting a full conversation object
+      // Save the conversation to the database including the reflection prompt
+      const [conversation] = await db.insert(conversations)
+        .values({
+          userId: req.user.id,
+          userMessage: message,
+          flappyResponse: flappyResponse.content,
+          conversationType: 'chat',
+          savedAsJournal: createJournalEntry,
+          messageTags: extractTags(message),
+          mood: detectMood(message),
+          reflectionPrompt: flappyResponse.reflectionPrompt || null
+        })
+        .returning();
+      
+      // Return the response text and reflection prompt
       return res.status(200).json({ 
         response: flappyResponse.content,
+        reflectionPrompt: flappyResponse.reflectionPrompt,
+        conversationId: conversation.id,
         success: true
       });
     } catch (error) {

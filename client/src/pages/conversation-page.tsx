@@ -49,6 +49,8 @@ interface Message {
   content: string;
   type: MessageType;
   timestamp: Date;
+  reflectionPrompt?: string; // Optional reflection prompt for follow-up questions
+  conversationId?: number;    // Reference to the conversation ID in the database
 }
 
 export default function ConversationPage() {
@@ -272,6 +274,8 @@ export default function ConversationPage() {
             content: responseData.response,
             type: "flappy",
             timestamp: new Date(),
+            reflectionPrompt: responseData.reflectionPrompt || undefined,
+            conversationId: responseData.conversationId
           },
         ];
       });
@@ -413,6 +417,32 @@ export default function ConversationPage() {
                           ) : (
                             <>
                               <div className="whitespace-pre-wrap break-words text-left">{message.content}</div>
+                              
+                              {/* Display reflection prompt if available */}
+                              {message.type === "flappy" && message.reflectionPrompt && (
+                                <div className="mt-3 pt-3 border-t border-border/50">
+                                  <button 
+                                    onClick={() => {
+                                      // Prefill the input with the reflection prompt text
+                                      // Users can edit it before sending if they wish
+                                      form.setValue("message", message.reflectionPrompt || "");
+                                      form.setFocus("message");
+                                      // Auto-scroll to text area
+                                      setTimeout(() => {
+                                        const textarea = document.querySelector("[name='message']");
+                                        if (textarea) {
+                                          textarea.scrollIntoView({ behavior: "smooth" });
+                                        }
+                                      }, 100);
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 rounded-md text-sm text-primary transition-colors w-full text-left"
+                                  >
+                                    <Feather className="h-4 w-4 flex-shrink-0" />
+                                    <span className="font-medium">{message.reflectionPrompt}</span>
+                                  </button>
+                                </div>
+                              )}
+                              
                               <div
                                 className={`text-xs mt-2 text-right ${
                                   message.type === "user"

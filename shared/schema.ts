@@ -14,6 +14,7 @@ export const conversations = pgTable("conversations", {
   journalEntryId: integer("journal_entry_id"), // If saved as a journal entry
   messageTags: json("message_tags").$type<string[]>(),
   mood: text("mood"), // happy, calm, neutral, sad, frustrated
+  reflectionPrompt: text("reflection_prompt"), // Interactive reflection prompt for follow-up questions
 });
 
 // Users table
