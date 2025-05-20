@@ -95,6 +95,9 @@ export const memoryService = {
       sentiment: string;
       importance: number;
       context: string;
+      category?: string;
+      emotionalTone?: string;
+      growthOpportunity?: string;
     }>;
   } | null> {
     try {
@@ -108,16 +111,19 @@ export const memoryService = {
         messages: [
           {
             role: "system",
-            content: `You are a content analysis assistant. Analyze the following message to extract memory-worthy topics.
-            Identify topics that would be relevant for a friend to remember about someone from a conversation.
+            content: `You are an advanced content analysis assistant specializing in emotional intelligence and human growth. Analyze the following message to extract memory-worthy topics.
+            Identify topics that would be relevant for a supportive therapeutic companion to remember about someone from a conversation.
             For each topic:
             1. Provide a short name (1-3 words)
             2. Determine the sentiment (positive, negative, neutral, mixed)
             3. Rate importance (1-5 where 5 is most important)
             4. Extract a brief context (10-15 words)
+            5. Categorize the topic (work, relationships, health, personal_growth, hobbies, family, education, finance, spirituality, other)
+            6. Analyze the emotional tone with greater depth (e.g., "cautiously optimistic", "underlying anxiety", "conflicted joy", "repressed frustration", etc.)
+            7. Identify a potential growth opportunity related to this topic (e.g., "developing confidence in professional settings", "establishing healthier boundaries in relationships", etc.)
             
             Respond in JSON format with an array of topics:
-            {"topics": [{"name": "topic name", "sentiment": "positive", "importance": 3, "context": "brief context"}]}
+            {"topics": [{"name": "topic name", "sentiment": "positive", "importance": 3, "context": "brief context", "category": "relationships", "emotionalTone": "cautiously optimistic", "growthOpportunity": "potential for deeper self-acceptance"}]}
             
             Only include important topics that would be worth remembering for future conversations.
             If the message is small talk or doesn't contain memory-worthy topics, return an empty array.`

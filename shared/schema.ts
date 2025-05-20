@@ -103,7 +103,7 @@ export const smsMessages = pgTable("sms_messages", {
 export const conversationMemories = pgTable("conversation_memories", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
-  type: text("type").notNull(), // "email", "sms", "journal_topic"
+  type: text("type").notNull(), // "email", "sms", "journal_topic", "conversation"
   topic: text("topic"), // Extracted topic or theme
   sentiment: text("sentiment"), // Extracted sentiment
   importance: integer("importance").default(1), // 1-5 scale of importance
@@ -113,6 +113,9 @@ export const conversationMemories = pgTable("conversation_memories", {
   context: text("context").notNull(), // Brief context about this topic
   relatedEntryIds: json("related_entry_ids").$type<number[]>(), // IDs of related journal entries
   isResolved: boolean("is_resolved").default(false), // Whether this topic has been resolved
+  category: text("category"), // Category such as work, relationships, health, etc.
+  emotionalTone: text("emotional_tone"), // More nuanced emotional analysis
+  growthOpportunity: text("growth_opportunity"), // Potential area for personal growth related to this topic
 });
 
 // Email queue table for asynchronous processing
