@@ -1,5 +1,5 @@
-const fetch = require('node-fetch');
-const FormData = require('form-data');
+import fetch from 'node-fetch';
+import FormData from 'form-data';
 
 async function testMultipartWebhook() {
   console.log('🔔 Testing SendGrid multipart/form-data webhook format');
@@ -51,3 +51,6 @@ async function testMultipartWebhook() {
 }
 
 testMultipartWebhook();
+
+// Add export statement to satisfy ES module requirements
+export default testMultipartWebhook;
