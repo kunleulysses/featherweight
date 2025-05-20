@@ -1,0 +1,61 @@
+import express, { Request, Response } from 'express';
+import multer from 'multer';
+import { simpleParser } from 'mailparser';
+
+const app = express();
+const upload = multer();  // multer for multipart/form-data
+
+// -------------------------------
+// OPTION A: MULTER (multipart/form-data)
+// -------------------------------
+app.post(
+  "/api/emails/webhook-multipart",
+  upload.none(),                // parses text fields into req.body
+  async (req: Request, res: Response) => {
+    console.log('📝 [Multipart] Content-Type:', req.headers['content-type']);
+    console.log('📝 [Multipart] Parsed body keys:', Object.keys(req.body));
+    console.log('📝 [Multipart] Payload:', req.body);
+    // Now you can access: req.body.from, req.body.to, req.body.subject, req.body.text
+    // … your enqueue / processing logic …
+    res.status(200).send('ok (multipart)');
+  }
+);
+
+// -------------------------------
+// OPTION B: RAW MIME (if you checked "POST raw MIME" in SendGrid)
+// -------------------------------
+app.post(
+  "/api/emails/webhook-raw",
+  express.raw({ type: '*/*', limit: '50mb' }),  // raw buffer for full MIME
+  async (req: Request, res: Response) => {
+    console.log('📝 [Raw] Content-Type:', req.headers['content-type']);
+    try {
+      const parsed = await simpleParser(req.body as Buffer);
+      console.log('📝 [Raw] From:', parsed.from?.text);
+      console.log('📝 [Raw] Subject:', parsed.subject);
+      console.log('📝 [Raw] Text Body:', parsed.text);
+      // … your enqueue / processing logic using parsed object …
+      res.status(200).send('ok (raw)');
+    } catch (err) {
+      console.error('⚠️ [Raw] Parse error:', err);
+      res.status(500).send('parse-error');
+    }
+  }
+);
+
+// --------------------------------
+// To test locally, hit:
+// POST /api/emails/webhook-multipart   (with form-data)
+// POST /api/emails/webhook-raw         (with raw .eml body)
+// --------------------------------
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log('🚀 Server is live');
+});
+How to use:
+
+If you’re using SendGrid Inbound Parse with form fields, call /api/emails/webhook-multipart.
+
+If you enabled “POST raw, full MIME” in SendGrid, call /api/emails/webhook-raw.
+
+You can keep both routes active or comment out whichever you don’t need. Copy–paste this into your Replit server/routes.ts (or main file), deploy, then send a real email to see which one logs your payload correctly.

@@ -5,10 +5,32 @@ import { setupAuth } from "./auth";
 import { type InsertEmailQueue } from "@shared/schema";
 import { emailService } from "./email";
 import { journalImageUpload, getFileUrl } from "./file-upload";
+import multer from "multer";
+import { simpleParser } from "mailparser";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Setup multer for parsing multipart/form-data (for SendGrid webhooks)
+  const upload = multer();
+  
+  // Setup raw parser middleware for raw MIME option
+  const rawBodyParser = (req: Request, res: Response, next: Function) => {
+    if (req.headers['content-type']?.includes('message/rfc822')) {
+      let data = '';
+      req.setEncoding('utf8');
+      req.on('data', chunk => {
+        data += chunk;
+      });
+      req.on('end', () => {
+        req.rawBody = data;
+        next();
+      });
+    } else {
+      next();
+    }
+  };
 
   // Health check endpoint
   app.get("/api/health", (_req: Request, res: Response) => {
@@ -86,12 +108,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Enhanced SendGrid webhook handler with detailed logging
-  app.post("/api/emails/webhook", async (req: Request, res: Response) => {
+  // Enhanced SendGrid webhook handler with detailed logging and multer for multipart/form-data
+  app.post("/api/emails/webhook", upload.none(), async (req: Request, res: Response) => {
     console.log('🔔 === SENDGRID WEBHOOK REQUEST RECEIVED === 🔔');
     console.log(`Request received at: ${new Date().toISOString()}`);
     console.log(`Content-Type: ${req.headers['content-type']}`);
     console.log(`Content-Length: ${req.headers['content-length']}`);
+    console.log(`Body keys after multer: ${Object.keys(req.body).join(', ')}`);
     
     try {
       console.log("=== WEBHOOK HEADERS ===");
