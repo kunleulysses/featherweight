@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { addConversationRoutes } from "./add-conversation-routes";
 import { startEmailProcessor } from "./email-processor";
+import { startEmailScheduler } from "./scheduler";
 
 const app = express();
 app.use(express.json());
@@ -54,6 +55,9 @@ app.use((req, res, next) => {
   
   // Start the email processor for background processing of email queue
   startEmailProcessor();
+  
+  // Start the scheduler for daily inspiration emails
+  startEmailScheduler();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
