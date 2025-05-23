@@ -519,6 +519,336 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mood analytics for the mood tracker feature
+  app.get("/api/analytics/mood", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    try {
+      // Get the user's journal entries
+      const entries = await storage.getJournalEntries(req.user.id);
+      
+      // Create type for insight items
+      interface Insight {
+        title: string;
+        description: string;
+        emoji: string;
+      }
+      
+      // Generate mood insights based on journal entries
+      function generateMoodInsights(
+        entries: any[], 
+        moodFrequency: Record<string, number>,
+        dailyTrends: any[],
+        monthlyTrends: any[],
+        streaks: { current: number, longest: number }
+      ): Insight[] {
+        const insights: Insight[] = [];
+        
+        // Only generate insights if we have enough data
+        if (entries.length === 0) {
+          return [];
+        }
+        
+        // Add streak insight
+        if (streaks.current > 0) {
+          insights.push({
+            title: 'Journaling Streak',
+            description: `You've journaled for ${streaks.current} consecutive day${streaks.current !== 1 ? 's' : ''}! Keep it up to build a healthy reflection habit.`,
+            emoji: '🔥'
+          });
+        }
+        
+        // Add top mood insight
+        const moodEntries = Object.entries(moodFrequency);
+        if (moodEntries.length > 0) {
+          const [topMood, topCount] = moodEntries.sort((a, b) => b[1] - a[1])[0];
+          const percentage = Math.round((topCount / entries.length) * 100);
+          
+          const moodEmojis: Record<string, string> = {
+            happy: '😊',
+            calm: '😌',
+            neutral: '😐',
+            sad: '😔',
+            frustrated: '😤',
+            none: '❓'
+          };
+          
+          const moodDescriptions: Record<string, string> = {
+            happy: "You've been feeling quite positive lately! This is a great time to build on this momentum.",
+            calm: "Serenity has been your companion lately. These peaceful moments are perfect for deeper reflection.",
+            neutral: "Your mood has been balanced recently. This equilibrium can be a good foundation for growth.",
+            sad: "You've been experiencing some sadness lately. Remember that acknowledging these feelings is an important step in processing them.",
+            frustrated: "Frustration has been present in your recent entries. Consider what specific situations trigger these feelings.",
+            none: "We don't have enough mood data yet. Try adding mood tags to your entries!"
+          };
+          
+          insights.push({
+            title: `Mood Pattern: ${topMood.charAt(0).toUpperCase() + topMood.slice(1)}`,
+            description: moodDescriptions[topMood] || "We're noticing patterns in your mood entries.",
+            emoji: moodEmojis[topMood] || '📊'
+          });
+        }
+        
+        // Add frequency insight
+        if (entries.length >= 5) {
+          insights.push({
+            title: 'Journaling Progress',
+            description: `You've created ${entries.length} journal entries so far. Each entry helps build your self-awareness.`,
+            emoji: '📝'
+          });
+        }
+        
+        // Generate random personalized insight based on mood patterns
+        const positiveEmotions = (moodFrequency['happy'] || 0) + (moodFrequency['calm'] || 0);
+        const negativeEmotions = (moodFrequency['sad'] || 0) + (moodFrequency['frustrated'] || 0);
+        
+        if (positiveEmotions > negativeEmotions && positiveEmotions > 0) {
+          insights.push({
+            title: 'Positive Outlook',
+            description: 'Your entries show a tendency toward positive emotions, which can enhance resilience and creative thinking.',
+            emoji: '✨'
+          });
+        } else if (negativeEmotions > positiveEmotions && negativeEmotions > 0) {
+          insights.push({
+            title: 'Emotional Processing',
+            description: 'You\'re processing some challenging emotions, which shows courage and self-awareness. Consider what small actions might shift your perspective.',
+            emoji: '🌱'
+          });
+        }
+        
+        // Add random helpful insight if we have few insights so far
+        if (insights.length < 3) {
+          const randomInsights = [
+            {
+              title: 'Reflection Tip',
+              description: 'Try journaling at the same time each day to build a consistent habit that sticks.',
+              emoji: '⏰'
+            },
+            {
+              title: 'Self-Discovery',
+              description: 'Looking back at old journal entries can reveal patterns and growth you might not have noticed in the moment.',
+              emoji: '🔍'
+            },
+            {
+              title: 'Journaling Habit',
+              description: 'Even short journal entries of 2-3 sentences can provide valuable insights when reviewed over time.',
+              emoji: '💫'
+            },
+            {
+              title: 'Mood Patterns',
+              description: 'Your mood often follows patterns. Tracking it can help you identify triggers and make positive adjustments.',
+              emoji: '📊'
+            }
+          ];
+          
+          // Add random insights until we have at least 3
+          while (insights.length < 3 && randomInsights.length > 0) {
+            const randomIndex = Math.floor(Math.random() * randomInsights.length);
+            insights.push(randomInsights[randomIndex]);
+            randomInsights.splice(randomIndex, 1);
+          }
+        }
+        
+        return insights;
+      }
+      
+      // If there are no entries, return default empty data
+      if (!entries || entries.length === 0) {
+        return res.json({
+          moodFrequency: {},
+          dailyTrends: [],
+          monthlyTrends: [],
+          streaks: { current: 0, longest: 0 },
+          insights: [
+            {
+              title: 'Getting Started',
+              description: 'Welcome to your mood tracker! Start journaling to see patterns and insights about your emotional well-being.',
+              emoji: '👋'
+            },
+            {
+              title: 'Mood Tracking',
+              description: 'Select a mood for each journal entry to build your personal mood pattern visualization.',
+              emoji: '📊'
+            },
+            {
+              title: 'Reflection Tip',
+              description: 'Even short journal entries of 2-3 sentences can provide valuable insights when reviewed over time.',
+              emoji: '💫'
+            }
+          ],
+          entryCount: 0
+        });
+      }
+      
+      // Calculate mood frequency
+      const moodFrequency: Record<string, number> = {};
+      const dailyMoodMap = new Map<string, Map<string, number>>();
+      const monthlyMoodMap = new Map<string, Map<string, number>>();
+      
+      // Organize entries by date for streak calculation
+      const entriesByDate = new Map<string, boolean>();
+      
+      // Sort entries by date
+      const sortedEntries = [...entries].sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      // Process all entries
+      for (const entry of entries) {
+        const mood = entry.mood || 'none';
+        const createdAt = new Date(entry.createdAt);
+        
+        // Format date strings
+        const dateStr = createdAt.toISOString().split('T')[0]; // YYYY-MM-DD
+        const monthKey = dateStr.substring(0, 7); // YYYY-MM
+        const monthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(createdAt);
+        
+        // Count mood frequency
+        moodFrequency[mood] = (moodFrequency[mood] || 0) + 1;
+        
+        // Track daily counts
+        if (!dailyMoodMap.has(dateStr)) {
+          dailyMoodMap.set(dateStr, new Map());
+        }
+        const dailyMoods = dailyMoodMap.get(dateStr)!;
+        dailyMoods.set(mood, (dailyMoods.get(mood) || 0) + 1);
+        
+        // Track monthly counts
+        if (!monthlyMoodMap.has(monthKey)) {
+          monthlyMoodMap.set(monthKey, new Map());
+        }
+        const monthlyMoods = monthlyMoodMap.get(monthKey)!;
+        monthlyMoods.set(mood, (monthlyMoods.get(mood) || 0) + 1);
+        
+        // Track dates with entries for streak calculation
+        entriesByDate.set(dateStr, true);
+      }
+      
+      // Convert daily mood map to array
+      const dailyTrends = Array.from(dailyMoodMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0])) // Sort by date
+        .flatMap(([date, moods]) => 
+          Array.from(moods.entries()).map(([mood, count]) => ({
+            date,
+            mood,
+            count
+          }))
+        );
+      
+      // Convert monthly mood map to array
+      const monthlyTrends = Array.from(monthlyMoodMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0])) // Sort by month
+        .map(([monthKey, moods]) => {
+          const counts: Record<string, number> = {};
+          let total = 0;
+          
+          moods.forEach((count, mood) => {
+            counts[mood] = count;
+            total += count;
+          });
+          
+          // Get month name from the key (YYYY-MM)
+          const [year, month] = monthKey.split('-');
+          const monthName = new Intl.DateTimeFormat('en-US', { 
+            month: 'long', 
+            year: 'numeric' 
+          }).format(new Date(parseInt(year), parseInt(month) - 1, 1));
+          
+          return {
+            month: monthName,
+            monthKey,
+            counts,
+            total
+          };
+        });
+      
+      // Calculate streaks
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 0;
+      
+      // Get dates array and sort in descending order (newest first)
+      const dates = Array.from(entriesByDate.keys()).sort((a, b) => 
+        b.localeCompare(a)
+      );
+      
+      // Calculate current streak (consecutive days with entries, counting from today)
+      const today = new Date().toISOString().split('T')[0];
+      
+      // If today has an entry, start counting from today
+      if (entriesByDate.has(today)) {
+        currentStreak = 1;
+        
+        // Check consecutive previous days
+        let prevDate = new Date();
+        
+        for (let i = 1; i <= 365; i++) { // Check up to a year back
+          prevDate.setDate(prevDate.getDate() - 1);
+          const prevDateStr = prevDate.toISOString().split('T')[0];
+          
+          if (entriesByDate.has(prevDateStr)) {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+      }
+      
+      // Calculate longest streak
+      for (let i = 0; i < dates.length; i++) {
+        // If this is the first date or consecutive with previous date, increment temp streak
+        if (i === 0) {
+          tempStreak = 1;
+        } else {
+          const currDate = new Date(dates[i]);
+          const prevDate = new Date(dates[i-1]);
+          
+          // Calculate difference in days
+          const diffTime = Math.abs(prevDate.getTime() - currDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            tempStreak++;
+          } else {
+            // Reset streak counter if days aren't consecutive
+            tempStreak = 1;
+          }
+        }
+        
+        // Update longest streak if current temp streak is longer
+        if (tempStreak > longestStreak) {
+          longestStreak = tempStreak;
+        }
+      }
+      
+      // Generate insights based on the data
+      const insights = generateMoodInsights(
+        entries, 
+        moodFrequency, 
+        dailyTrends, 
+        monthlyTrends, 
+        { current: currentStreak, longest: longestStreak }
+      );
+      
+      res.json({
+        moodFrequency,
+        dailyTrends,
+        monthlyTrends,
+        streaks: {
+          current: currentStreak,
+          longest: longestStreak
+        },
+        insights,
+        entryCount: entries.length
+      });
+    } catch (error) {
+      console.error("Error generating mood analytics:", error);
+      res.status(500).json({ error: "Failed to generate mood analytics" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
