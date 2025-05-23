@@ -333,7 +333,7 @@ export default function ConversationPage() {
                 <div className="flex justify-between items-start">
                   <CardTitle className="flex items-center">
                     <Avatar className="h-8 w-8 mr-2">
-                      <AvatarImage src="/assets/flappy.svg" alt="Flappy" />
+                      <AvatarImage src="/assets/flappy-avatar.png" alt="Flappy" />
                       <AvatarFallback>F</AvatarFallback>
                     </Avatar>
                     <span>Flappy</span>
