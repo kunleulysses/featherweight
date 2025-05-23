@@ -98,6 +98,7 @@ export default function ConversationCenterPage() {
   const [conversationTitle, setConversationTitle] = useState("");
   const [messageCount, setMessageCount] = useState(0);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [currentMood, setCurrentMood] = useState<string | null>(null);
   const MAX_FREE_MESSAGES = 3; // Maximum messages for free tier users
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -232,6 +233,13 @@ export default function ConversationCenterPage() {
     }
   };
 
+  // Get emoji for a mood
+  const getMoodEmoji = (mood: string | null) => {
+    if (!mood) return null;
+    const option = moodOptions.find(opt => opt.value === mood);
+    return option ? option.emoji : null;
+  };
+  
   // Handle form submission
   async function onSubmit(data: MessageFormValues) {
     if (isSubmitting || !isActive) return;
@@ -255,6 +263,7 @@ export default function ConversationCenterPage() {
       content: data.message,
       type: "user",
       timestamp: new Date(),
+      mood: currentMood || undefined,
     };
     
     setMessages((prev) => [...prev, userMessage]);
@@ -526,6 +535,34 @@ export default function ConversationCenterPage() {
                       onSubmit={form.handleSubmit(onSubmit)}
                       className="w-full space-y-2"
                     >
+                      {/* Mood selector */}
+                      <div className="flex items-center mb-3 gap-1 flex-wrap">
+                        <span className="text-sm text-muted-foreground mr-2 flex items-center">
+                          <SmilePlus className="h-4 w-4 mr-1" />
+                          How are you feeling?
+                        </span>
+                        {moodOptions.map((mood) => (
+                          <Button
+                            key={mood.value}
+                            type="button"
+                            variant={currentMood === mood.value ? "secondary" : "ghost"}
+                            size="sm"
+                            className={`p-1 rounded-full min-w-[40px] ${
+                              currentMood === mood.value ? 'scale-110' : 'opacity-70 hover:opacity-100'
+                            }`}
+                            onClick={() => setCurrentMood(currentMood === mood.value ? null : mood.value)}
+                            title={mood.label}
+                          >
+                            <span className="text-lg">{mood.emoji}</span>
+                          </Button>
+                        ))}
+                        {currentMood && (
+                          <div className="ml-2 text-xs text-muted-foreground">
+                            Feeling: <span className="font-medium capitalize">{currentMood}</span>
+                          </div>
+                        )}
+                      </div>
+                      
                       <FormField
                         control={form.control}
                         name="message"
