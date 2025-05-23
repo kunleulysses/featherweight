@@ -444,6 +444,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // User profile and preferences API endpoints
+  app.patch('/api/user/profile', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    try {
+      const { username, email, firstName, lastName, bio } = req.body;
+      
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(req.user.id, {
+        username,
+        email,
+        firstName,
+        lastName, 
+        bio
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  });
+  
+  app.patch('/api/user/phone', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    try {
+      const { phoneNumber } = req.body;
+      
+      // Update user phone number
+      const updatedUser = await storage.updateUserPhoneNumber(req.user.id, phoneNumber);
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating phone number:', error);
+      res.status(500).json({ error: 'Failed to update phone number' });
+    }
+  });
+  
+  app.patch('/api/user/preferences', async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    try {
+      const {
+        emailFrequency,
+        marketingEmails,
+        receiveInsights,
+        receiveSms,
+        emailDeliveryTime,
+        disableDailyEmails
+      } = req.body;
+      
+      // Update user preferences
+      const updatedUser = await storage.updateUserPreferences(req.user.id, {
+        emailFrequency,
+        marketingEmails,
+        receiveInsights,
+        receiveSms,
+        emailDeliveryTime,
+        disableDailyEmails
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user preferences:', error);
+      res.status(500).json({ error: 'Failed to update user preferences' });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   
