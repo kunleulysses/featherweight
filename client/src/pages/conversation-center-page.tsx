@@ -11,7 +11,14 @@ import { Container } from "@/components/ui/container";
 import { AdBanner } from "@/components/ads/ad-banner";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Save, PlusCircle, AlertCircle } from "lucide-react";
+import { 
+  Loader2, 
+  Send, 
+  Save, 
+  PlusCircle, 
+  AlertCircle,
+  SmilePlus
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,20 +33,42 @@ import {
   FormField,
   FormItem,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Define the form schema
 const messageFormSchema = z.object({
   message: z.string().min(1, {
     message: "Message cannot be empty.",
   }),
+  mood: z.string().optional(),
 });
 
 type MessageFormValues = z.infer<typeof messageFormSchema>;
+
+// Mood options with emojis
+const moodOptions = [
+  { value: "happy", label: "Happy", emoji: "😊" },
+  { value: "calm", label: "Calm", emoji: "😌" },
+  { value: "neutral", label: "Neutral", emoji: "😐" },
+  { value: "sad", label: "Sad", emoji: "😔" },
+  { value: "frustrated", label: "Frustrated", emoji: "😤" },
+];
 
 // Types for conversation messages
 type MessageType = "user" | "flappy";
@@ -49,6 +78,7 @@ interface Message {
   content: string;
   type: MessageType;
   timestamp: Date;
+  mood?: string; // Track mood with messages
 }
 
 export default function ConversationCenterPage() {
