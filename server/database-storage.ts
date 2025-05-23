@@ -128,49 +128,51 @@ export class DatabaseStorage implements IStorage {
     lastName?: string;
     bio?: string
   }): Promise<User> {
-    const user = await this.getUser(userId);
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
-    }
-
     try {
-      // Get current preferences
+      // First get the current user
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+      
+      // Get current preferences (safely)
       const currentPreferences = user.preferences || {} as UserPreferences;
       
-      // Update preferences to include firstName and lastName
-      const updatedPreferences: UserPreferences = {
-        ...currentPreferences,
-        firstName: profileData.firstName || currentPreferences.firstName || undefined,
-        lastName: profileData.lastName || currentPreferences.lastName || undefined,
-        bio: profileData.bio || currentPreferences.bio || undefined,
-        // Ensure all required preferences fields exist
+      // Create updated preferences object - make sure to handle undefined/null values
+      const preferencesUpdate = {
+        firstName: profileData.firstName !== undefined ? profileData.firstName : currentPreferences.firstName,
+        lastName: profileData.lastName !== undefined ? profileData.lastName : currentPreferences.lastName,
+        bio: profileData.bio !== undefined ? profileData.bio : currentPreferences.bio,
+        // Keep existing preferences
         emailFrequency: currentPreferences.emailFrequency || "daily",
-        marketingEmails: currentPreferences.marketingEmails || false,
-        receiveInsights: currentPreferences.receiveInsights || true,
+        marketingEmails: currentPreferences.marketingEmails !== undefined ? currentPreferences.marketingEmails : false,
+        receiveInsights: currentPreferences.receiveInsights !== undefined ? currentPreferences.receiveInsights : true,
         theme: currentPreferences.theme || "light",
-        receiveSms: currentPreferences.receiveSms || false,
-        phoneNumber: currentPreferences.phoneNumber || undefined
+        receiveSms: currentPreferences.receiveSms !== undefined ? currentPreferences.receiveSms : false,
+        phoneNumber: currentPreferences.phoneNumber,
+        emailDeliveryTime: currentPreferences.emailDeliveryTime || "11:00",
+        disableDailyEmails: currentPreferences.disableDailyEmails !== undefined ? currentPreferences.disableDailyEmails : false
       };
       
-      // Update user with new preferences
-      const result = await pool.query(`
-        UPDATE users 
-        SET 
-          username = $1, 
-          email = $2,
-          preferences = $3,
-          updated_at = NOW()
-        WHERE id = $4
-        RETURNING *
-      `, [
-        profileData.username,
-        profileData.email,
-        JSON.stringify(updatedPreferences),
-        userId
-      ]);
+      // Use raw SQL to avoid potential JSON serialization issues
+      const result = await pool.query(
+        `UPDATE users 
+         SET username = $1, 
+             email = $2, 
+             preferences = $3, 
+             updated_at = NOW() 
+         WHERE id = $4 
+         RETURNING *`, 
+        [
+          profileData.username,
+          profileData.email,
+          JSON.stringify(preferencesUpdate),
+          userId
+        ]
+      );
       
-      if (result.rows.length > 0) {
-        return result.rows[0] as User;
+      if (result.rows && result.rows.length > 0) {
+        return result.rows[0];
       } else {
         throw new Error(`Failed to update user with ID ${userId}`);
       }

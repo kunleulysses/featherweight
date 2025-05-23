@@ -237,6 +237,8 @@ export const updateUserPreferencesSchema = z.object({
   bio: z.string().max(160).optional(),
   theme: z.enum(["light", "dark", "system"]).optional(),
   receiveSms: z.boolean().default(false).optional(),
+  emailDeliveryTime: z.string().optional(),
+  disableDailyEmails: z.boolean().optional(),
   phoneNumber: z.string().optional().refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val), {
     message: "Please enter a valid phone number in E.164 format (e.g., +14155552671)"
   }),
