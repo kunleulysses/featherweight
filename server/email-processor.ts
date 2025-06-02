@@ -52,12 +52,35 @@ async function processQueuedEmail(queueItem: EmailQueueItem): Promise<boolean> {
     console.log(`📦 Payload preview: ${payloadPreview}${JSON.stringify(payload).length > 500 ? '...' : ''}`);
     
     // Handle different payload formats
-    if (payload && payload.buffer) {
+    if (payload && payload.rawMimeBase64) {
+      // Handle raw MIME base64 payload from SendGrid
+      console.log(`🔍 Processing payload with rawMimeBase64`);
+      const buffer = Buffer.from(payload.rawMimeBase64 as string, 'base64');
+      console.log(`🔍 Buffer size: ${buffer.length} bytes`);
+      const parsedEmail = await simpleParser(buffer);
+      await emailService.processIncomingEmail(
+        parsedEmail.from?.text || 'unknown@example.com',
+        parsedEmail.subject || 'No Subject',
+        parsedEmail.text || parsedEmail.html || '',
+        parsedEmail.inReplyTo || undefined
+      );
+      
+    } else if (payload && payload.buffer) {
       // If we have base64 encoded buffer data
       console.log(`🔍 Detected buffer payload format`);
       const buffer = Buffer.from(payload.buffer as string, 'base64');
       console.log(`🔍 Buffer size: ${buffer.length} bytes`);
       await processRawEmail(buffer);
+      
+    } else if (payload && payload.text && payload.from && payload.subject) {
+      // Handle direct JSON payload (e.g., from manual testing or other sources)
+      console.log(`🔍 Processing direct JSON payload`);
+      await emailService.processIncomingEmail(
+        payload.from,
+        payload.subject,
+        payload.text,
+        payload.inReplyTo || undefined
+      );
       
     } else if (payload && payload.text) {
       // If we have text data

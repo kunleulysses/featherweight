@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Use the request directly as a fallback
         requestData = {
-          text: req.rawBody || 'No content available',
+          text: 'No content available',
           subject: 'Test Email',
           from: 'unknown@example.com'
         };
@@ -175,61 +175,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced SendGrid webhook handler with multer for multipart/form-data support
-  app.post("/api/emails/webhook", upload.none(), async (req: Request, res: Response) => {
-    console.log('🔔 === SENDGRID WEBHOOK REQUEST RECEIVED === 🔔');
-    console.log(`Request received at: ${new Date().toISOString()}`);
-    console.log(`Content-Type: ${req.headers['content-type']}`);
-    console.log(`Content-Length: ${req.headers['content-length']}`);
-    
-    // Try to process anything we get - don't be too strict about format
-    try {
-      console.log("Processing webhook data...");
-      
-      // For debugging: log some data about what we received
-      const reqBodyKeys = req.body ? Object.keys(req.body) : [];
-      console.log(`Body has ${reqBodyKeys.length} keys: ${reqBodyKeys.join(', ')}`);
-      
-      // Just process the email directly here for debugging
-      if (req.body && req.body.text) {
-        const from = req.body.from || req.body.sender || 'unknown@example.com';
-        const subject = req.body.subject || 'No Subject';
-        const text = req.body.text;
-        
-        console.log(`⭐ DIRECT PROCESSING: from=${from}, subject=${subject}`);
-        await emailService.processIncomingEmail(from, subject, text);
-        console.log("✅ Email processed directly!");
+  // Main SendGrid Inbound Parse Webhook - handles raw MIME messages
+  app.post(
+    "/api/emails/webhook",
+    express.raw({ type: '*/*', limit: '50mb' }), // Middleware to get raw body
+    async (req: Request, res: Response) => {
+      console.log('🔔 === SENDGRID RAW MIME WEBHOOK (/api/emails/webhook) RECEIVED === 🔔');
+      console.log(`Request received at: ${new Date().toISOString()}`);
+      console.log(`Content-Type: ${req.headers['content-type']}`);
+      console.log(`Content-Length: ${req.headers['content-length']}`);
+
+      try {
+        if (!req.body || req.body.length === 0) {
+          console.log('❌ Empty raw MIME body received from SendGrid.');
+          // Still return 200 OK to SendGrid to prevent retries
+          return res.status(200).send('Error: Empty MIME body');
+        }
+
+        const rawEmailBuffer = req.body as Buffer;
+        console.log(`Raw MIME length: ${rawEmailBuffer.length} bytes`);
+
+        // For the queue, store the raw email as base64.
+        // The email-processor will decode and parse it.
+        const queuePayload = {
+          rawMimeBase64: rawEmailBuffer.toString('base64'),
+          receivedAt: new Date().toISOString(),
+          contentType: req.headers['content-type'] as string,
+          source: 'sendgrid-inbound-webhook'
+        };
+
+        const queueItem: InsertEmailQueue = {
+          payload: queuePayload,
+          status: "pending" as const
+        };
+
+        const savedQueueItem = await storage.enqueueEmail(queueItem);
+        console.log(`✅ Raw MIME email (base64) queued for processing. Queue ID: ${savedQueueItem.id}`);
+
+        // Always return 200 OK to SendGrid quickly.
+        res.status(200).send('OK: Email data queued for processing.');
+
+      } catch (error) {
+        console.error('❌ Error processing raw MIME webhook:', error);
+        // Still return 200 OK to SendGrid.
+        res.status(200).send(`Error processing email: ${error.message}`);
       }
-      
-      // Always try to queue the raw data as received - to debug issues
-      console.log("Queueing raw webhook data...");
-      
-      // Use any fields we can find
-      const from = req.body.from || req.body.sender || (req.body.envelope ? JSON.parse(req.body.envelope).from : null) || 'unknown@example.com';
-      const subject = req.body.subject || 'No Subject';
-      const text = req.body.text || req.body.html || req.body.email || req.body.raw || 'No content';
-      
-      console.log(`From: ${from}`);
-      console.log(`Subject: ${subject}`);
-      console.log(`Text preview: ${text.substring(0, Math.min(100, text.length))}...`);
-      
-      // Create a queue item with the structured data for processing
-      const queueItem: InsertEmailQueue = {
-        payload: req.body, // Store the entire body for debugging
-        status: "pending" as const
-      };
-        
-      const saved = await storage.enqueueEmail(queueItem);
-      console.log(`✅ Email queued for processing (Queue ID: ${saved.id})`);
-      
-      return res.status(200).send('OK: Email data queued for processing');
-    } catch (error) {
-      console.error('Error processing webhook:', error);
-      
-      // Always return 200 OK to prevent SendGrid from retrying
-      return res.status(200).send('Error: ' + error.message);
     }
-  });
+  );
   
   // Journal entries API endpoints
   // Get all journal entries for the current user
