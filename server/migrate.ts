@@ -139,6 +139,37 @@ async function runMigration() {
     `);
     console.log("Created conversation_memories table");
 
+    // Create conversations table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        user_message TEXT NOT NULL,
+        flappy_response TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT now(),
+        conversation_type TEXT NOT NULL DEFAULT 'general',
+        saved_as_journal BOOLEAN NOT NULL DEFAULT false,
+        journal_entry_id INTEGER,
+        message_tags JSON,
+        mood TEXT,
+        reflection_prompt TEXT
+      );
+    `);
+    console.log("Created conversations table");
+
+    // Create email_queue table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_queue (
+        id SERIAL PRIMARY KEY,
+        payload JSON NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP NOT NULL DEFAULT now(),
+        processed_at TIMESTAMP,
+        process_attempts INTEGER DEFAULT 0
+      );
+    `);
+    console.log("Created email_queue table");
+
     // Create sessions table for connect-pg-simple
     await pool.query(`
       CREATE TABLE IF NOT EXISTS "session" (

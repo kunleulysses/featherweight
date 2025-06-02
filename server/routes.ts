@@ -164,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.status(200).send('OK: Raw MIME email queued for processing');
         } catch (error) {
           console.error('Error processing raw MIME:', error);
-          res.status(200).send(`Error parsing raw MIME: ${error.message}`);
+          res.status(200).send(`Error parsing raw MIME: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       });
       
