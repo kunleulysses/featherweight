@@ -359,6 +359,7 @@ Flappy 🦢
           subject,
           content: cleanContent,
           sentAt: new Date(),
+          type: 'inbound',
           isRead: true,
           direction: 'inbound',
           isJournalEntry: false,
