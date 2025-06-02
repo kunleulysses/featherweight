@@ -1,25 +1,20 @@
 <!-- public/favicon.svg -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Background circle -->
-  <circle cx="50" cy="50" r="48" fill="#4299e1"/>
+  <!-- Background circle with Featherweight blue -->
+  <circle cx="50" cy="50" r="48" fill="#64B5F6"/>
   
-  <!-- Elegant Feather Design -->
-  <g transform="translate(20, 15) scale(0.6)">
-    <!-- Feather shaft -->
-    <path d="M50 10 L50 90" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <!-- Clean feather design matching Featherweight logo -->
+  <g transform="translate(50, 50)">
+    <!-- Feather outline and fill -->
+    <path d="M0 -25 C-8 -20, -12 -10, -12 0 C-12 8, -8 15, 0 20 C8 15, 12 8, 12 0 C12 -10, 8 -20, 0 -25 Z" 
+          fill="white" stroke="none"/>
     
-    <!-- Feather barbs - right side -->
-    <path d="M50 30 Q70 25, 90 10" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 40 Q75 35, 95 20" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 50 Q80 45, 95 30" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 60 Q75 55, 90 40" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 70 Q70 65, 85 50" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    <!-- Feather quill/shaft -->
+    <path d="M0 -25 L0 25" stroke="white" stroke-width="2" stroke-linecap="round"/>
     
-    <!-- Feather barbs - left side -->
-    <path d="M50 30 Q30 25, 10 10" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 40 Q25 35, 5 20" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 50 Q20 45, 5 30" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 60 Q25 55, 10 40" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-    <path d="M50 70 Q30 65, 15 50" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    <!-- Simple feather texture lines -->
+    <path d="M-8 -15 C-4 -12, 4 -12, 8 -15" stroke="#64B5F6" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M-10 -5 C-5 -2, 5 -2, 10 -5" stroke="#64B5F6" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M-8 5 C-4 8, 4 8, 8 5" stroke="#64B5F6" stroke-width="1.5" stroke-linecap="round"/>
   </g>
 </svg>
