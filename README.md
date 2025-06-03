@@ -61,8 +61,6 @@ Featherweight exists to make journaling feel as natural as texting a friend. Pow
 
 ## Architecture & Flow
 
-![Architecture Diagram](docs/architecture.png)
-
 1. **User Interaction Layer**
 
    * Web App (React + Node.js)
